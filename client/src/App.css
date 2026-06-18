@@ -1,0 +1,272 @@
+.app-shell {
+  min-height: 100svh;
+  padding: 28px;
+  box-sizing: border-box;
+}
+
+.topbar {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 24px;
+  padding-bottom: 24px;
+  border-bottom: 1px solid var(--border);
+}
+
+.eyebrow {
+  color: var(--accent);
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0;
+  margin-bottom: 8px;
+  text-transform: uppercase;
+}
+
+.status-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--muted);
+  font-size: 14px;
+  font-weight: 700;
+  padding-top: 8px;
+  white-space: nowrap;
+}
+
+.status-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 999px;
+  background: #f59e0b;
+  box-shadow: 0 0 0 4px rgba(245, 158, 11, 0.14);
+}
+
+.status-dot.online {
+  background: #16a34a;
+  box-shadow: 0 0 0 4px rgba(22, 163, 74, 0.14);
+}
+
+.status-dot.offline {
+  background: #dc2626;
+  box-shadow: 0 0 0 4px rgba(220, 38, 38, 0.14);
+}
+
+.auction-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.5fr) minmax(280px, 0.75fr);
+  gap: 20px;
+  margin-top: 24px;
+}
+
+.player-panel,
+.bid-panel,
+.bid-log,
+.team-tile {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  box-shadow: var(--shadow);
+}
+
+.player-panel {
+  display: grid;
+  grid-template-columns: 180px 1fr;
+  align-items: center;
+  gap: 24px;
+  min-height: 300px;
+  padding: 28px;
+  text-align: left;
+}
+
+.player-photo {
+  display: grid;
+  place-items: center;
+  width: 180px;
+  aspect-ratio: 1;
+  border-radius: 8px;
+  color: #ffffff;
+  background:
+    linear-gradient(135deg, rgba(20, 184, 166, 0.95), rgba(59, 130, 246, 0.9)),
+    #0f766e;
+  font-size: 48px;
+  font-weight: 900;
+}
+
+.player-copy h2 {
+  font-size: 42px;
+  margin-bottom: 18px;
+}
+
+.tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.tags span {
+  color: var(--text-h);
+  background: var(--tag-bg);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  font-size: 14px;
+  font-weight: 700;
+  padding: 8px 12px;
+}
+
+.bid-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 24px;
+  text-align: left;
+}
+
+.bid-amount {
+  color: var(--text-h);
+  font-size: 52px;
+  font-weight: 900;
+  line-height: 1;
+}
+
+label {
+  color: var(--text-h);
+  font-size: 14px;
+  font-weight: 800;
+  margin-top: 8px;
+}
+
+select,
+button {
+  min-height: 44px;
+  border-radius: 8px;
+  font: inherit;
+}
+
+select {
+  color: var(--text-h);
+  background: var(--input-bg);
+  border: 1px solid var(--border);
+  padding: 0 12px;
+}
+
+button {
+  color: white;
+  background: #0f766e;
+  border: 0;
+  cursor: pointer;
+  font-weight: 900;
+  transition:
+    background 0.2s ease,
+    transform 0.2s ease;
+}
+
+button:hover {
+  background: #115e59;
+  transform: translateY(-1px);
+}
+
+.room-strip {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 14px;
+  margin-top: 20px;
+}
+
+.team-tile {
+  padding: 18px;
+  text-align: left;
+}
+
+.team-tile span {
+  display: block;
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 800;
+  margin-bottom: 6px;
+  text-transform: uppercase;
+}
+
+.team-tile strong {
+  display: block;
+  color: var(--text-h);
+  min-height: 48px;
+}
+
+.team-tile p {
+  margin-top: 12px;
+}
+
+.bid-log {
+  margin-top: 20px;
+  padding: 24px;
+  text-align: left;
+}
+
+.section-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 14px;
+}
+
+.bid-log ul {
+  display: grid;
+  gap: 10px;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.bid-log li {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  background: var(--input-bg);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 12px 14px;
+}
+
+.bid-log li div {
+  display: grid;
+  gap: 2px;
+}
+
+.bid-log strong {
+  color: var(--text-h);
+}
+
+.bid-log span,
+.bid-log time,
+.empty-state {
+  color: var(--muted);
+}
+
+@media (max-width: 860px) {
+  .app-shell {
+    padding: 18px;
+  }
+
+  .topbar,
+  .section-head {
+    flex-direction: column;
+  }
+
+  .auction-grid,
+  .player-panel,
+  .room-strip {
+    grid-template-columns: 1fr;
+  }
+
+  .player-photo {
+    width: 100%;
+    max-width: 220px;
+  }
+
+  .player-copy h2,
+  .bid-amount {
+    font-size: 36px;
+  }
+}
