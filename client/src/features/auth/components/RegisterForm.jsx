@@ -1,0 +1,101 @@
+import { Mail, Sparkles } from 'lucide-react'
+import { motion } from 'framer-motion'
+import { AUTH_MODES } from '../auth.constants'
+import AuthLegal from './AuthLegal'
+import FormField from './FormField'
+import PasswordField from './PasswordField'
+import PasswordStrength from './PasswordStrength'
+import RolePicker from './RolePicker'
+import SocialAuthButtons from './SocialAuthButtons'
+
+function RegisterForm({
+  form,
+  role,
+  passwordStrength,
+  showPassword,
+  onChange,
+  onModeChange,
+  onRoleChange,
+  onSubmit,
+  onTogglePassword,
+}) {
+  return (
+    <form id="auth-panel" className="auth-form" onSubmit={onSubmit} noValidate>
+      <div className="field-row field-row--two">
+        <FormField
+          id="fullName"
+          label="Full Name"
+          autoComplete="name"
+          placeholder="Rohit Sharma"
+          value={form.fullName}
+          onChange={onChange('fullName')}
+        />
+        <FormField
+          id="franchise"
+          label="Franchise"
+          placeholder="Mumbai Mavericks"
+          value={form.franchise}
+          onChange={onChange('franchise')}
+        />
+      </div>
+
+      <div className="field-row">
+        <FormField
+          id="email"
+          label="Email"
+          type="email"
+          autoComplete="email"
+          placeholder="owner@franchise.com"
+          value={form.email}
+          onChange={onChange('email')}
+          icon={<Mail size={18} />}
+        />
+      </div>
+
+      <div className="field-row">
+        <PasswordField
+          autoComplete="new-password"
+          placeholder="Create a strong password"
+          value={form.password}
+          showPassword={showPassword}
+          onChange={onChange('password')}
+          onToggleVisibility={onTogglePassword}
+        />
+        <PasswordStrength strength={passwordStrength} />
+      </div>
+
+      <RolePicker value={role} onChange={onRoleChange} />
+
+      <motion.button
+        type="submit"
+        className="cta-btn"
+        whileHover={{ y: -1 }}
+        whileTap={{ y: 0, scale: 0.99 }}
+        transition={{ type: 'spring', stiffness: 400, damping: 28 }}
+      >
+        <span className="cta-btn-shine" aria-hidden="true" />
+        <span className="cta-btn-content">
+          <Sparkles size={16} strokeWidth={2.4} />
+          Claim Your Paddle
+        </span>
+      </motion.button>
+
+      <SocialAuthButtons />
+
+      <p className="switch-copy">
+        Already have an account?{' '}
+        <button
+          type="button"
+          className="link-btn"
+          onClick={() => onModeChange(AUTH_MODES.LOGIN)}
+        >
+          Sign in
+        </button>
+      </p>
+
+      <AuthLegal />
+    </form>
+  )
+}
+
+export default RegisterForm

@@ -1,81 +1,61 @@
 :root {
-  --text: #475569;
-  --muted: #64748b;
-  --text-h: #0f172a;
-  --bg: #f8fafc;
-  --surface: #ffffff;
-  --border: #dbe3ee;
-  --input-bg: #f8fafc;
-  --tag-bg: #ecfeff;
-  --accent: #0f766e;
-  --shadow:
-    rgba(15, 23, 42, 0.06) 0 12px 24px, rgba(15, 23, 42, 0.04) 0 4px 8px;
+  --bg: #07080b;
+  --bg-deep: #050608;
+  --surface: rgba(22, 22, 26, 0.72);
+  --surface-strong: rgba(28, 28, 32, 0.92);
+  --border: rgba(255, 255, 255, 0.08);
+  --border-strong: rgba(255, 255, 255, 0.14);
+  --input-bg: #15151a;
+  --input-bg-focus: #1a1a20;
+  --text: #e6e6ec;
+  --text-soft: #b6b6c0;
+  --muted: #8a8a94;
+  --heading: #f4f4f6;
+  --gold: #f5b94a;
+  --gold-bright: #ffd24a;
+  --gold-deep: #b8861f;
+  --gold-soft: rgba(245, 185, 74, 0.18);
+  --green: #2bd97a;
 
-  --sans: system-ui, 'Segoe UI', Roboto, sans-serif;
-  --heading: system-ui, 'Segoe UI', Roboto, sans-serif;
-  --mono: ui-monospace, Consolas, monospace;
+  --sans: 'Inter', system-ui, 'Segoe UI', Roboto, sans-serif;
 
-  font: 18px/145% var(--sans);
-  letter-spacing: 0;
-  color-scheme: light dark;
+  font: 16px/1.5 var(--sans);
   color: var(--text);
-  background: var(--bg);
+  color-scheme: dark;
   font-synthesis: none;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-
-  @media (max-width: 1024px) {
-    font-size: 16px;
-  }
+  background: var(--bg-deep);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --text: #cbd5e1;
-    --muted: #94a3b8;
-    --text-h: #f8fafc;
-    --bg: #0f172a;
-    --surface: #111827;
-    --border: #263244;
-    --input-bg: #0b1220;
-    --tag-bg: rgba(20, 184, 166, 0.12);
-    --accent: #2dd4bf;
-    --shadow:
-      rgba(0, 0, 0, 0.35) 0 12px 24px, rgba(0, 0, 0, 0.25) 0 4px 8px;
-  }
+* {
+  box-sizing: border-box;
 }
 
 body {
   margin: 0;
+  min-height: 100svh;
+  background: var(--bg-deep);
 }
 
 #root {
-  width: 100%;
   min-height: 100svh;
+}
+
+a {
+  color: inherit;
 }
 
 h1,
 h2 {
-  font-family: var(--heading);
-  font-weight: 900;
-  color: var(--text-h);
-  line-height: 1.05;
+  font-family: var(--sans);
+  font-weight: 800;
+  color: var(--heading);
+  line-height: 1.1;
   margin: 0;
 }
 
-h1 {
-  font-size: 44px;
-  @media (max-width: 1024px) {
-    font-size: 34px;
-  }
-}
-h2 {
-  font-size: 24px;
-  @media (max-width: 1024px) {
-    font-size: 20px;
-  }
-}
 p {
   margin: 0;
 }
