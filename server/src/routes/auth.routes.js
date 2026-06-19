@@ -1,11 +1,18 @@
 const express = require('express');
-const { register, login, me, logout } = require('../controllers/auth.controller');
+const {
+  register,
+  login,
+  me,
+  logout,
+  loginWithGoogle,
+} = require('../controllers/auth.controller');
 const { auth } = require('../middleware/auth');
 
 const router = express.Router();
 
 router.post('/register', register);
 router.post('/login', login);
+router.post('/google', loginWithGoogle);
 router.get('/me', auth, me);
 router.post('/logout', auth, logout);
 

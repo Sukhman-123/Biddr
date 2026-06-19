@@ -40,8 +40,17 @@ const userSchema = new mongoose.Schema(
       },
       default: 'owner',
     },
+    googleSub: {
+      type: String,
+      default: null,
+    },
   },
   { timestamps: true },
+);
+
+userSchema.index(
+  { googleSub: 1 },
+  { unique: true, partialFilterExpression: { googleSub: { $type: 'string' } } },
 );
 
 userSchema.pre('save', async function hashPassword(next) {
@@ -66,6 +75,7 @@ userSchema.methods.toSafeJSON = function toSafeJSON() {
     franchise: this.franchise,
     email: this.email,
     role: this.role,
+    authProvider: this.googleSub ? 'google' : 'local',
     createdAt: this.createdAt,
   };
 };

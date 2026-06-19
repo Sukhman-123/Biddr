@@ -21,7 +21,15 @@ const initialForm = {
 const EMPTY_ERRORS = {}
 
 function AuthPage() {
-  const { isAuthenticated, isLoading, user, login, register, logout } = useAuth()
+  const {
+    isAuthenticated,
+    isLoading,
+    user,
+    login,
+    loginWithGoogle,
+    register,
+    logout,
+  } = useAuth()
   const [mode, setMode] = useState(AUTH_MODES.LOGIN)
   const [role, setRole] = useState('owner')
   const [showPassword, setShowPassword] = useState(false)
@@ -29,6 +37,7 @@ function AuthPage() {
   const [errors, setErrors] = useState(EMPTY_ERRORS)
   const [serverError, setServerError] = useState(null)
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const [isGoogleLoading, setIsGoogleLoading] = useState(false)
 
   const isRegister = mode === AUTH_MODES.REGISTER
   const strength = useMemo(
@@ -125,6 +134,26 @@ function AuthPage() {
     }
   }
 
+  const handleGoogleCredential = async (idToken) => {
+    if (isGoogleLoading || isSubmitting) return
+    setErrors(EMPTY_ERRORS)
+    setServerError(null)
+    setIsGoogleLoading(true)
+    try {
+      await loginWithGoogle(idToken, isRegister ? role : undefined)
+      setForm(initialForm)
+    } catch (err) {
+      setServerError(err.message || 'Google sign-in failed')
+    } finally {
+      setIsGoogleLoading(false)
+    }
+  }
+
+  const handleGoogleError = (error) => {
+    if (!error) return
+    setServerError(error.message || 'Google sign-in failed')
+  }
+
   if (isAuthenticated && user) {
     return <SignedIn user={user} onSignOut={logout} />
   }
@@ -166,11 +195,14 @@ function AuthPage() {
                   errors={errors}
                   serverError={serverError}
                   isSubmitting={isSubmitting}
+                  isGoogleLoading={isGoogleLoading}
                   onChange={updateField}
                   onRoleChange={setRole}
                   onModeChange={switchMode}
                   onSubmit={handleRegister}
                   onTogglePassword={() => setShowPassword((value) => !value)}
+                  onGoogleCredential={handleGoogleCredential}
+                  onGoogleError={handleGoogleError}
                 />
               </motion.div>
             ) : (
@@ -187,10 +219,13 @@ function AuthPage() {
                   errors={errors}
                   serverError={serverError}
                   isSubmitting={isSubmitting}
+                  isGoogleLoading={isGoogleLoading}
                   onChange={updateField}
                   onModeChange={switchMode}
                   onSubmit={handleLogin}
                   onTogglePassword={() => setShowPassword((value) => !value)}
+                  onGoogleCredential={handleGoogleCredential}
+                  onGoogleError={handleGoogleError}
                 />
               </motion.div>
             )}

@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import {
   fetchMeRequest,
+  googleLoginRequest,
   loginRequest,
   logoutRequest,
   registerRequest,
@@ -70,6 +71,21 @@ export function AuthProvider({ children }) {
     }
   }, [])
 
+  const loginWithGoogle = useCallback(async (idToken, role) => {
+    setError(null)
+    setStatus(AUTH_STATUS.LOADING)
+    try {
+      const data = await googleLoginRequest(idToken, role)
+      setUser(data.user)
+      setStatus(AUTH_STATUS.AUTHENTICATED)
+      return data.user
+    } catch (err) {
+      setStatus(AUTH_STATUS.UNAUTHENTICATED)
+      setError(err.message)
+      throw err
+    }
+  }, [])
+
   const logout = useCallback(async () => {
     setError(null)
     await logoutRequest()
@@ -88,10 +104,11 @@ export function AuthProvider({ children }) {
       error,
       register,
       login,
+      loginWithGoogle,
       logout,
       clearError,
     }),
-    [user, status, error, register, login, logout, clearError],
+    [user, status, error, register, login, loginWithGoogle, logout, clearError],
   )
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>

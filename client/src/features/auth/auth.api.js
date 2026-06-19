@@ -39,6 +39,16 @@ export async function loginRequest({ email, password }) {
   }
 }
 
+export async function googleLoginRequest(idToken, role) {
+  try {
+    const { data } = await api.post('/auth/google', { idToken, role })
+    if (data?.token) tokenStorage.set(data.token)
+    return data
+  } catch (error) {
+    throw wrapError(error, 'Google sign-in failed')
+  }
+}
+
 export async function fetchMeRequest() {
   try {
     const { data } = await api.get('/auth/me')

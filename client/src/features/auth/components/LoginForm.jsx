@@ -9,8 +9,11 @@ import SocialAuthButtons from './SocialAuthButtons'
 
 function LoginForm({
   errors = {},
+  isGoogleLoading = false,
   isSubmitting = false,
   onChange,
+  onGoogleCredential,
+  onGoogleError,
   onModeChange,
   onSubmit,
   onTogglePassword,
@@ -51,10 +54,10 @@ function LoginForm({
       <motion.button
         type="submit"
         className="cta-btn"
-        disabled={isSubmitting}
+        disabled={isSubmitting || isGoogleLoading}
         aria-busy={isSubmitting || undefined}
-        whileHover={isSubmitting ? undefined : { y: -1 }}
-        whileTap={isSubmitting ? undefined : { y: 0, scale: 0.99 }}
+        whileHover={isSubmitting || isGoogleLoading ? undefined : { y: -1 }}
+        whileTap={isSubmitting || isGoogleLoading ? undefined : { y: 0, scale: 0.99 }}
         transition={{ type: 'spring', stiffness: 400, damping: 28 }}
       >
         <span className="cta-btn-shine" aria-hidden="true" />
@@ -63,7 +66,11 @@ function LoginForm({
         </span>
       </motion.button>
 
-      <SocialAuthButtons />
+      <SocialAuthButtons
+        isGoogleLoading={isGoogleLoading}
+        onGoogleCredential={onGoogleCredential}
+        onGoogleError={onGoogleError}
+      />
 
       <p className="switch-copy">
         New to Biddr?{' '}

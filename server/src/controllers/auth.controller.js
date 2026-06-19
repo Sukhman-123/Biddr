@@ -1,5 +1,7 @@
 const User = require('../models/User');
+const { ROLES } = require('../models/User');
 const { signToken } = require('../middleware/auth');
+const { verifyGoogleIdToken } = require('../services/googleAuth');
 
 const sanitizeEmail = (value) =>
   typeof value === 'string' ? value.trim().toLowerCase() : value;
@@ -8,6 +10,8 @@ const buildPayload = (user, token) => ({
   user: user.toSafeJSON(),
   token,
 });
+
+const isValidRole = (role) => ROLES.includes(role);
 
 const register = async (req, res, next) => {
   try {
@@ -79,4 +83,64 @@ const logout = async (req, res) => {
   res.status(200).json({ message: 'Signed out' });
 };
 
-module.exports = { register, login, me, logout };
+const loginWithGoogle = async (req, res, next) => {
+  try {
+    const { idToken, role } = req.body || {};
+
+    if (!idToken) {
+      return res.status(400).json({ message: 'Google idToken is required' });
+    }
+
+    let payload;
+    try {
+      payload = await verifyGoogleIdToken(idToken);
+    } catch (error) {
+      return res
+        .status(401)
+        .json({ message: 'Google sign-in failed. Please try again.' });
+    }
+
+    const { sub, email, email_verified, name } = payload;
+    const normalizedEmail = sanitizeEmail(email);
+
+    let user = await User.findOne({ googleSub: sub });
+
+    if (!user && normalizedEmail) {
+      user = await User.findOne({ email: normalizedEmail });
+      if (user && !user.googleSub) {
+        if (!email_verified) {
+          return res.status(403).json({
+            message:
+              'This Google email is not verified. Please verify with Google before linking.',
+          });
+        }
+        user.googleSub = sub;
+        if (!user.fullName && name) user.fullName = name;
+        await user.save();
+      }
+    }
+
+    if (!user) {
+      if (!email_verified) {
+        return res.status(403).json({
+          message:
+            'Your Google email is not verified. Please verify with Google before signing in.',
+        });
+      }
+      const desiredRole = isValidRole(role) ? role : 'owner';
+      user = await User.create({
+        fullName: name || normalizedEmail.split('@')[0],
+        email: normalizedEmail,
+        role: desiredRole,
+        googleSub: sub,
+      });
+    }
+
+    const token = signToken(user._id);
+    return res.status(200).json(buildPayload(user, token));
+  } catch (error) {
+    return next(error);
+  }
+};
+
+module.exports = { register, login, me, logout, loginWithGoogle };
