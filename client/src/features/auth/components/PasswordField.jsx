@@ -3,6 +3,7 @@ import FormField from './FormField'
 
 function PasswordField({
   autoComplete,
+  error,
   onChange,
   onToggleVisibility,
   placeholder,
@@ -18,6 +19,7 @@ function PasswordField({
       placeholder={placeholder}
       value={value}
       onChange={onChange}
+      error={error}
       icon={<Lock size={18} />}
     >
       <button

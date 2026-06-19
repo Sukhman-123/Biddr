@@ -2,20 +2,26 @@ import { Mail } from 'lucide-react'
 import { motion } from 'framer-motion'
 import { AUTH_MODES } from '../auth.constants'
 import AuthLegal from './AuthLegal'
+import FormError from './FormError'
 import FormField from './FormField'
 import PasswordField from './PasswordField'
 import SocialAuthButtons from './SocialAuthButtons'
 
 function LoginForm({
-  form,
-  showPassword,
+  errors = {},
+  isSubmitting = false,
   onChange,
   onModeChange,
   onSubmit,
   onTogglePassword,
+  serverError,
+  showPassword,
+  form,
 }) {
   return (
     <form id="auth-panel" className="auth-form" onSubmit={onSubmit} noValidate>
+      <FormError message={serverError} />
+
       <div className="field-row">
         <FormField
           id="email"
@@ -25,6 +31,7 @@ function LoginForm({
           placeholder="owner@franchise.com"
           value={form.email}
           onChange={onChange('email')}
+          error={errors.email}
           icon={<Mail size={18} />}
         />
       </div>
@@ -37,18 +44,23 @@ function LoginForm({
           showPassword={showPassword}
           onChange={onChange('password')}
           onToggleVisibility={onTogglePassword}
+          error={errors.password}
         />
       </div>
 
       <motion.button
         type="submit"
         className="cta-btn"
-        whileHover={{ y: -1 }}
-        whileTap={{ y: 0, scale: 0.99 }}
+        disabled={isSubmitting}
+        aria-busy={isSubmitting || undefined}
+        whileHover={isSubmitting ? undefined : { y: -1 }}
+        whileTap={isSubmitting ? undefined : { y: 0, scale: 0.99 }}
         transition={{ type: 'spring', stiffness: 400, damping: 28 }}
       >
         <span className="cta-btn-shine" aria-hidden="true" />
-        <span className="cta-btn-content">Enter Auction Room</span>
+        <span className="cta-btn-content">
+          {isSubmitting ? 'Signing you in…' : 'Enter Auction Room'}
+        </span>
       </motion.button>
 
       <SocialAuthButtons />

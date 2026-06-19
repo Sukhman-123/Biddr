@@ -2,6 +2,7 @@ import { Mail, Sparkles } from 'lucide-react'
 import { motion } from 'framer-motion'
 import { AUTH_MODES } from '../auth.constants'
 import AuthLegal from './AuthLegal'
+import FormError from './FormError'
 import FormField from './FormField'
 import PasswordField from './PasswordField'
 import PasswordStrength from './PasswordStrength'
@@ -9,18 +10,23 @@ import RolePicker from './RolePicker'
 import SocialAuthButtons from './SocialAuthButtons'
 
 function RegisterForm({
+  errors = {},
   form,
-  role,
-  passwordStrength,
-  showPassword,
+  isSubmitting = false,
   onChange,
   onModeChange,
   onRoleChange,
   onSubmit,
   onTogglePassword,
+  passwordStrength,
+  role,
+  serverError,
+  showPassword,
 }) {
   return (
     <form id="auth-panel" className="auth-form" onSubmit={onSubmit} noValidate>
+      <FormError message={serverError} />
+
       <div className="field-row field-row--two">
         <FormField
           id="fullName"
@@ -29,6 +35,7 @@ function RegisterForm({
           placeholder="Rohit Sharma"
           value={form.fullName}
           onChange={onChange('fullName')}
+          error={errors.fullName}
         />
         <FormField
           id="franchise"
@@ -36,6 +43,7 @@ function RegisterForm({
           placeholder="Mumbai Mavericks"
           value={form.franchise}
           onChange={onChange('franchise')}
+          error={errors.franchise}
         />
       </div>
 
@@ -48,6 +56,7 @@ function RegisterForm({
           placeholder="owner@franchise.com"
           value={form.email}
           onChange={onChange('email')}
+          error={errors.email}
           icon={<Mail size={18} />}
         />
       </div>
@@ -60,6 +69,7 @@ function RegisterForm({
           showPassword={showPassword}
           onChange={onChange('password')}
           onToggleVisibility={onTogglePassword}
+          error={errors.password}
         />
         <PasswordStrength strength={passwordStrength} />
       </div>
@@ -69,14 +79,22 @@ function RegisterForm({
       <motion.button
         type="submit"
         className="cta-btn"
-        whileHover={{ y: -1 }}
-        whileTap={{ y: 0, scale: 0.99 }}
+        disabled={isSubmitting}
+        aria-busy={isSubmitting || undefined}
+        whileHover={isSubmitting ? undefined : { y: -1 }}
+        whileTap={isSubmitting ? undefined : { y: 0, scale: 0.99 }}
         transition={{ type: 'spring', stiffness: 400, damping: 28 }}
       >
         <span className="cta-btn-shine" aria-hidden="true" />
         <span className="cta-btn-content">
-          <Sparkles size={16} strokeWidth={2.4} />
-          Claim Your Paddle
+          {isSubmitting ? (
+            'Claiming your paddle…'
+          ) : (
+            <>
+              <Sparkles size={16} strokeWidth={2.4} />
+              Claim Your Paddle
+            </>
+          )}
         </span>
       </motion.button>
 

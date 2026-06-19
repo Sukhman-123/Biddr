@@ -215,6 +215,37 @@
   box-shadow: 0 0 0 4px rgba(245, 185, 74, 0.1);
 }
 
+.input-wrap--error,
+.input-wrap--error:focus-within {
+  border-color: rgba(255, 87, 87, 0.7);
+  box-shadow: 0 0 0 4px rgba(255, 87, 87, 0.12);
+}
+
+.field-error {
+  color: #ff8585;
+  font-size: 12px;
+  margin-top: 4px;
+  line-height: 1.3;
+}
+
+.form-error {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
+  padding: 10px 12px;
+  border: 1px solid rgba(255, 87, 87, 0.35);
+  background: rgba(255, 87, 87, 0.08);
+  color: #ffb1b1;
+  border-radius: 10px;
+  font-size: 13px;
+  line-height: 1.35;
+}
+
+.form-error svg {
+  flex-shrink: 0;
+}
+
 .input-wrap input {
   width: 100%;
   border: 0;
@@ -456,6 +487,106 @@
 @keyframes ctaShine {
   to {
     transform: translateX(120%);
+  }
+}
+
+.cta-btn:disabled {
+  cursor: not-allowed;
+  opacity: 0.7;
+  box-shadow: none;
+}
+
+.cta-btn--ghost {
+  background: transparent;
+  color: var(--text);
+  border: 1px solid var(--border-strong);
+  box-shadow: none;
+  margin-top: 14px;
+}
+
+.cta-btn--ghost:hover {
+  background: var(--input-bg);
+  color: var(--gold-bright);
+  border-color: rgba(245, 185, 74, 0.5);
+  box-shadow: none;
+}
+
+/* ====== Success view ====== */
+.auth-card--success {
+  text-align: center;
+  padding: 36px 28px 30px;
+}
+
+.success-badge {
+  display: grid;
+  place-items: center;
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  margin: 0 auto 16px;
+  background: rgba(43, 217, 122, 0.12);
+  color: var(--green);
+  box-shadow: 0 0 0 6px rgba(43, 217, 122, 0.06);
+}
+
+.success-title {
+  font-size: 24px;
+  font-weight: 800;
+  color: var(--heading);
+  margin-bottom: 8px;
+}
+
+.success-subtitle {
+  color: var(--text-soft);
+  font-size: 14px;
+  margin-bottom: 4px;
+}
+
+.success-subtitle strong {
+  color: var(--gold-bright);
+  font-weight: 800;
+}
+
+.success-role {
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  font-size: 11px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: rgba(245, 185, 74, 0.18);
+  color: var(--gold-bright);
+  margin: 0 2px;
+}
+
+.success-meta {
+  color: var(--muted);
+  font-size: 12px;
+  margin-bottom: 18px;
+}
+
+/* ====== Splash (loading) ====== */
+.auth-card--splash {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+  padding: 40px 24px;
+  color: var(--text-soft);
+  font-size: 14px;
+}
+
+.splash-spinner {
+  width: 28px;
+  height: 28px;
+  border: 2px solid rgba(245, 185, 74, 0.25);
+  border-top-color: var(--gold);
+  border-radius: 50%;
+  animation: splashSpin 0.8s linear infinite;
+}
+
+@keyframes splashSpin {
+  to {
+    transform: rotate(360deg);
   }
 }
 

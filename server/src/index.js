@@ -7,6 +7,8 @@ const { Server } = require('socket.io');
 
 const connectDB = require('./config/db');
 const registerSocketHandlers = require('./socket');
+const authRoutes = require('./routes/auth.routes');
+const errorHandler = require('./middleware/error');
 
 dotenv.config({ path: path.resolve(__dirname, '../config.env') });
 
@@ -26,6 +28,14 @@ app.get('/api/health', (req, res) => {
     timestamp: new Date().toISOString(),
   });
 });
+
+app.use('/api/auth', authRoutes);
+
+app.use((req, res) => {
+  res.status(404).json({ message: 'Route not found' });
+});
+
+app.use(errorHandler);
 
 const io = new Server(server, {
   cors: {
