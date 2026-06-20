@@ -1,4 +1,5 @@
 const User = require('../models/User');
+const Tournament = require('../models/Tournament');
 const { ROLES } = require('../models/User');
 const { signToken } = require('../middleware/auth');
 const { verifyGoogleIdToken } = require('../services/googleAuth');
@@ -13,13 +14,63 @@ const buildPayload = (user, token) => ({
 
 const isValidRole = (role) => ROLES.includes(role);
 
+const resolveTournamentMembership = async ({
+  role,
+  tournamentId,
+  franchiseId,
+}) => {
+  if (role === 'auctioneer') return null;
+
+  const mongoose = require('mongoose');
+  if (!tournamentId || !mongoose.isValidObjectId(tournamentId)) {
+    return { error: 'A tournament is required for owners and spectators' };
+  }
+
+  const tournament = await Tournament.findById(tournamentId);
+  if (!tournament) return { error: 'Tournament not found' };
+
+  if (tournament.visibility === 'invite-only') {
+    return { error: 'This tournament is invite-only' };
+  }
+
+  let franchise = null;
+  if (role === 'owner') {
+    if (!franchiseId || !mongoose.isValidObjectId(franchiseId)) {
+      return { error: 'Pick a franchise to claim' };
+    }
+    franchise = tournament.franchises.id(franchiseId);
+    if (!franchise) {
+      return { error: 'That franchise is not part of this tournament' };
+    }
+    if (franchise.ownerUserId) {
+      return { error: 'That franchise is already claimed' };
+    }
+  }
+
+  return { tournament, franchise };
+};
+
 const register = async (req, res, next) => {
   try {
-    const { fullName, franchise, email, password, role } = req.body || {};
+    const {
+      fullName,
+      franchise,
+      email,
+      password,
+      role,
+      tournamentId,
+      franchiseId,
+    } = req.body || {};
 
     if (!fullName || !email || !password) {
       return res.status(400).json({
         message: 'Full name, email, and password are required',
+      });
+    }
+
+    if (!isValidRole(role)) {
+      return res.status(400).json({
+        message: 'Role must be auctioneer, owner, or spectator',
       });
     }
 
@@ -31,13 +82,45 @@ const register = async (req, res, next) => {
       });
     }
 
+    let resolved = null;
+    if (role !== 'auctioneer') {
+      const result = await resolveTournamentMembership({
+        role,
+        tournamentId,
+        franchiseId,
+      });
+      if (result.error) {
+        return res.status(400).json({ message: result.error });
+      }
+      resolved = result;
+    }
+
+    const membership = resolved
+      ? {
+          tournamentId: resolved.tournament._id,
+          franchiseId: resolved.franchise ? resolved.franchise._id : null,
+          franchiseName: resolved.franchise ? resolved.franchise.name : '',
+          role,
+          status: 'active',
+        }
+      : null;
+
     const user = await User.create({
       fullName: fullName.trim(),
-      franchise: typeof franchise === 'string' ? franchise.trim() : '',
+      franchise:
+        typeof franchise === 'string' && franchise.trim()
+          ? franchise.trim()
+          : resolved?.franchise?.name ?? '',
       email: normalizedEmail,
       password,
       role,
+      tournamentMemberships: membership ? [membership] : [],
     });
+
+    if (resolved?.franchise) {
+      resolved.franchise.ownerUserId = user._id;
+      await resolved.tournament.save();
+    }
 
     const token = signToken(user._id);
     return res.status(201).json(buildPayload(user, token));
@@ -75,8 +158,16 @@ const login = async (req, res, next) => {
   }
 };
 
-const me = async (req, res) => {
-  res.status(200).json({ user: req.user.toSafeJSON() });
+const me = async (req, res, next) => {
+  try {
+    const fresh = await User.findById(req.user._id);
+    if (!fresh) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+    return res.status(200).json({ user: fresh.toSafeJSON() });
+  } catch (error) {
+    return next(error);
+  }
 };
 
 const logout = async (req, res) => {

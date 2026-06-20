@@ -6,6 +6,7 @@
   "scripts": {
     "start": "node src/index.js",
     "dev": "nodemon --legacy-watch --watch src --ext js,json src/index.js",
+    "seed:tournaments": "node src/scripts/seedTournaments.js",
     "test": "echo \"No server tests configured yet\""
   },
   "keywords": [],

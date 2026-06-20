@@ -8,6 +8,7 @@ const { Server } = require('socket.io');
 const connectDB = require('./config/db');
 const registerSocketHandlers = require('./socket');
 const authRoutes = require('./routes/auth.routes');
+const tournamentRoutes = require('./routes/tournament.routes');
 const errorHandler = require('./middleware/error');
 
 dotenv.config({ path: path.resolve(__dirname, '../config.env') });
@@ -30,6 +31,7 @@ app.get('/api/health', (req, res) => {
 });
 
 app.use('/api/auth', authRoutes);
+app.use('/api/tournaments', tournamentRoutes);
 
 app.use((req, res) => {
   res.status(404).json({ message: 'Route not found' });

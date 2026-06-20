@@ -3,6 +3,46 @@ const bcrypt = require('bcryptjs');
 
 const ROLES = ['auctioneer', 'owner', 'spectator'];
 
+const tournamentMembershipSchema = new mongoose.Schema(
+  {
+    tournamentId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Tournament',
+      required: true,
+    },
+    franchiseId: {
+      type: mongoose.Schema.Types.ObjectId,
+      default: null,
+    },
+    franchiseName: {
+      type: String,
+      trim: true,
+      default: '',
+    },
+    role: {
+      type: String,
+      enum: {
+        values: ROLES,
+        message: 'Tournament role must be auctioneer, owner, or spectator',
+      },
+      required: true,
+    },
+    status: {
+      type: String,
+      enum: {
+        values: ['active', 'pending', 'revoked'],
+        message: 'Membership status must be active, pending, or revoked',
+      },
+      default: 'active',
+    },
+    joinedAt: {
+      type: Date,
+      default: Date.now,
+    },
+  },
+  { _id: false },
+);
+
 const userSchema = new mongoose.Schema(
   {
     fullName: {
@@ -44,6 +84,10 @@ const userSchema = new mongoose.Schema(
       type: String,
       default: null,
     },
+    tournamentMemberships: {
+      type: [tournamentMembershipSchema],
+      default: [],
+    },
   },
   { timestamps: true },
 );
@@ -76,6 +120,14 @@ userSchema.methods.toSafeJSON = function toSafeJSON() {
     email: this.email,
     role: this.role,
     authProvider: this.googleSub ? 'google' : 'local',
+    tournamentMemberships: (this.tournamentMemberships || []).map((m) => ({
+      tournamentId: m.tournamentId?.toString?.() ?? m.tournamentId,
+      franchiseId: m.franchiseId?.toString?.() ?? m.franchiseId ?? null,
+      franchiseName: m.franchiseName || '',
+      role: m.role,
+      status: m.status,
+      joinedAt: m.joinedAt,
+    })),
     createdAt: this.createdAt,
   };
 };

@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react'
+import { Navigate, useLocation } from 'react-router-dom'
 import { AnimatePresence, motion } from 'framer-motion'
-import { CheckCircle2, LogOut } from 'lucide-react'
 import { AUTH_MODES } from './auth.constants'
 import { getPasswordStrength } from './auth.utils'
 import { validateLogin, validateRegister } from './auth.validation'
@@ -21,15 +21,10 @@ const initialForm = {
 const EMPTY_ERRORS = {}
 
 function AuthPage() {
-  const {
-    isAuthenticated,
-    isLoading,
-    user,
-    login,
-    loginWithGoogle,
-    register,
-    logout,
-  } = useAuth()
+  const { isAuthenticated, isLoading } = useAuth()
+  const location = useLocation()
+  const nextPath = location.state?.next || '/tournaments'
+
   const [mode, setMode] = useState(AUTH_MODES.LOGIN)
   const [role, setRole] = useState('owner')
   const [showPassword, setShowPassword] = useState(false)
@@ -38,6 +33,8 @@ function AuthPage() {
   const [serverError, setServerError] = useState(null)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [isGoogleLoading, setIsGoogleLoading] = useState(false)
+
+  const { login, loginWithGoogle, register } = useAuth()
 
   const isRegister = mode === AUTH_MODES.REGISTER
   const strength = useMemo(
@@ -67,6 +64,10 @@ function AuthPage() {
     )
   }
 
+  if (isAuthenticated) {
+    return <Navigate to={nextPath} replace />
+  }
+
   const updateField = (key) => (event) => {
     const value = event.target.value
     setForm((prev) => ({ ...prev, [key]: value }))
@@ -83,6 +84,10 @@ function AuthPage() {
     if (nextMode === AUTH_MODES.REGISTER && role === 'auctioneer') {
       setRole('owner')
     }
+  }
+
+  const handleRoleChange = (nextRole) => {
+    setRole(nextRole)
   }
 
   const handleLogin = async (event) => {
@@ -154,11 +159,6 @@ function AuthPage() {
     setServerError(error.message || 'Google sign-in failed')
   }
 
-  if (isAuthenticated && user) {
-    return <SignedIn user={user} onSignOut={logout} />
-  }
-
-
   return (
     <div className="biddr-stage">
       <div className="biddr-grid" aria-hidden="true" />
@@ -197,7 +197,7 @@ function AuthPage() {
                   isSubmitting={isSubmitting}
                   isGoogleLoading={isGoogleLoading}
                   onChange={updateField}
-                  onRoleChange={setRole}
+                  onRoleChange={handleRoleChange}
                   onModeChange={switchMode}
                   onSubmit={handleRegister}
                   onTogglePassword={() => setShowPassword((value) => !value)}
@@ -230,52 +230,6 @@ function AuthPage() {
               </motion.div>
             )}
           </AnimatePresence>
-        </motion.section>
-      </main>
-    </div>
-  )
-}
-
-function SignedIn({ user, onSignOut }) {
-  return (
-    <div className="biddr-stage">
-      <div className="biddr-grid" aria-hidden="true" />
-      <div className="biddr-glow" aria-hidden="true" />
-
-      <header className="biddr-header">
-        <AuthBrand />
-      </header>
-
-      <main className="biddr-main">
-        <motion.section
-          className="auth-card auth-card--success"
-          initial={{ opacity: 0, y: 16, scale: 0.98 }}
-          animate={{ opacity: 1, y: 0, scale: 1 }}
-          transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
-          aria-label="Signed in"
-        >
-          <div className="success-badge" aria-hidden="true">
-            <CheckCircle2 size={28} strokeWidth={2.2} />
-          </div>
-          <h1 className="success-title">You&rsquo;re in the auction hall</h1>
-          <p className="success-subtitle">
-            Welcome back, <strong>{user.fullName}</strong>. Your{' '}
-            <span className="success-role">{user.role}</span> account is ready.
-          </p>
-          <p className="success-meta">
-            {user.email}
-            {user.franchise ? ` · ${user.franchise}` : ''}
-          </p>
-          <button
-            type="button"
-            className="cta-btn cta-btn--ghost"
-            onClick={onSignOut}
-          >
-            <span className="cta-btn-content">
-              <LogOut size={16} strokeWidth={2.4} />
-              Sign out
-            </span>
-          </button>
         </motion.section>
       </main>
     </div>
