@@ -618,8 +618,8 @@
   gap: 10px;
 }
 
-.alt-row--three {
-  grid-template-columns: 1fr 1fr;
+.alt-row--single {
+  grid-template-columns: 1fr;
 }
 
 .google-button-slot {

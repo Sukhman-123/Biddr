@@ -1,12 +1,7 @@
-import { ShieldCheck } from 'lucide-react'
 import GoogleSignInButton from './GoogleSignInButton'
 import { config } from '../../../lib/config'
 
-function SocialAuthButtons({
-  isGoogleLoading = false,
-  onGoogleCredential,
-  onGoogleError,
-}) {
+function SocialAuthButtons({ isGoogleLoading = false, onGoogleCredential, onGoogleError }) {
   const hasGoogleClientId = Boolean(config.googleClientId)
 
   return (
@@ -15,7 +10,7 @@ function SocialAuthButtons({
         <span>Or continue with</span>
       </div>
 
-      <div className="alt-row alt-row--three">
+      <div className="alt-row alt-row--single">
         {hasGoogleClientId ? (
           <GoogleSignInButton
             clientId={config.googleClientId}
@@ -37,16 +32,6 @@ function SocialAuthButtons({
             <span>Google (not configured)</span>
           </button>
         )}
-        <button
-          type="button"
-          className="alt-btn"
-          aria-label="Continue with SSO"
-          disabled
-          title="SSO coming soon"
-        >
-          <ShieldCheck size={18} />
-          <span>SSO</span>
-        </button>
       </div>
     </>
   )
