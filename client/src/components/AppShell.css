@@ -167,6 +167,15 @@
   border: 1px solid var(--border);
   background: rgba(255, 255, 255, 0.04);
   max-width: 240px;
+  text-decoration: none;
+  color: inherit;
+  cursor: pointer;
+  transition: border-color 0.15s ease, background 0.15s ease;
+}
+
+.appshell-user:hover {
+  border-color: var(--gold);
+  background: rgba(245, 185, 74, 0.06);
 }
 
 .appshell-user-avatar {

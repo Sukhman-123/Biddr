@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { NavLink } from 'react-router-dom'
+import { Link, NavLink } from 'react-router-dom'
 import { CircleDot, LogOut, Menu, X } from 'lucide-react'
 import { useAuth } from '../features/auth/useAuth'
 import AuthBrand from '../features/auth/components/AuthBrand'
@@ -71,7 +71,11 @@ function AppShell({ children, liveRoomCount = 0 }) {
             </span>
           </span>
 
-          <div className="appshell-user">
+          <Link
+            to="/profile"
+            className="appshell-user"
+            aria-label="Open your profile"
+          >
             <span className="appshell-user-avatar" aria-hidden="true">
               {getInitials(user?.fullName)}
             </span>
@@ -88,7 +92,7 @@ function AppShell({ children, liveRoomCount = 0 }) {
             >
               <LogOut size={16} />
             </button>
-          </div>
+          </Link>
 
           <button
             type="button"
