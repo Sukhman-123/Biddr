@@ -12,6 +12,8 @@ import {
   Wallet,
 } from 'lucide-react'
 import clsx from 'clsx'
+import { Link } from 'react-router-dom'
+import { Plus } from 'lucide-react'
 import api from '../../lib/api'
 import { formatDateRange, formatPurse } from './tournament.utils'
 import './TournamentsPage.css'
@@ -79,6 +81,13 @@ function TournamentsPage() {
           Live, upcoming, or already in the books — every franchise and every
           gavel lives here.
         </p>
+        <Link
+          to="/tournaments/new"
+          className="hall-create-btn"
+        >
+          <Plus size={14} strokeWidth={2.4} />
+          Create tournament
+        </Link>
       </header>
 
       <section className="hall-toolbar">

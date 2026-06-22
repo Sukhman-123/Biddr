@@ -23,8 +23,6 @@ async function fetchTournaments() {
 
 function HomePage() {
   const { user } = useAuth()
-  const isAuctioneer = user?.role === 'auctioneer'
-
   const { data: tournaments = [], isLoading } = useQuery({
     queryKey: ['tournaments', 'home'],
     queryFn: fetchTournaments,
@@ -78,9 +76,7 @@ function HomePage() {
             <span className="home-title-dot">.</span>
           </h1>
           <p className="home-subtitle">
-            {isAuctioneer
-              ? 'Spin up a new tournament, manage a live room, or review yesterday’s bidding.'
-              : 'Pick a tournament, follow the live rooms, and watch every paddle fall.'}
+            Pick a tournament, run a live room, or follow every paddle fall.
           </p>
 
           <div className="home-hero-cta">
@@ -94,17 +90,10 @@ function HomePage() {
                 <ArrowRight size={16} strokeWidth={2.4} />
               </span>
             </Link>
-            {isAuctioneer ? (
-              <button
-                type="button"
-                className="home-cta-secondary"
-                disabled
-                title="Create tournament flow is coming next phase"
-              >
-                <Plus size={16} strokeWidth={2.4} />
-                New tournament
-              </button>
-            ) : null}
+            <Link to="/tournaments/new" className="home-cta-secondary">
+              <Plus size={16} strokeWidth={2.4} />
+              New tournament
+            </Link>
           </div>
         </div>
 
@@ -201,14 +190,10 @@ function HomePage() {
           <div>
             <h2 className="home-section-title">
               <Trophy size={16} />
-              {isAuctioneer
-                ? 'Your tournaments'
-                : 'Recent tournaments'}
+              Recent tournaments
             </h2>
             <p className="home-section-sub">
-              {isAuctioneer
-                ? 'Tournaments you host or have recently visited.'
-                : 'Across every league we follow.'}
+              Across every league we follow.
             </p>
           </div>
           <Link to="/tournaments" className="home-section-link">
@@ -227,7 +212,7 @@ function HomePage() {
           <div className="home-section-empty">
             <Trophy size={20} />
             <span>
-              No tournaments yet. {isAuctioneer ? 'Create the first one.' : 'Check back soon.'}
+              No tournaments yet. Be the first to create one.
             </span>
           </div>
         ) : (

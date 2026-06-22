@@ -55,7 +55,8 @@ function TournamentLobbyPage() {
     )
   }
 
-  const isAuctioneer = user?.role === 'auctioneer'
+  const isAuctioneer =
+    user && tournament && tournament.ownerId === user.id
 
   return (
     <main className="tournaments-main lobby-main">
@@ -199,15 +200,17 @@ function TournamentLobbyPage() {
           <div className="lobby-role-card">
             <span className="lobby-role-label">Logged in as</span>
             <span className="lobby-role-name">{user?.fullName}</span>
-            <span className="lobby-role-role">{user?.role}</span>
+            <span className="lobby-role-role">
+              {isAuctioneer ? 'Auctioneer' : 'Viewer'}
+            </span>
             <p className="lobby-role-help">
               {isAuctioneer
                 ? 'You can spin up rooms, manage player queues, and run this auction end-to-end.'
-                : 'Browse freely. Live rooms will open here when the auctioneer starts them.'}
+                : 'Browse freely. Live rooms will open here when the host starts them.'}
             </p>
             {!isAuctioneer ? (
               <div className="lobby-role-hint">
-                Tournament management tools appear here for auctioneers.
+                Tournament management tools appear here for the host.
               </div>
             ) : null}
           </div>

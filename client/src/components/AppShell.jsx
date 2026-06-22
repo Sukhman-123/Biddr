@@ -21,13 +21,6 @@ function getInitials(name) {
     .join('')
 }
 
-function formatRole(role) {
-  if (!role) return 'Viewer'
-  if (role === 'auctioneer') return 'Auctioneer'
-  if (role === 'viewer') return 'Viewer'
-  return role
-}
-
 function AppShell({ children, liveRoomCount = 0 }) {
   const { user, logout } = useAuth()
   const [drawerOpen, setDrawerOpen] = useState(false)
@@ -84,7 +77,7 @@ function AppShell({ children, liveRoomCount = 0 }) {
             </span>
             <span className="appshell-user-meta">
               <span className="appshell-user-name">{user?.fullName}</span>
-              <span className="appshell-user-role">{formatRole(user?.role)}</span>
+              <span className="appshell-user-role">Signed in</span>
             </span>
             <button
               type="button"

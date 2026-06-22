@@ -589,3 +589,33 @@
     padding: 14px;
   }
 }
+
+.hall-create-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 8px;
+  padding: 9px 16px;
+  border-radius: 999px;
+  border: 1px solid var(--gold);
+  background: rgba(245, 185, 74, 0.1);
+  color: var(--gold);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  text-decoration: none;
+  align-self: flex-start;
+  transition: background 0.15s ease;
+}
+
+.hall-create-btn:hover {
+  background: rgba(245, 185, 74, 0.2);
+}
+
+@media (max-width: 560px) {
+  .hall-create-btn {
+    font-size: 11px;
+    padding: 7px 12px;
+  }
+}
