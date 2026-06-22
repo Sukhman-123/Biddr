@@ -1,5 +1,4 @@
 const User = require('../models/User');
-const Tournament = require('../models/Tournament');
 const { ROLES } = require('../models/User');
 const { signToken } = require('../middleware/auth');
 const { verifyGoogleIdToken } = require('../services/googleAuth');
@@ -14,63 +13,13 @@ const buildPayload = (user, token) => ({
 
 const isValidRole = (role) => ROLES.includes(role);
 
-const resolveTournamentMembership = async ({
-  role,
-  tournamentId,
-  franchiseId,
-}) => {
-  if (role === 'auctioneer') return null;
-
-  const mongoose = require('mongoose');
-  if (!tournamentId || !mongoose.isValidObjectId(tournamentId)) {
-    return { error: 'A tournament is required for owners and spectators' };
-  }
-
-  const tournament = await Tournament.findById(tournamentId);
-  if (!tournament) return { error: 'Tournament not found' };
-
-  if (tournament.visibility === 'invite-only') {
-    return { error: 'This tournament is invite-only' };
-  }
-
-  let franchise = null;
-  if (role === 'owner') {
-    if (!franchiseId || !mongoose.isValidObjectId(franchiseId)) {
-      return { error: 'Pick a franchise to claim' };
-    }
-    franchise = tournament.franchises.id(franchiseId);
-    if (!franchise) {
-      return { error: 'That franchise is not part of this tournament' };
-    }
-    if (franchise.ownerUserId) {
-      return { error: 'That franchise is already claimed' };
-    }
-  }
-
-  return { tournament, franchise };
-};
-
 const register = async (req, res, next) => {
   try {
-    const {
-      fullName,
-      franchise,
-      email,
-      password,
-      role,
-      tournamentId,
-      franchiseId,
-    } = req.body || {};
+    const { fullName, email, password, role } = req.body || {};
 
     if (!fullName || !email || !password) {
       return res.status(400).json({
         message: 'Full name, email, and password are required',
-      });
-    }
-
-    if (!isValidRole(role)) {
-      return res.status(400).json({
-        message: 'Role must be auctioneer, owner, or spectator',
       });
     }
 
@@ -82,45 +31,15 @@ const register = async (req, res, next) => {
       });
     }
 
-    let resolved = null;
-    if (role !== 'auctioneer') {
-      const result = await resolveTournamentMembership({
-        role,
-        tournamentId,
-        franchiseId,
-      });
-      if (result.error) {
-        return res.status(400).json({ message: result.error });
-      }
-      resolved = result;
-    }
-
-    const membership = resolved
-      ? {
-          tournamentId: resolved.tournament._id,
-          franchiseId: resolved.franchise ? resolved.franchise._id : null,
-          franchiseName: resolved.franchise ? resolved.franchise.name : '',
-          role,
-          status: 'active',
-        }
-      : null;
+    // Role is optional on signup; auctioneers can self-elect.
+    const desiredRole = isValidRole(role) ? role : 'viewer';
 
     const user = await User.create({
       fullName: fullName.trim(),
-      franchise:
-        typeof franchise === 'string' && franchise.trim()
-          ? franchise.trim()
-          : resolved?.franchise?.name ?? '',
       email: normalizedEmail,
       password,
-      role,
-      tournamentMemberships: membership ? [membership] : [],
+      role: desiredRole,
     });
-
-    if (resolved?.franchise) {
-      resolved.franchise.ownerUserId = user._id;
-      await resolved.tournament.save();
-    }
 
     const token = signToken(user._id);
     return res.status(201).json(buildPayload(user, token));
@@ -215,10 +134,10 @@ const loginWithGoogle = async (req, res, next) => {
       if (!email_verified) {
         return res.status(403).json({
           message:
-            'Your Google email is not verified. Please verify with Google before signing in.',
+            'Your Google email is not verified. Please try again with a verified Google account.',
         });
       }
-      const desiredRole = isValidRole(role) ? role : 'owner';
+      const desiredRole = isValidRole(role) ? role : 'viewer';
       user = await User.create({
         fullName: name || normalizedEmail.split('@')[0],
         email: normalizedEmail,

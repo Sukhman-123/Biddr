@@ -5,8 +5,8 @@ const VALID_STATUSES = ['upcoming', 'live', 'completed'];
 const listTournaments = async (req, res, next) => {
   try {
     const filter = {};
-    const viewerRole = req.user?.role;
-    const isOwnerRole = viewerRole === 'auctioneer';
+    const role = req.user?.role;
+    const isAuctioneer = role === 'auctioneer';
 
     if (req.query.status && VALID_STATUSES.includes(req.query.status)) {
       filter.status = req.query.status;
@@ -14,7 +14,7 @@ const listTournaments = async (req, res, next) => {
 
     if (req.query.visibility && req.query.visibility !== 'all') {
       filter.visibility = req.query.visibility;
-    } else if (!isOwnerRole) {
+    } else if (!isAuctioneer) {
       filter.visibility = 'public';
     }
 

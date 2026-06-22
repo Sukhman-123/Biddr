@@ -55,7 +55,7 @@ function TournamentLobbyPage() {
     )
   }
 
-  const isOwner = user?.role === 'auctioneer' || user?.role === 'owner'
+  const isAuctioneer = user?.role === 'auctioneer'
 
   return (
     <main className="tournaments-main lobby-main">
@@ -201,15 +201,13 @@ function TournamentLobbyPage() {
             <span className="lobby-role-name">{user?.fullName}</span>
             <span className="lobby-role-role">{user?.role}</span>
             <p className="lobby-role-help">
-              {user?.role === 'auctioneer'
-                ? 'You can run rooms, manage player queues, and approve owners.'
-                : user?.role === 'owner'
-                ? 'Pick a franchise from the list to join as its owner.'
+              {isAuctioneer
+                ? 'You can spin up rooms, manage player queues, and run this auction end-to-end.'
                 : 'Browse freely. Live rooms will open here when the auctioneer starts them.'}
             </p>
-            {!isOwner ? (
+            {!isAuctioneer ? (
               <div className="lobby-role-hint">
-                Tournament owner tools appear here for auctioneers.
+                Tournament management tools appear here for auctioneers.
               </div>
             ) : null}
           </div>

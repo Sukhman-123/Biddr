@@ -31,7 +31,7 @@ function LoginForm({
           label="Email"
           type="email"
           autoComplete="email"
-          placeholder="owner@franchise.com"
+          placeholder="you@example.com"
           value={form.email}
           onChange={onChange('email')}
           error={errors.email}

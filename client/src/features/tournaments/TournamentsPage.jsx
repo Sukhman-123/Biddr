@@ -7,14 +7,12 @@ import {
   Gavel,
   MapPin,
   Search,
-  Sparkles,
   Trophy,
   Users,
   Wallet,
 } from 'lucide-react'
 import clsx from 'clsx'
 import api from '../../lib/api'
-import { useAuth } from '../auth/useAuth'
 import { formatDateRange, formatPurse } from './tournament.utils'
 import './TournamentsPage.css'
 
@@ -23,12 +21,6 @@ const TABS = [
   { id: 'live', label: 'Live now' },
   { id: 'upcoming', label: 'Upcoming' },
   { id: 'completed', label: 'Completed' },
-]
-
-const ROLES = [
-  { id: 'owner', label: 'Owner' },
-  { id: 'auctioneer', label: 'Auctioneer' },
-  { id: 'spectator', label: 'Spectator' },
 ]
 
 async function fetchTournaments(status) {
@@ -51,10 +43,8 @@ async function fetchTournamentCounts() {
 
 function TournamentsPage() {
   const navigate = useNavigate()
-  const { user } = useAuth()
   const [tab, setTab] = useState('all')
   const [search, setSearch] = useState('')
-  const [viewAsRole, setViewAsRole] = useState(user?.role ?? 'owner')
 
   const { data: counts } = useQuery({
     queryKey: ['tournaments', 'counts'],
@@ -80,38 +70,15 @@ function TournamentsPage() {
   return (
     <main className="tournaments-main">
       <header className="hall-header">
-        <div className="hall-header-copy">
-          <p className="hall-eyebrow">
-            <Sparkles size={12} strokeWidth={2.4} />
-            AUCTION HALL · <span>Tournaments</span>
-          </p>
-          <h1 className="hall-title">Find your next auction</h1>
-          <p className="hall-subtitle">
-            Live, upcoming, or already in the books — every franchise and every
-            gavel lives here.
-          </p>
-        </div>
-
-        <div
-          className="hall-role-switcher"
-          role="tablist"
-          aria-label="View tournaments as"
-        >
-          {ROLES.map((r) => (
-            <button
-              key={r.id}
-              type="button"
-              role="tab"
-              aria-selected={viewAsRole === r.id}
-              className={clsx('hall-role-tab', {
-                active: viewAsRole === r.id,
-              })}
-              onClick={() => setViewAsRole(r.id)}
-            >
-              {r.label}
-            </button>
-          ))}
-        </div>
+        <p className="hall-eyebrow">
+          <span className="hall-eyebrow-icon">★</span>
+          AUCTION HALL · <span>Tournaments</span>
+        </p>
+        <h1 className="hall-title">Find your next auction</h1>
+        <p className="hall-subtitle">
+          Live, upcoming, or already in the books — every franchise and every
+          gavel lives here.
+        </p>
       </header>
 
       <section className="hall-toolbar">
@@ -129,9 +96,7 @@ function TournamentsPage() {
                 onClick={() => setTab(t.id)}
               >
                 <span>{t.label}</span>
-                <span className="hall-tab-count">
-                  {count ?? '·'}
-                </span>
+                <span className="hall-tab-count">{count ?? '·'}</span>
               </button>
             )
           })}
@@ -174,7 +139,6 @@ function TournamentsPage() {
             <li key={tournament.id}>
               <TournamentCard
                 tournament={tournament}
-                role={viewAsRole}
                 onOpen={() => navigate(`/tournaments/${tournament.id}`)}
               />
             </li>
@@ -185,13 +149,12 @@ function TournamentsPage() {
   )
 }
 
-function TournamentCard({ tournament, role, onOpen }) {
+function TournamentCard({ tournament, onOpen }) {
   const isLive = tournament.status === 'live'
   const isCompleted = tournament.status === 'completed'
   const isInviteOnly = tournament.visibility === 'invite-only'
   const cover = tournament.cover ?? {}
   const liveRooms = cover.liveRoomCount ?? 0
-  const cta = getCtaForRole(role, tournament)
 
   const gradientStyle = cover.gradientVia
     ? {
@@ -202,6 +165,12 @@ function TournamentCard({ tournament, role, onOpen }) {
       }
 
   const accentStyle = cover.accentHex ? { '--card-accent': cover.accentHex } : null
+
+  const ctaLabel = isCompleted
+    ? 'View recap'
+    : isLive
+    ? 'Enter rooms'
+    : 'Open lobby'
 
   return (
     <article
@@ -223,7 +192,7 @@ function TournamentCard({ tournament, role, onOpen }) {
         >
           {isLive ? <CircleDot size={11} /> : null}
           {isLive && liveRooms > 0
-            ? `${liveRooms} ${liveRooms === 1 ? 'live' : 'live'}`
+            ? `${liveRooms} ${liveRooms === 1 ? 'room' : 'rooms'} live`
             : tournament.status}
         </span>
       </header>
@@ -275,20 +244,15 @@ function TournamentCard({ tournament, role, onOpen }) {
       <footer className="t-card-footer">
         <span className="t-card-host-credit">
           <Trophy size={12} />
-          by {tournament.hostName || 'Biddr'}
+          {tournament.hostName || 'Biddr'}
         </span>
 
         <button
           type="button"
-          className={clsx('t-card-cta', {
-            't-card-cta--joined': cta.tone === 'joined',
-            't-card-cta--ghost': cta.tone === 'ghost',
-            't-card-cta--disabled': cta.tone === 'disabled',
-          })}
+          className="t-card-cta"
           onClick={onOpen}
-          disabled={cta.tone === 'disabled'}
         >
-          {cta.label}
+          {ctaLabel}
         </button>
       </footer>
     </article>
@@ -313,21 +277,6 @@ function EmptyState({ title, message, tone = 'default' }) {
       <p>{message}</p>
     </div>
   )
-}
-
-function getCtaForRole(role, tournament) {
-  if (tournament.status === 'completed') {
-    return { label: 'View recap', tone: 'ghost' }
-  }
-  switch (role) {
-    case 'auctioneer':
-      return { label: 'Manage', tone: 'ghost' }
-    case 'owner':
-      return { label: 'Joined', tone: 'joined' }
-    case 'spectator':
-    default:
-      return { label: 'Join', tone: 'solid' }
-  }
 }
 
 export default TournamentsPage

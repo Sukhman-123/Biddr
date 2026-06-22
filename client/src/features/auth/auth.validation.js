@@ -7,10 +7,6 @@ export function validateRegister(form) {
     errors.fullName = 'Please enter your full name'
   }
 
-  if (form.franchise && form.franchise.length > 80) {
-    errors.franchise = 'Franchise name is too long'
-  }
-
   if (!form.email.trim()) {
     errors.email = 'Email is required'
   } else if (!EMAIL_RE.test(form.email.trim())) {

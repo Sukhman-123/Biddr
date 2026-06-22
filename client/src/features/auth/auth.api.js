@@ -13,14 +13,12 @@ const wrapError = (error, fallback) => {
   return wrapped
 }
 
-export async function registerRequest({ fullName, franchise, email, password, role }) {
+export async function registerRequest({ fullName, email, password }) {
   try {
     const { data } = await api.post('/auth/register', {
       fullName,
-      franchise,
       email,
       password,
-      role,
     })
     if (data?.token) tokenStorage.set(data.token)
     return data
@@ -39,9 +37,9 @@ export async function loginRequest({ email, password }) {
   }
 }
 
-export async function googleLoginRequest(idToken, role) {
+export async function googleLoginRequest(idToken) {
   try {
-    const { data } = await api.post('/auth/google', { idToken, role })
+    const { data } = await api.post('/auth/google', { idToken })
     if (data?.token) tokenStorage.set(data.token)
     return data
   } catch (error) {

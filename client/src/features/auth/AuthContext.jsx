@@ -71,11 +71,11 @@ export function AuthProvider({ children }) {
     }
   }, [])
 
-  const loginWithGoogle = useCallback(async (idToken, role) => {
+  const loginWithGoogle = useCallback(async (idToken) => {
     setError(null)
     setStatus(AUTH_STATUS.LOADING)
     try {
-      const data = await googleLoginRequest(idToken, role)
+      const data = await googleLoginRequest(idToken)
       setUser(data.user)
       setStatus(AUTH_STATUS.AUTHENTICATED)
       return data.user

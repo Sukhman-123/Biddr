@@ -1,6 +1,7 @@
 import { Navigate, Route, Routes } from 'react-router-dom'
 import AuthPage from './features/auth/AuthPage'
 import AuthGate from './features/auth/AuthGate'
+import HomePage from './features/home/HomePage'
 import TournamentsPage from './features/tournaments/TournamentsPage'
 import TournamentLobbyPage from './features/tournaments/TournamentLobbyPage'
 import AppShell from './components/AppShell'
@@ -14,6 +15,16 @@ function App() {
     <Routes>
       <Route path="/login" element={<AuthPage />} />
       <Route path="/register" element={<AuthPage />} />
+      <Route
+        path="/"
+        element={
+          <AuthGate>
+            <Shell>
+              <HomePage />
+            </Shell>
+          </AuthGate>
+        }
+      />
       <Route
         path="/tournaments"
         element={
@@ -34,10 +45,27 @@ function App() {
           </AuthGate>
         }
       />
-      <Route path="/squad" element={<AuthGate><Shell><ComingSoon label="Squad" /></Shell></AuthGate>} />
-      <Route path="/analytics" element={<AuthGate><Shell><ComingSoon label="Analytics" /></Shell></AuthGate>} />
-      <Route path="/" element={<Navigate to="/tournaments" replace />} />
-      <Route path="*" element={<Navigate to="/tournaments" replace />} />
+      <Route
+        path="/squad"
+        element={
+          <AuthGate>
+            <Shell>
+              <ComingSoon label="Squad" />
+            </Shell>
+          </AuthGate>
+        }
+      />
+      <Route
+        path="/analytics"
+        element={
+          <AuthGate>
+            <Shell>
+              <ComingSoon label="Analytics" />
+            </Shell>
+          </AuthGate>
+        }
+      />
+      <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
   )
 }

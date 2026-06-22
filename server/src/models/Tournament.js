@@ -52,11 +52,6 @@ const franchiseSlotSchema = new mongoose.Schema(
       match: [/^#([0-9a-fA-F]{3}){1,2}$/, 'colorHex must be a hex color'],
       default: '#f5b94a',
     },
-    ownerUserId: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: 'User',
-      default: null,
-    },
   },
   { _id: true },
 );
@@ -129,7 +124,7 @@ const tournamentSchema = new mongoose.Schema(
     ownerId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'User',
-      required: [true, 'Tournament must have an owner (auctioneer)'],
+      required: [true, 'Tournament must have an auctioneer'],
     },
     hostName: {
       type: String,
@@ -199,7 +194,6 @@ tournamentSchema.methods.toDetailJSON = function toDetailJSON() {
       name: f.name,
       city: f.city,
       colorHex: f.colorHex,
-      taken: Boolean(f.ownerUserId),
     })),
   };
 };

@@ -1,47 +1,7 @@
 const mongoose = require('mongoose');
 const bcrypt = require('bcryptjs');
 
-const ROLES = ['auctioneer', 'owner', 'spectator'];
-
-const tournamentMembershipSchema = new mongoose.Schema(
-  {
-    tournamentId: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: 'Tournament',
-      required: true,
-    },
-    franchiseId: {
-      type: mongoose.Schema.Types.ObjectId,
-      default: null,
-    },
-    franchiseName: {
-      type: String,
-      trim: true,
-      default: '',
-    },
-    role: {
-      type: String,
-      enum: {
-        values: ROLES,
-        message: 'Tournament role must be auctioneer, owner, or spectator',
-      },
-      required: true,
-    },
-    status: {
-      type: String,
-      enum: {
-        values: ['active', 'pending', 'revoked'],
-        message: 'Membership status must be active, pending, or revoked',
-      },
-      default: 'active',
-    },
-    joinedAt: {
-      type: Date,
-      default: Date.now,
-    },
-  },
-  { _id: false },
-);
+const ROLES = ['auctioneer', 'viewer'];
 
 const userSchema = new mongoose.Schema(
   {
@@ -51,12 +11,6 @@ const userSchema = new mongoose.Schema(
       trim: true,
       minlength: [2, 'Full name must be at least 2 characters'],
       maxlength: [80, 'Full name must be 80 characters or fewer'],
-    },
-    franchise: {
-      type: String,
-      trim: true,
-      maxlength: [80, 'Franchise must be 80 characters or fewer'],
-      default: '',
     },
     email: {
       type: String,
@@ -76,17 +30,13 @@ const userSchema = new mongoose.Schema(
       type: String,
       enum: {
         values: ROLES,
-        message: 'Role must be auctioneer, owner, or spectator',
+        message: 'Role must be auctioneer or viewer',
       },
-      default: 'owner',
+      default: 'viewer',
     },
     googleSub: {
       type: String,
       default: null,
-    },
-    tournamentMemberships: {
-      type: [tournamentMembershipSchema],
-      default: [],
     },
   },
   { timestamps: true },
@@ -116,18 +66,9 @@ userSchema.methods.toSafeJSON = function toSafeJSON() {
   return {
     id: this._id.toString(),
     fullName: this.fullName,
-    franchise: this.franchise,
     email: this.email,
     role: this.role,
     authProvider: this.googleSub ? 'google' : 'local',
-    tournamentMemberships: (this.tournamentMemberships || []).map((m) => ({
-      tournamentId: m.tournamentId?.toString?.() ?? m.tournamentId,
-      franchiseId: m.franchiseId?.toString?.() ?? m.franchiseId ?? null,
-      franchiseName: m.franchiseName || '',
-      role: m.role,
-      status: m.status,
-      joinedAt: m.joinedAt,
-    })),
     createdAt: this.createdAt,
   };
 };

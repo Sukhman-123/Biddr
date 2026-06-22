@@ -13,7 +13,6 @@ import './AuthPage.css'
 
 const initialForm = {
   fullName: '',
-  franchise: '',
   email: '',
   password: '',
 }
@@ -23,10 +22,9 @@ const EMPTY_ERRORS = {}
 function AuthPage() {
   const { isAuthenticated, isLoading } = useAuth()
   const location = useLocation()
-  const nextPath = location.state?.next || '/tournaments'
+  const nextPath = location.state?.next || '/'
 
   const [mode, setMode] = useState(AUTH_MODES.LOGIN)
-  const [role, setRole] = useState('owner')
   const [showPassword, setShowPassword] = useState(false)
   const [form, setForm] = useState(initialForm)
   const [errors, setErrors] = useState(EMPTY_ERRORS)
@@ -81,13 +79,6 @@ function AuthPage() {
     setErrors(EMPTY_ERRORS)
     setServerError(null)
     setShowPassword(false)
-    if (nextMode === AUTH_MODES.REGISTER && role === 'auctioneer') {
-      setRole('owner')
-    }
-  }
-
-  const handleRoleChange = (nextRole) => {
-    setRole(nextRole)
   }
 
   const handleLogin = async (event) => {
@@ -126,10 +117,8 @@ function AuthPage() {
     try {
       await register({
         fullName: form.fullName.trim(),
-        franchise: form.franchise.trim(),
         email: form.email.trim().toLowerCase(),
         password: form.password,
-        role,
       })
       setForm(initialForm)
     } catch (err) {
@@ -145,7 +134,7 @@ function AuthPage() {
     setServerError(null)
     setIsGoogleLoading(true)
     try {
-      await loginWithGoogle(idToken, isRegister ? role : undefined)
+      await loginWithGoogle(idToken)
       setForm(initialForm)
     } catch (err) {
       setServerError(err.message || 'Google sign-in failed')
@@ -189,7 +178,6 @@ function AuthPage() {
               >
                 <RegisterForm
                   form={form}
-                  role={role}
                   passwordStrength={strength}
                   showPassword={showPassword}
                   errors={errors}
@@ -197,7 +185,6 @@ function AuthPage() {
                   isSubmitting={isSubmitting}
                   isGoogleLoading={isGoogleLoading}
                   onChange={updateField}
-                  onRoleChange={handleRoleChange}
                   onModeChange={switchMode}
                   onSubmit={handleRegister}
                   onTogglePassword={() => setShowPassword((value) => !value)}

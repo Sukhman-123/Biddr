@@ -5,6 +5,7 @@ import AuthBrand from '../features/auth/components/AuthBrand'
 import './AppShell.css'
 
 const NAV_LINKS = [
+  { to: '/', label: 'Home', end: true },
   { to: '/tournaments', label: 'Tournaments' },
   { to: '/squad', label: 'Squad' },
   { to: '/analytics', label: 'Analytics' },
@@ -18,6 +19,13 @@ function getInitials(name) {
     .slice(0, 2)
     .map((part) => part[0]?.toUpperCase() ?? '')
     .join('')
+}
+
+function formatRole(role) {
+  if (!role) return 'Viewer'
+  if (role === 'auctioneer') return 'Auctioneer'
+  if (role === 'viewer') return 'Viewer'
+  return role
 }
 
 function AppShell({ children, liveRoomCount = 0 }) {
@@ -36,6 +44,7 @@ function AppShell({ children, liveRoomCount = 0 }) {
               <NavLink
                 key={link.to}
                 to={link.to}
+                end={Boolean(link.end)}
                 className={({ isActive }) =>
                   isActive ? 'appshell-nav-link is-active' : 'appshell-nav-link'
                 }
@@ -63,7 +72,7 @@ function AppShell({ children, liveRoomCount = 0 }) {
             </span>
             <span className="appshell-user-meta">
               <span className="appshell-user-name">{user?.fullName}</span>
-              <span className="appshell-user-role">{user?.role}</span>
+              <span className="appshell-user-role">{formatRole(user?.role)}</span>
             </span>
             <button
               type="button"

@@ -6,7 +6,6 @@ import FormError from './FormError'
 import FormField from './FormField'
 import PasswordField from './PasswordField'
 import PasswordStrength from './PasswordStrength'
-import RolePicker from './RolePicker'
 import SocialAuthButtons from './SocialAuthButtons'
 
 function RegisterForm({
@@ -18,11 +17,9 @@ function RegisterForm({
   onGoogleCredential,
   onGoogleError,
   onModeChange,
-  onRoleChange,
   onSubmit,
   onTogglePassword,
   passwordStrength,
-  role,
   serverError,
   showPassword,
 }) {
@@ -30,7 +27,7 @@ function RegisterForm({
     <form id="auth-panel" className="auth-form" onSubmit={onSubmit} noValidate>
       <FormError message={serverError} />
 
-      <div className="field-row field-row--two">
+      <div className="field-row">
         <FormField
           id="fullName"
           label="Full Name"
@@ -40,14 +37,6 @@ function RegisterForm({
           onChange={onChange('fullName')}
           error={errors.fullName}
         />
-        <FormField
-          id="franchise"
-          label="Franchise"
-          placeholder="Mumbai Mavericks"
-          value={form.franchise}
-          onChange={onChange('franchise')}
-          error={errors.franchise}
-        />
       </div>
 
       <div className="field-row">
@@ -56,7 +45,7 @@ function RegisterForm({
           label="Email"
           type="email"
           autoComplete="email"
-          placeholder="owner@franchise.com"
+          placeholder="you@example.com"
           value={form.email}
           onChange={onChange('email')}
           error={errors.email}
@@ -77,8 +66,6 @@ function RegisterForm({
         <PasswordStrength strength={passwordStrength} />
       </div>
 
-      <RolePicker value={role} onChange={onRoleChange} />
-
       <motion.button
         type="submit"
         className="cta-btn"
@@ -91,11 +78,11 @@ function RegisterForm({
         <span className="cta-btn-shine" aria-hidden="true" />
         <span className="cta-btn-content">
           {isSubmitting ? (
-            'Claiming your paddle…'
+            'Setting up your account…'
           ) : (
             <>
               <Sparkles size={16} strokeWidth={2.4} />
-              Claim Your Paddle
+              Create account
             </>
           )}
         </span>
@@ -124,4 +111,3 @@ function RegisterForm({
 }
 
 export default RegisterForm
-
