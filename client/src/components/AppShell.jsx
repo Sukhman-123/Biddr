@@ -1,5 +1,6 @@
+import { useEffect, useState } from 'react'
 import { NavLink } from 'react-router-dom'
-import { CircleDot, LogOut } from 'lucide-react'
+import { CircleDot, LogOut, Menu, X } from 'lucide-react'
 import { useAuth } from '../features/auth/useAuth'
 import AuthBrand from '../features/auth/components/AuthBrand'
 import './AppShell.css'
@@ -7,7 +8,6 @@ import './AppShell.css'
 const NAV_LINKS = [
   { to: '/', label: 'Home', end: true },
   { to: '/tournaments', label: 'Tournaments' },
-  { to: '/squad', label: 'Squad' },
   { to: '/analytics', label: 'Analytics' },
 ]
 
@@ -30,12 +30,23 @@ function formatRole(role) {
 
 function AppShell({ children, liveRoomCount = 0 }) {
   const { user, logout } = useAuth()
+  const [drawerOpen, setDrawerOpen] = useState(false)
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return undefined
+    const mq = window.matchMedia('(min-width: 881px)')
+    const onChange = (event) => {
+      if (event.matches) setDrawerOpen(false)
+    }
+    mq.addEventListener?.('change', onChange)
+    return () => mq.removeEventListener?.('change', onChange)
+  }, [])
+
+  const closeDrawer = () => setDrawerOpen(false)
 
   return (
-    <div className="biddr-stage">
-      <div className="biddr-grid" aria-hidden="true" />
-      <div className="biddr-glow" aria-hidden="true" />
-
+    <>
+      {/* Fixed navbar — outside the scrollable page */}
       <header className="appshell-nav">
         <div className="appshell-nav-left">
           <AuthBrand compact size={26} />
@@ -62,7 +73,8 @@ function AppShell({ children, liveRoomCount = 0 }) {
           >
             <CircleDot size={12} strokeWidth={3} />
             <span>
-              <strong>{liveRoomCount}</strong> {liveRoomCount === 1 ? 'room' : 'rooms'} live
+              <strong>{liveRoomCount}</strong>{' '}
+              {liveRoomCount === 1 ? 'room' : 'rooms'} live
             </span>
           </span>
 
@@ -76,7 +88,7 @@ function AppShell({ children, liveRoomCount = 0 }) {
             </span>
             <button
               type="button"
-              className="icon-btn"
+              className="icon-btn appshell-signout"
               onClick={logout}
               aria-label="Sign out"
               title="Sign out"
@@ -84,11 +96,56 @@ function AppShell({ children, liveRoomCount = 0 }) {
               <LogOut size={16} />
             </button>
           </div>
+
+          <button
+            type="button"
+            className="appshell-hamburger"
+            aria-label={drawerOpen ? 'Close menu' : 'Open menu'}
+            aria-expanded={drawerOpen}
+            aria-controls="appshell-drawer"
+            onClick={() => setDrawerOpen((value) => !value)}
+          >
+            {drawerOpen ? <X size={18} /> : <Menu size={18} />}
+          </button>
         </div>
       </header>
 
-      {children}
-    </div>
+      {/* Mobile drawer */}
+      <div
+        id="appshell-drawer"
+        className={`appshell-drawer${drawerOpen ? ' is-open' : ''}`}
+        hidden={!drawerOpen}
+      >
+        {NAV_LINKS.map((link) => (
+          <NavLink
+            key={link.to}
+            to={link.to}
+            end={Boolean(link.end)}
+            onClick={closeDrawer}
+            className={({ isActive }) =>
+              isActive ? 'appshell-nav-link is-active' : 'appshell-nav-link'
+            }
+          >
+            {link.label}
+          </NavLink>
+        ))}
+        <span
+          className="appshell-live-pill"
+          title="Live rooms across all tournaments"
+        >
+          <CircleDot size={12} strokeWidth={3} />
+          <span>
+            <strong>{liveRoomCount}</strong>{' '}
+            {liveRoomCount === 1 ? 'room' : 'rooms'} live
+          </span>
+        </span>
+      </div>
+
+      {/* Page content — scrollable, offset for the fixed header */}
+      <div className="appshell-page">
+        {children}
+      </div>
+    </>
   )
 }
 

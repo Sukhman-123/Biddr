@@ -317,4 +317,79 @@
   .lobby-grid {
     grid-template-columns: minmax(0, 1fr);
   }
+  .lobby-meta-col {
+    grid-row: 1;
+  }
+  .lobby-franchise-list {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+@media (max-width: 720px) {
+  .tournaments-main {
+    padding: 24px 16px 60px;
+  }
+  .lobby-title {
+    font-size: 26px;
+  }
+  .lobby-eyebrow {
+    font-size: 9px;
+    letter-spacing: 0.16em;
+  }
+  .lobby-hero {
+    grid-template-columns: 1fr;
+  }
+  .lobby-grid {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+  .lobby-franchise-list {
+    grid-template-columns: 1fr;
+    gap: 8px;
+  }
+  .lobby-tabs {
+    overflow-x: auto;
+    flex-wrap: nowrap;
+    -webkit-overflow-scrolling: touch;
+  }
+  .lobby-tab {
+    flex-shrink: 0;
+  }
+}
+
+@media (max-width: 480px) {
+  .tournaments-main {
+    padding: 20px 12px 50px;
+  }
+  .lobby-hero {
+    padding: 18px 14px;
+  }
+  .lobby-title {
+    font-size: 20px;
+  }
+  .lobby-subtitle {
+    font-size: 13px;
+  }
+  .lobby-status-chip {
+    padding: 4px 10px;
+    font-size: 10px;
+  }
+  .lobby-room {
+    padding: 14px;
+  }
+  .lobby-role-card {
+    padding: 14px;
+  }
+}
+
+@media (max-width: 360px) {
+  .tournaments-main {
+    padding: 16px 10px 50px;
+  }
+  .lobby-hero {
+    padding: 14px 10px;
+  }
+  .lobby-title {
+    font-size: 18px;
+  }
 }

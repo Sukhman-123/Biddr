@@ -1,27 +1,100 @@
+/* ------------------------------------------------------------------------- *
+ * AppShell — fixed top navbar + page content
+ *
+ * The navbar uses position: fixed so it always stays pinned to the top
+ * of the viewport, regardless of which page is mounted. The page content
+ * (.appshell-page) is offset by a top padding equal to the navbar height
+ * so the first row of content never slides underneath it.
+ * ------------------------------------------------------------------------- */
+
 .appshell-nav {
-  position: relative;
-  z-index: 2;
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 50;
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 24px;
-  padding: 18px 28px;
+  padding: 14px 24px;
   border-bottom: 1px solid var(--border-soft);
-  background: rgba(8, 11, 18, 0.65);
-  backdrop-filter: blur(14px);
-  -webkit-backdrop-filter: blur(14px);
+  background: rgba(8, 11, 18, 0.78);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+}
+
+/* Page content is offset down by the navbar height (≈60px) so nothing
+ * slides under the fixed bar. The dark theme + grid/glow backdrop live
+ * here because the navbar is now outside the page wrapper. */
+.appshell-page {
+  position: relative;
+  z-index: 1;
+  padding-top: 64px;
+  min-height: 100vh;
+  background: var(--bg);
+  isolation: isolate;
+}
+
+.appshell-page::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  background-image:
+    linear-gradient(rgba(255, 255, 255, 0.045) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.045) 1px, transparent 1px);
+  background-size: 56px 56px;
+  background-position: center top;
+  mask-image: radial-gradient(
+    ellipse 90% 70% at 50% 36%,
+    rgba(0, 0, 0, 1) 0%,
+    rgba(0, 0, 0, 0.55) 55%,
+    rgba(0, 0, 0, 0.2) 80%,
+    transparent 100%
+  );
+  pointer-events: none;
+}
+
+.appshell-page::after {
+  content: '';
+  position: absolute;
+  z-index: 0;
+  top: 8%;
+  left: 50%;
+  width: 1100px;
+  height: 760px;
+  max-width: 120vw;
+  transform: translateX(-50%);
+  background: radial-gradient(
+    closest-side,
+    rgba(245, 185, 74, 0.28) 0%,
+    rgba(245, 185, 74, 0.12) 30%,
+    rgba(245, 185, 74, 0.04) 55%,
+    transparent 75%
+  );
+  filter: blur(8px);
+  pointer-events: none;
+}
+
+.appshell-page > * {
+  position: relative;
+  z-index: 1;
 }
 
 .appshell-nav-left {
   display: flex;
   align-items: center;
-  gap: 28px;
+  gap: 24px;
+  min-width: 0;
+  flex-shrink: 1;
 }
 
 .appshell-nav-links {
   display: inline-flex;
   align-items: center;
   gap: 4px;
+  flex-shrink: 0;
 }
 
 .appshell-nav-link {
@@ -35,6 +108,7 @@
   color: var(--muted);
   text-decoration: none;
   transition: color 0.15s ease, background 0.15s ease;
+  white-space: nowrap;
 }
 
 .appshell-nav-link:hover {
@@ -44,13 +118,15 @@
 
 .appshell-nav-link.is-active {
   color: var(--gold);
-  background: rgba(245, 185, 74, 0.08);
+  background: rgba(245, 185, 74, 0.1);
 }
 
 .appshell-nav-right {
   display: inline-flex;
   align-items: center;
-  gap: 14px;
+  gap: 12px;
+  margin-left: auto;
+  flex-shrink: 0;
 }
 
 .appshell-live-pill {
@@ -66,12 +142,14 @@
   letter-spacing: 0.06em;
   text-transform: uppercase;
   font-weight: 600;
+  white-space: nowrap;
 }
 
 .appshell-live-pill svg {
   color: #52e88e;
   filter: drop-shadow(0 0 4px rgba(82, 232, 142, 0.6));
   animation: livePulse 1.6s ease-in-out infinite;
+  flex-shrink: 0;
 }
 
 .appshell-live-pill strong {
@@ -79,6 +157,7 @@
   font-weight: 700;
 }
 
+/* user chip */
 .appshell-user {
   display: inline-flex;
   align-items: center;
@@ -87,16 +166,17 @@
   border-radius: 999px;
   border: 1px solid var(--border);
   background: rgba(255, 255, 255, 0.04);
+  max-width: 240px;
 }
 
 .appshell-user-avatar {
-  width: 28px;
-  height: 28px;
+  width: 30px;
+  height: 30px;
   border-radius: 50%;
   background: linear-gradient(135deg, #f5b94a 0%, #ff7a5a 100%);
   color: #1a1206;
   font-size: 11px;
-  font-weight: 700;
+  font-weight: 800;
   letter-spacing: 0.04em;
   display: inline-flex;
   align-items: center;
@@ -108,12 +188,17 @@
   display: inline-flex;
   flex-direction: column;
   line-height: 1.1;
+  min-width: 0;
 }
 
 .appshell-user-name {
   font-size: 13px;
   font-weight: 600;
   color: var(--ink-strong);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 140px;
 }
 
 .appshell-user-role {
@@ -123,23 +208,156 @@
   color: var(--muted);
 }
 
+.appshell-signout {
+  flex-shrink: 0;
+}
+
+/* mobile hamburger button (hidden by default) */
+.appshell-hamburger {
+  display: none;
+  border: 1px solid var(--border);
+  background: rgba(255, 255, 255, 0.04);
+  color: var(--ink-strong);
+  border-radius: 10px;
+  padding: 7px 8px;
+  cursor: pointer;
+  align-items: center;
+  justify-content: center;
+}
+
+/* mobile drawer */
+.appshell-drawer {
+  display: none;
+  position: fixed;
+  top: 60px;
+  left: 0;
+  right: 0;
+  z-index: 49;
+  flex-direction: column;
+  gap: 2px;
+  padding: 12px 16px 14px;
+  border-bottom: 1px solid var(--border-soft);
+  background: rgba(8, 11, 18, 0.92);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+}
+
+.appshell-drawer .appshell-nav-link {
+  display: block;
+  width: 100%;
+  text-align: left;
+  padding: 10px 12px;
+  border-radius: 10px;
+  font-size: 14px;
+}
+
+.appshell-drawer .appshell-live-pill {
+  margin-top: 8px;
+  align-self: flex-start;
+}
+
+/* ------------------------------------------------------------------------- *
+ * Responsive — large desktop → xs
+ * ------------------------------------------------------------------------- */
+
+/* large laptops / 1280 down: tighten padding */
+@media (max-width: 1280px) {
+  .appshell-nav {
+    padding: 12px 20px;
+  }
+  .appshell-page {
+    padding-top: 60px;
+  }
+}
+
+/* laptop / 1024 down: hide long nav link label, drop live pill, narrower gaps */
+@media (max-width: 1024px) {
+  .appshell-nav {
+    gap: 16px;
+    padding: 12px 18px;
+  }
+  .appshell-page {
+    padding-top: 58px;
+  }
+  .appshell-nav-left {
+    gap: 18px;
+  }
+  .appshell-live-pill {
+    display: none;
+  }
+}
+
+/* tablet / 880 down: collapse to 2-row layout (brand+profile on top, nav below) */
 @media (max-width: 880px) {
   .appshell-nav {
     flex-wrap: wrap;
     gap: 12px;
-    padding: 14px 16px;
+    padding: 12px 16px;
   }
-
+  .appshell-page {
+    padding-top: 56px;
+  }
+  .appshell-drawer {
+    top: 54px;
+  }
   .appshell-nav-links {
-    order: 3;
-    width: 100%;
-    overflow-x: auto;
+    display: none;
   }
-
+  .appshell-hamburger {
+    display: inline-flex;
+  }
+  .appshell-drawer {
+    display: flex;
+  }
   .appshell-user-meta {
     display: none;
   }
+  .appshell-user {
+    padding: 4px 6px;
+  }
 }
+
+/* mobile / 560 down: brand-only left, profile-only right */
+@media (max-width: 560px) {
+  .appshell-nav {
+    padding: 10px 12px;
+  }
+  .appshell-page {
+    padding-top: 52px;
+  }
+  .appshell-drawer {
+    top: 50px;
+  }
+  .appshell-user {
+    max-width: 56px;
+    padding: 4px;
+  }
+  .appshell-user-avatar {
+    width: 28px;
+    height: 28px;
+  }
+  .appshell-signout {
+    margin-left: 4px;
+  }
+}
+
+/* very small / 380 down */
+@media (max-width: 380px) {
+  .appshell-nav {
+    padding: 8px 10px;
+  }
+  .appshell-page {
+    padding-top: 48px;
+  }
+  .appshell-drawer {
+    top: 46px;
+  }
+  .appshell-hamburger {
+    padding: 6px;
+  }
+}
+
+/* ------------------------------------------------------------------------- */
 
 @keyframes livePulse {
   0%,
