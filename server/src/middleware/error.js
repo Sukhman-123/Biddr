@@ -12,6 +12,12 @@ const errorHandler = (err, req, res, _next) => {
     });
   }
 
+  if (err && (err.status || err.statusCode)) {
+    return res.status(err.status || err.statusCode).json({
+      message: err.message || 'Request failed',
+    });
+  }
+
   console.error('Unhandled error:', err);
   return res.status(500).json({ message: 'Something went wrong on our end' });
 };

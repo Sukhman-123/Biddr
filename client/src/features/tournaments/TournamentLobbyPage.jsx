@@ -3,6 +3,7 @@ import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import EditTournamentModal from './EditTournamentModal'
+import AuctionPoolSection from './AuctionPoolSection'
 import {
   ArrowLeft,
   Calendar,
@@ -50,6 +51,7 @@ function TournamentLobbyPage() {
   })
 
   const isOwner = Boolean(user && tournament && tournament.ownerId === user.id)
+  const isHost = isOwner
   const showInvites = isOwner && tournament?.visibility === 'invite-only'
 
   const { data: invites = [] } = useQuery({
@@ -290,6 +292,13 @@ function TournamentLobbyPage() {
           </button>
         </div>
       </section>
+
+      {isHost ? (
+        <AuctionPoolSection
+          tournamentId={tournament.id}
+          currency={tournament.currency}
+        />
+      ) : null}
 
       <section className="lobby-grid">
         <div className="lobby-col">

@@ -9,6 +9,7 @@ const connectDB = require('./config/db');
 const registerSocketHandlers = require('./socket');
 const authRoutes = require('./routes/auth.routes');
 const tournamentRoutes = require('./routes/tournament.routes');
+const lotRoutes = require('./routes/lot.routes');
 const userRoutes = require('./routes/user.routes');
 const errorHandler = require('./middleware/error');
 
@@ -33,6 +34,7 @@ app.get('/api/health', (req, res) => {
 
 app.use('/api/auth', authRoutes);
 app.use('/api/tournaments', tournamentRoutes);
+app.use('/api/lots', lotRoutes);
 app.use('/api/users', userRoutes);
 
 app.use((req, res) => {
