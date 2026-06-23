@@ -57,6 +57,15 @@ export async function fetchMeRequest() {
   }
 }
 
+export async function updateMeRequest(patch) {
+  try {
+    const { data } = await api.patch('/auth/me', patch)
+    return data?.user ?? null
+  } catch (error) {
+    throw wrapError(error, 'Could not save your changes')
+  }
+}
+
 export async function logoutRequest() {
   try {
     await api.post('/auth/logout')

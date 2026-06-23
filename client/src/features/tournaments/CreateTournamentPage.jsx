@@ -18,9 +18,12 @@ import clsx from 'clsx'
 import { useAuth } from '../auth/useAuth'
 import { createTournamentRequest } from './tournament.api'
 import { formatPurse } from './tournament.utils'
+import {
+  validateCreateTournament,
+  buildInitialFranchiseState,
+  VALID_CURRENCIES,
+} from './createTournament.validation'
 import './CreateTournamentPage.css'
-
-const CURRENCIES = ['INR', 'USD', 'GBP', 'AUD', 'AED', 'ZAR', 'PKR']
 
 const DEFAULT_COLOR = '#f5b94a'
 
@@ -53,14 +56,20 @@ const newFranchise = (color = DEFAULT_COLOR) => ({
   colorHex: color,
 })
 
-const buildFranchiseRows = (count = 6) =>
-  Array.from({ length: count }, () => newFranchise())
-
 const sanitizeShortCode = (value) =>
   (value || '')
     .toUpperCase()
     .replace(/[^A-Z0-9]/g, '')
     .slice(0, 8)
+
+const PRESET_GRADIENTS = [
+  { id: 'midnight', label: 'Midnight', from: '#1d2436', via: '#3a2a52', to: '#0a0d16' },
+  { id: 'sunset', label: 'Sunset', from: '#f59e0b', via: '#ec4899', to: '#1e1b4b' },
+  { id: 'forest', label: 'Forest', from: '#14532d', via: '#15803d', to: '#052e16' },
+  { id: 'ocean', label: 'Ocean', from: '#0c4a6e', via: '#0e7490', to: '#082f49' },
+  { id: 'ruby', label: 'Ruby', from: '#7f1d1d', via: '#9f1239', to: '#1f1010' },
+  { id: 'steel', label: 'Steel', from: '#334155', via: '#475569', to: '#0f172a' },
+]
 
 const initialState = () => ({
   name: '',
@@ -72,54 +81,15 @@ const initialState = () => ({
   currency: 'INR',
   pursePerFranchise: '100000000',
   visibility: 'public',
-  franchises: buildFranchiseRows(6),
+  cover: {
+    presetId: 'midnight',
+    gradientFrom: '#1d2436',
+    gradientVia: '#3a2a52',
+    gradientTo: '#0a0d16',
+    accentHex: '#f5b94a',
+  },
+  franchises: buildInitialFranchiseState(6),
 })
-
-function validate(form) {
-  const errors = {}
-
-  if (!form.name.trim()) {
-    errors.name = 'Tournament name is required'
-  } else if (form.name.trim().length < 3) {
-    errors.name = 'Use at least 3 characters'
-  } else if (form.name.trim().length > 120) {
-    errors.name = 'Keep it under 120 characters'
-  }
-
-  if (!form.shortCode.trim()) {
-    errors.shortCode = 'Short code is required'
-  } else if (form.shortCode.trim().length < 2) {
-    errors.shortCode = 'At least 2 characters'
-  }
-
-  if (form.startDate && form.endDate) {
-    if (form.endDate < form.startDate) {
-      errors.endDate = 'End date must be after the start date'
-    }
-  }
-
-  const purse = Number(form.pursePerFranchise)
-  if (!form.pursePerFranchise || Number.isNaN(purse) || purse <= 0) {
-    errors.pursePerFranchise = 'Enter a positive purse'
-  }
-
-  const validFranchises = form.franchises.filter((f) => f.name.trim())
-  if (validFranchises.length < 2) {
-    errors.franchises = 'Add at least two franchise teams'
-  } else {
-    const seen = new Set()
-    for (const f of validFranchises) {
-      const key = f.name.trim().toLowerCase()
-      if (seen.has(key)) {
-        errors.franchises = 'Franchise names must be unique'
-        break
-      }
-      seen.add(key)
-    }
-  }
-
-  return errors
-}
 
 function CreateTournamentPage() {
   const { user, isAuthenticated } = useAuth()
@@ -203,7 +173,7 @@ function CreateTournamentPage() {
 
   const handleSubmit = async (event) => {
     event.preventDefault()
-    const nextErrors = validate(form)
+    const nextErrors = validateCreateTournament(form)
     if (Object.keys(nextErrors).length > 0) {
       setErrors(nextErrors)
       return
@@ -233,6 +203,12 @@ function CreateTournamentPage() {
         endDate: form.endDate ? new Date(form.endDate).toISOString() : null,
         visibility: form.visibility,
         hostName: user.fullName,
+        cover: {
+          gradientFrom: form.cover.gradientFrom,
+          gradientVia: form.cover.gradientVia,
+          gradientTo: form.cover.gradientTo,
+          accentHex: form.cover.accentHex,
+        },
         franchises: validFranchises,
       }
 
@@ -437,6 +413,145 @@ function CreateTournamentPage() {
 
         <section className="create-card">
           <header className="create-card-head">
+            <h2>Look & feel</h2>
+            <p>Pick a gradient palette. It shows up on cards and the lobby.</p>
+          </header>
+
+          <div className="create-cover-grid">
+            <div
+              className="create-cover-preview"
+              style={{
+                background: `linear-gradient(135deg, ${form.cover.gradientFrom}, ${form.cover.gradientVia}, ${form.cover.gradientTo})`,
+                '--cover-accent': form.cover.accentHex,
+              }}
+              aria-label="Cover preview"
+            >
+              <div className="create-cover-preview-grid" />
+              <div className="create-cover-preview-body">
+                <span className="create-cover-preview-code">
+                  {form.shortCode || 'ABCD'}
+                </span>
+                <span className="create-cover-preview-name">
+                  {form.name || 'Your tournament'}
+                </span>
+                <span className="create-cover-preview-pill">
+                  {form.visibility === 'invite-only' ? 'Invite-only' : 'Open'}
+                </span>
+              </div>
+            </div>
+
+            <div className="create-cover-controls">
+              <div className="create-presets">
+                {PRESET_GRADIENTS.map((preset) => {
+                  const isActive = preset.id === form.cover.presetId
+                  return (
+                    <button
+                      key={preset.id}
+                      type="button"
+                      className={`create-preset${isActive ? ' is-active' : ''}`}
+                      onClick={() =>
+                        setForm((prev) => ({
+                          ...prev,
+                          cover: {
+                            ...prev.cover,
+                            presetId: preset.id,
+                            gradientFrom: preset.from,
+                            gradientVia: preset.via,
+                            gradientTo: preset.to,
+                          },
+                        }))
+                      }
+                      aria-label={preset.label}
+                      aria-pressed={isActive}
+                    >
+                      <span
+                        className="create-preset-swatch"
+                        style={{
+                          background: `linear-gradient(135deg, ${preset.from}, ${preset.via}, ${preset.to})`,
+                        }}
+                      />
+                      <span className="create-preset-label">{preset.label}</span>
+                    </button>
+                  )
+                })}
+              </div>
+
+              <div className="create-color-row">
+                <label className="create-color-pick">
+                  <span>From</span>
+                  <input
+                    type="color"
+                    value={form.cover.gradientFrom}
+                    onChange={(e) =>
+                      setForm((prev) => ({
+                        ...prev,
+                        cover: {
+                          ...prev.cover,
+                          presetId: 'custom',
+                          gradientFrom: e.target.value,
+                        },
+                      }))
+                    }
+                  />
+                </label>
+                <label className="create-color-pick">
+                  <span>Via</span>
+                  <input
+                    type="color"
+                    value={form.cover.gradientVia}
+                    onChange={(e) =>
+                      setForm((prev) => ({
+                        ...prev,
+                        cover: {
+                          ...prev.cover,
+                          presetId: 'custom',
+                          gradientVia: e.target.value,
+                        },
+                      }))
+                    }
+                  />
+                </label>
+                <label className="create-color-pick">
+                  <span>To</span>
+                  <input
+                    type="color"
+                    value={form.cover.gradientTo}
+                    onChange={(e) =>
+                      setForm((prev) => ({
+                        ...prev,
+                        cover: {
+                          ...prev.cover,
+                          presetId: 'custom',
+                          gradientTo: e.target.value,
+                        },
+                      }))
+                    }
+                  />
+                </label>
+                <label className="create-color-pick">
+                  <span>Accent</span>
+                  <input
+                    type="color"
+                    value={form.cover.accentHex}
+                    onChange={(e) =>
+                      setForm((prev) => ({
+                        ...prev,
+                        cover: {
+                          ...prev.cover,
+                          presetId: 'custom',
+                          accentHex: e.target.value,
+                        },
+                      }))
+                    }
+                  />
+                </label>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section className="create-card">
+          <header className="create-card-head">
             <h2>
               <Users size={16} />
               Franchises
@@ -578,7 +693,7 @@ function CurrencyPicker({ value, onChange }) {
         onChange={onChange}
         className="create-currency-select"
       >
-        {CURRENCIES.map((code) => (
+        {VALID_CURRENCIES.map((code) => (
           <option key={code} value={code}>
             {code}
           </option>

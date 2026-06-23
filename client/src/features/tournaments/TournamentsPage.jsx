@@ -15,6 +15,7 @@ import clsx from 'clsx'
 import { Link } from 'react-router-dom'
 import { Plus } from 'lucide-react'
 import api from '../../lib/api'
+import { useDebouncedValue } from '../../lib/useDebouncedValue'
 import { formatDateRange, formatPurse } from './tournament.utils'
 import './TournamentsPage.css'
 
@@ -47,6 +48,7 @@ function TournamentsPage() {
   const navigate = useNavigate()
   const [tab, setTab] = useState('all')
   const [search, setSearch] = useState('')
+  const debouncedSearch = useDebouncedValue(search, 300)
 
   const { data: counts } = useQuery({
     queryKey: ['tournaments', 'counts'],
@@ -60,14 +62,14 @@ function TournamentsPage() {
 
   const filtered = useMemo(() => {
     const list = data ?? []
-    if (!search.trim()) return list
-    const q = search.trim().toLowerCase()
+    if (!debouncedSearch.trim()) return list
+    const q = debouncedSearch.trim().toLowerCase()
     return list.filter(
       (t) =>
         t.name.toLowerCase().includes(q) ||
         t.shortCode.toLowerCase().includes(q),
     )
-  }, [data, search])
+  }, [data, debouncedSearch])
 
   return (
     <main className="tournaments-main">
@@ -119,6 +121,7 @@ function TournamentsPage() {
             onChange={(event) => setSearch(event.target.value)}
             placeholder="Search by name or code…"
             aria-label="Search tournaments"
+            className={search !== debouncedSearch ? 'is-debouncing' : ''}
           />
         </div>
       </section>

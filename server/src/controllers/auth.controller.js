@@ -13,6 +13,41 @@ const buildPayload = (user, token) => ({
 
 const isValidRole = (role) => ROLES.includes(role);
 
+const updateMe = async (req, res, next) => {
+  try {
+    const user = await User.findById(req.user._id);
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+    const { fullName, password } = req.body || {};
+    if (fullName !== undefined) {
+      if (typeof fullName !== 'string' || fullName.trim().length < 2) {
+        return res
+          .status(400)
+          .json({ message: 'Full name must be at least 2 characters' });
+      }
+      if (fullName.trim().length > 80) {
+        return res
+          .status(400)
+          .json({ message: 'Full name must be 80 characters or fewer' });
+      }
+      user.fullName = fullName.trim();
+    }
+    if (password !== undefined) {
+      if (typeof password !== 'string' || password.length < 8) {
+        return res
+          .status(400)
+          .json({ message: 'Password must be at least 8 characters' });
+      }
+      user.password = password;
+    }
+    await user.save();
+    return res.json({ user: user.toSafeJSON() });
+  } catch (error) {
+    return next(error);
+  }
+};
+
 const register = async (req, res, next) => {
   try {
     const { fullName, email, password, role } = req.body || {};
@@ -153,4 +188,4 @@ const loginWithGoogle = async (req, res, next) => {
   }
 };
 
-module.exports = { register, login, me, logout, loginWithGoogle };
+module.exports = { register, login, me, logout, loginWithGoogle, updateMe };

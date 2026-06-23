@@ -1,5 +1,8 @@
 import { Link, useParams } from 'react-router-dom'
-import { useQuery } from '@tanstack/react-query'
+import { useQuery, useQueryClient } from '@tanstack/react-query'
+import { useState } from 'react'
+import { motion, AnimatePresence } from 'framer-motion'
+import EditTournamentModal from './EditTournamentModal'
 import {
   ArrowLeft,
   Calendar,
@@ -7,17 +10,27 @@ import {
   Eye,
   Flag,
   Gavel,
+  Lock,
+  Mail,
   MapPin,
+  Pencil,
+  Send,
   ShieldCheck,
   Sparkles,
   Trophy,
   Users,
   Wallet,
+  X,
 } from 'lucide-react'
 import clsx from 'clsx'
 import api from '../../lib/api'
 import { useAuth } from '../auth/useAuth'
 import { formatDateRange, formatPurse } from './tournament.utils'
+import {
+  listInvitesRequest,
+  createInviteRequest,
+  revokeInviteRequest,
+} from './tournament.api'
 import './TournamentLobbyPage.css'
 
 async function fetchTournament(id) {
@@ -28,12 +41,63 @@ async function fetchTournament(id) {
 function TournamentLobbyPage() {
   const { id } = useParams()
   const { user } = useAuth()
+  const queryClient = useQueryClient()
 
-  const { data: tournament, isLoading, isError, error } = useQuery({
+  const { data: tournament, isLoading, isError, error, refetch } = useQuery({
     queryKey: ['tournament', id],
     queryFn: () => fetchTournament(id),
     enabled: Boolean(id),
   })
+
+  const isOwner = Boolean(user && tournament && tournament.ownerId === user.id)
+  const showInvites = isOwner && tournament?.visibility === 'invite-only'
+
+  const { data: invites = [] } = useQuery({
+    queryKey: ['tournament-invites', id],
+    queryFn: () => listInvitesRequest(id),
+    enabled: Boolean(showInvites),
+  })
+
+  const [inviteEmail, setInviteEmail] = useState('')
+  const [inviteBusy, setInviteBusy] = useState(false)
+  const [inviteError, setInviteError] = useState(null)
+
+  const sendInvite = async (e) => {
+    e.preventDefault()
+    if (inviteBusy) return
+    const email = inviteEmail.trim()
+    if (!email) {
+      setInviteError('Enter an email address')
+      return
+    }
+    setInviteBusy(true)
+    setInviteError(null)
+    try {
+      await createInviteRequest(id, email)
+      setInviteEmail('')
+      queryClient.invalidateQueries({ queryKey: ['tournament-invites', id] })
+    } catch (err) {
+      setInviteError(err?.message ?? 'Could not send invite')
+    } finally {
+      setInviteBusy(false)
+    }
+  }
+
+  const onRevoke = async (inviteId) => {
+    if (inviteBusy) return
+    setInviteBusy(true)
+    setInviteError(null)
+    try {
+      await revokeInviteRequest(id, inviteId)
+      queryClient.invalidateQueries({ queryKey: ['tournament-invites', id] })
+    } catch (err) {
+      setInviteError(err?.message ?? 'Could not revoke invite')
+    } finally {
+      setInviteBusy(false)
+    }
+  }
+
+  const [editing, setEditing] = useState(false)
 
   if (isLoading) {
     return <LobbySkeleton />
@@ -55,8 +119,7 @@ function TournamentLobbyPage() {
     )
   }
 
-  const isAuctioneer =
-    user && tournament && tournament.ownerId === user.id
+  const isAuctioneer = isOwner
 
   return (
     <main className="tournaments-main lobby-main">
@@ -64,6 +127,78 @@ function TournamentLobbyPage() {
         <ArrowLeft size={14} />
         Back to tournaments
       </Link>
+
+      {showInvites ? (
+        <section className="lobby-invites" aria-label="Manage invites">
+          <header className="lobby-invites-head">
+            <div className="lobby-invites-title">
+              <Lock size={14} />
+              <h2>Invite bidders</h2>
+              <span className="lobby-invites-count">
+                {invites.length} pending
+              </span>
+            </div>
+            <p>Private tournament — only invited bidders can see it.</p>
+          </header>
+          <form className="lobby-invites-form" onSubmit={sendInvite}>
+            <div className="lobby-invites-input">
+              <Mail size={14} />
+              <input
+                type="email"
+                placeholder="bidder@example.com"
+                value={inviteEmail}
+                onChange={(e) => setInviteEmail(e.target.value)}
+                disabled={inviteBusy}
+                autoComplete="off"
+              />
+            </div>
+            <button
+              type="submit"
+              className="lobby-invites-send"
+              disabled={inviteBusy || !inviteEmail.trim()}
+            >
+              <Send size={14} />
+              {inviteBusy ? 'Sending…' : 'Send invite'}
+            </button>
+          </form>
+          {inviteError ? (
+            <div className="lobby-invites-error">{inviteError}</div>
+          ) : null}
+          {invites.length > 0 ? (
+            <ul className="lobby-invites-list">
+              <AnimatePresence initial={false}>
+                {invites.map((invite) => (
+                  <motion.li
+                    key={invite._id}
+                    className="lobby-invites-row"
+                    initial={{ opacity: 0, x: -8 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    exit={{ opacity: 0, x: 8 }}
+                    transition={{ duration: 0.18 }}
+                  >
+                    <span className="lobby-invites-email">{invite.email}</span>
+                    <span className="lobby-invites-status">
+                      {invite.status === 'accepted' ? 'Accepted' : 'Pending'}
+                    </span>
+                    <button
+                      type="button"
+                      className="lobby-invites-revoke"
+                      onClick={() => onRevoke(invite._id)}
+                      disabled={inviteBusy}
+                      aria-label={`Revoke invite for ${invite.email}`}
+                    >
+                      <X size={12} />
+                      Revoke
+                    </button>
+                  </motion.li>
+                ))}
+              </AnimatePresence>
+            </ul>
+          ) : (
+            <p className="lobby-invites-empty">No invites yet.</p>
+          )}
+        </section>
+      ) : null}
 
       <section className="lobby-hero">
         <div className="lobby-hero-text">
@@ -74,6 +209,19 @@ function TournamentLobbyPage() {
           <h1 className="lobby-title">{tournament.name}</h1>
           {tournament.description ? (
             <p className="lobby-subtitle">{tournament.description}</p>
+          ) : null}
+
+          {isAuctioneer ? (
+            <div className="lobby-host-actions">
+              <button
+                type="button"
+                className="lobby-edit-btn"
+                onClick={() => setEditing(true)}
+              >
+                <Pencil size={14} />
+                Edit tournament
+              </button>
+            </div>
           ) : null}
 
           <ul className="lobby-stats">
@@ -216,6 +364,16 @@ function TournamentLobbyPage() {
           </div>
         </aside>
       </section>
+      {editing ? (
+        <EditTournamentModal
+          tournament={tournament}
+          onClose={() => setEditing(false)}
+          onSaved={() => {
+            setEditing(false)
+            refetch()
+          }}
+        />
+      ) : null}
     </main>
   )
 }

@@ -1,6 +1,11 @@
 const Tournament = require('../models/Tournament');
+const Invitation = require('../models/Invitation');
+const User = require('../models/User');
 
 const VALID_STATUSES = ['upcoming', 'live', 'completed'];
+
+const isOwner = (tournament, user) =>
+  user && tournament.ownerId.toString() === user._id.toString();
 
 const listTournaments = async (req, res, next) => {
   try {
@@ -13,12 +18,21 @@ const listTournaments = async (req, res, next) => {
 
     if (req.query.visibility && req.query.visibility !== 'all') {
       filter.visibility = req.query.visibility;
-    } else {
-      // Show public tournaments plus any private tournament the user owns.
+    } else if (userId) {
+      // Public + tournaments the user owns + tournaments the user was invited to.
+      const invites = await Invitation.find({ email: req.user.email }).select(
+        'tournamentId',
+      );
+      const invitedIds = invites.map((i) => i.tournamentId);
       filter.$or = [
         { visibility: 'public' },
-        ...(userId ? [{ visibility: 'invite-only', ownerId: userId }] : []),
+        { visibility: 'invite-only', ownerId: userId },
+        ...(invitedIds.length > 0
+          ? [{ visibility: 'invite-only', _id: { $in: invitedIds } }]
+          : []),
       ];
+    } else {
+      filter.visibility = 'public';
     }
 
     const tournaments = await Tournament.find(filter)
@@ -42,13 +56,16 @@ const getTournament = async (req, res, next) => {
       return res.status(404).json({ message: 'Tournament not found' });
     }
 
-    if (
-      tournament.visibility === 'invite-only' &&
-      tournament.ownerId.toString() !== req.user?._id?.toString()
-    ) {
-      return res
-        .status(403)
-        .json({ message: 'This tournament is invite-only' });
+    if (tournament.visibility === 'invite-only' && !isOwner(tournament, req.user)) {
+      const invite = await Invitation.findOne({
+        tournamentId: tournament._id,
+        email: req.user.email,
+      });
+      if (!invite) {
+        return res
+          .status(403)
+          .json({ message: 'This tournament is invite-only' });
+      }
     }
 
     return res.status(200).json({ tournament: tournament.toDetailJSON() });
@@ -91,6 +108,7 @@ const createTournament = async (req, res, next) => {
       shortCode,
       description,
       coverImage,
+      cover,
       currency,
       pursePerFranchise,
       startDate,
@@ -149,6 +167,14 @@ const createTournament = async (req, res, next) => {
       shortCode: normalizedCode,
       description: typeof description === 'string' ? description.trim() : '',
       coverImage: typeof coverImage === 'string' ? coverImage.trim() : '',
+      cover: cover && typeof cover === 'object'
+        ? {
+            gradientFrom: cover.gradientFrom || '#1d2436',
+            gradientVia: cover.gradientVia || '#3a2a52',
+            gradientTo: cover.gradientTo || '#0a0d16',
+            accentHex: cover.accentHex || '#f5b94a',
+          }
+        : undefined,
       currency:
         typeof currency === 'string' && currency.trim()
           ? currency.trim().toUpperCase()
@@ -192,4 +218,185 @@ const createTournament = async (req, res, next) => {
   }
 };
 
-module.exports = { listTournaments, getTournament, createTournament };
+const updateTournament = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    const tournament = await Tournament.findById(id);
+    if (!tournament) {
+      return res.status(404).json({ message: 'Tournament not found' });
+    }
+    if (tournament.ownerId.toString() !== req.user._id.toString()) {
+      return res
+        .status(403)
+        .json({ message: 'Only the host can edit this tournament' });
+    }
+
+    const allowed = [
+      'name',
+      'description',
+      'region',
+      'coverImage',
+      'visibility',
+    ];
+    for (const field of allowed) {
+      if (req.body[field] !== undefined) {
+        tournament[field] = req.body[field];
+      }
+    }
+
+    if (req.body.cover && typeof req.body.cover === 'object') {
+      const cover = req.body.cover;
+      if (cover.gradientFrom !== undefined)
+        tournament.cover.gradientFrom = cover.gradientFrom;
+      if (cover.gradientVia !== undefined)
+        tournament.cover.gradientVia = cover.gradientVia;
+      if (cover.gradientTo !== undefined)
+        tournament.cover.gradientTo = cover.gradientTo;
+      if (cover.accentHex !== undefined)
+        tournament.cover.accentHex = cover.accentHex;
+    }
+
+    if (req.body.startDate !== undefined) {
+      tournament.startDate = req.body.startDate
+        ? new Date(req.body.startDate)
+        : null;
+    }
+    if (req.body.endDate !== undefined) {
+      tournament.endDate = req.body.endDate ? new Date(req.body.endDate) : null;
+    }
+    if (
+      tournament.startDate &&
+      tournament.endDate &&
+      tournament.endDate < tournament.startDate
+    ) {
+      return res
+        .status(400)
+        .json({ message: 'End date must be after the start date' });
+    }
+
+    await tournament.save();
+    return res
+      .status(200)
+      .json({ tournament: tournament.toDetailJSON() });
+  } catch (error) {
+    if (error?.name === 'CastError') {
+      return res.status(404).json({ message: 'Tournament not found' });
+    }
+    if (error?.code === 11000) {
+      return res
+        .status(409)
+        .json({ message: 'That short code is taken. Try another.' });
+    }
+    return next(error);
+  }
+};
+
+const ensureHost = async (req, res) => {
+  const tournament = await Tournament.findById(req.params.id);
+  if (!tournament) {
+    res.status(404).json({ message: 'Tournament not found' });
+    return null;
+  }
+  if (!isOwner(tournament, req.user)) {
+    res.status(403).json({ message: 'Only the host can manage invites' });
+    return null;
+  }
+  return tournament;
+};
+
+const listInvites = async (req, res, next) => {
+  try {
+    const tournament = await ensureHost(req, res);
+    if (!tournament) return;
+    const invites = await Invitation.find({ tournamentId: tournament._id }).sort({
+      createdAt: -1,
+    });
+    return res.json({
+      invites: invites.map((i) => i.toJSON ? i.toJSON() : i),
+    });
+  } catch (error) {
+    return next(error);
+  }
+};
+
+const sanitizeEmail = (value) =>
+  typeof value === 'string' ? value.trim().toLowerCase() : '';
+
+const createInvite = async (req, res, next) => {
+  try {
+    const tournament = await ensureHost(req, res);
+    if (!tournament) return;
+
+    if (tournament.visibility !== 'invite-only') {
+      return res
+        .status(400)
+        .json({ message: 'Invites are only for invite-only tournaments' });
+    }
+
+    const email = sanitizeEmail(req.body?.email);
+    if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      return res.status(400).json({ message: 'A valid email is required' });
+    }
+
+    // Block self-invites
+    const owner = await User.findById(tournament.ownerId);
+    if (owner && owner.email === email) {
+      return res
+        .status(400)
+        .json({ message: "You can't invite the host" });
+    }
+
+    const existing = await Invitation.findOne({
+      tournamentId: tournament._id,
+      email,
+    });
+    if (existing) {
+      return res
+        .status(200)
+        .json({ invite: existing, alreadyInvited: true });
+    }
+
+    const invite = await Invitation.create({
+      tournamentId: tournament._id,
+      email,
+      invitedById: tournament.ownerId,
+    });
+    return res.status(201).json({ invite });
+  } catch (error) {
+    if (error?.code === 11000) {
+      return res.status(200).json({ message: 'Already invited' });
+    }
+    return next(error);
+  }
+};
+
+const revokeInvite = async (req, res, next) => {
+  try {
+    const tournament = await ensureHost(req, res);
+    if (!tournament) return;
+    const { inviteId } = req.params;
+    const deleted = await Invitation.findOneAndDelete({
+      _id: inviteId,
+      tournamentId: tournament._id,
+    });
+    if (!deleted) {
+      return res.status(404).json({ message: 'Invite not found' });
+    }
+    return res.status(200).json({ revoked: true });
+  } catch (error) {
+    if (error?.name === 'CastError') {
+      return res.status(404).json({ message: 'Invite not found' });
+    }
+    return next(error);
+  }
+};
+
+module.exports = {
+  listTournaments,
+  getTournament,
+  createTournament,
+  updateTournament,
+  listInvites,
+  createInvite,
+  revokeInvite,
+};

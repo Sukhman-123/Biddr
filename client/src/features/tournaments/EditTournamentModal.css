@@ -1,0 +1,332 @@
+.edit-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  background: rgba(4, 7, 12, 0.6);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  overflow-y: auto;
+}
+
+.edit-modal {
+  width: 100%;
+  max-width: 720px;
+  max-height: calc(100vh - 48px);
+  overflow-y: auto;
+  background: linear-gradient(180deg, #0f1422 0%, #0a0d16 100%);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  padding: 24px;
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.5);
+}
+
+.edit-modal-head {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  margin-bottom: 18px;
+}
+
+.edit-modal-head h3 {
+  margin: 0 0 4px;
+  font-size: 18px;
+  font-weight: 800;
+  letter-spacing: -0.01em;
+  color: var(--ink-strong);
+}
+
+.edit-modal-head p {
+  margin: 0;
+  font-size: 13px;
+  color: var(--muted);
+}
+
+.edit-modal-close {
+  margin-left: auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  background: transparent;
+  color: var(--muted);
+  cursor: pointer;
+  transition: border-color 0.15s ease, color 0.15s ease;
+}
+
+.edit-modal-close:hover {
+  border-color: rgba(255, 255, 255, 0.2);
+  color: var(--ink-strong);
+}
+
+.edit-modal-form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.edit-cover-preview {
+  position: relative;
+  height: 120px;
+  border-radius: 14px;
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  isolation: isolate;
+}
+
+.edit-cover-preview-grid {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  background-image:
+    linear-gradient(rgba(255, 255, 255, 0.06) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.06) 1px, transparent 1px);
+  background-size: 28px 28px;
+  mask-image: radial-gradient(ellipse 90% 70% at 50% 30%, rgba(0, 0, 0, 1), transparent 70%);
+}
+
+.edit-cover-preview-body {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 14px 18px;
+  height: 100%;
+  justify-content: flex-end;
+}
+
+.edit-cover-preview-code {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.18em;
+  color: var(--cover-accent, #f5b94a);
+  text-shadow: 0 0 12px color-mix(in srgb, var(--cover-accent, #f5b94a) 40%, transparent);
+}
+
+.edit-cover-preview-name {
+  font-size: 16px;
+  font-weight: 800;
+  letter-spacing: -0.01em;
+  color: white;
+}
+
+.edit-cover-preview-pill {
+  display: inline-flex;
+  align-self: flex-start;
+  padding: 3px 10px;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(6px);
+}
+
+.edit-modal-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.edit-field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.edit-field--full {
+  grid-column: 1 / -1;
+}
+
+.edit-field > span {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.edit-field input,
+.edit-field textarea {
+  padding: 9px 12px;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  background: rgba(8, 11, 18, 0.6);
+  color: var(--ink-strong);
+  font-size: 13px;
+  font-family: inherit;
+  resize: vertical;
+}
+
+.edit-field input:focus,
+.edit-field textarea:focus {
+  outline: none;
+  border-color: var(--gold);
+}
+
+.edit-vis-toggle {
+  display: flex;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  background: rgba(8, 11, 18, 0.6);
+  padding: 3px;
+  height: 38px;
+}
+
+.edit-vis-option {
+  flex: 1;
+  border: 0;
+  background: transparent;
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 600;
+  border-radius: 7px;
+  cursor: pointer;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+
+.edit-vis-option.is-active {
+  background: var(--gold);
+  color: #1f1300;
+}
+
+.edit-presets {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 6px;
+}
+
+.edit-preset {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 6px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: transparent;
+  font-size: 9px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  color: var(--muted);
+  cursor: pointer;
+  transition: border-color 0.15s ease;
+}
+
+.edit-preset:hover {
+  border-color: rgba(255, 255, 255, 0.2);
+}
+
+.edit-preset.is-active {
+  border-color: var(--gold);
+  color: var(--ink-strong);
+}
+
+.edit-preset-swatch {
+  display: block;
+  width: 100%;
+  height: 24px;
+  border-radius: 4px;
+}
+
+.edit-color-row {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 8px;
+}
+
+.edit-color-pick {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 8px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: rgba(255, 255, 255, 0.02);
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.edit-color-pick input[type="color"] {
+  width: 24px;
+  height: 24px;
+  border-radius: 5px;
+  border: 1px solid var(--border);
+  background: transparent;
+  cursor: pointer;
+  padding: 0;
+}
+
+.edit-modal-error {
+  padding: 10px 12px;
+  border-radius: 10px;
+  border: 1px solid rgba(255, 90, 90, 0.4);
+  background: rgba(255, 90, 90, 0.08);
+  color: #ffd0d0;
+  font-size: 12px;
+}
+
+.edit-modal-foot {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 4px;
+}
+
+.edit-btn {
+  padding: 10px 18px;
+  border-radius: 999px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: border-color 0.15s ease, background 0.15s ease;
+}
+
+.edit-btn--ghost {
+  background: transparent;
+  border: 1px solid var(--border);
+  color: var(--muted);
+}
+
+.edit-btn--ghost:hover {
+  border-color: rgba(255, 255, 255, 0.18);
+  color: var(--ink-strong);
+}
+
+.edit-btn--primary {
+  background: var(--gold);
+  border: 1px solid var(--gold);
+  color: #1f1300;
+}
+
+.edit-btn--primary:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+@media (max-width: 640px) {
+  .edit-modal {
+    padding: 18px;
+  }
+  .edit-modal-grid {
+    grid-template-columns: 1fr;
+  }
+  .edit-presets {
+    grid-template-columns: repeat(3, 1fr);
+  }
+  .edit-color-row {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}

@@ -1,4 +1,5 @@
-import { useQuery } from '@tanstack/react-query'
+import { useQuery, useQueryClient } from '@tanstack/react-query'
+import { useState } from 'react'
 import { motion } from 'framer-motion'
 import {
   Award,
@@ -15,7 +16,6 @@ import {
   Palette,
   RefreshCw,
   Shield,
-  Sparkles,
   Star,
   Trophy,
   Users as UsersIcon,
@@ -26,6 +26,7 @@ import clsx from 'clsx'
 import { useAuth } from '../auth/useAuth'
 import { fetchUserStatsRequest } from './profile.api'
 import { usePreferences } from './preferences'
+import EditProfileModal from './EditProfileModal'
 import './UserProfilePage.css'
 
 const ACHIEVEMENT_ICONS = {
@@ -51,6 +52,8 @@ const fadeIn = {
 function UserProfilePage() {
   const { user, logout } = useAuth()
   const { preferences, update, reset } = usePreferences()
+  const queryClient = useQueryClient()
+  const [editing, setEditing] = useState(false)
   const {
     data,
     error,
@@ -127,15 +130,7 @@ function UserProfilePage() {
           <button
             type="button"
             className="profile-edit-btn"
-            onClick={() => {
-              const next = prompt(
-                'Pick a display name:',
-                user?.fullName ?? '',
-              )
-              if (next && next.trim()) {
-                update({ displayName: next.trim() })
-              }
-            }}
+            onClick={() => setEditing(true)}
           >
             <BadgeCheck size={14} />
             Edit profile
@@ -421,6 +416,19 @@ function UserProfilePage() {
           </motion.section>
         </aside>
       </div>
+      {editing ? (
+        <EditProfileModal
+          user={user}
+          onClose={() => setEditing(false)}
+          onSaved={() => {
+            queryClient.invalidateQueries({ queryKey: ['user-stats'] })
+            queryClient.invalidateQueries({ queryKey: ['auth-me'] })
+            // Trigger a re-read of localStorage so the page's preferences hook updates.
+            window.dispatchEvent(new Event('biddr:preferences-changed'))
+            setEditing(false)
+          }}
+        />
+      ) : null}
     </main>
   )
 }

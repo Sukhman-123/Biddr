@@ -40,6 +40,18 @@ export function usePreferences() {
     writeStored(preferences)
   }, [preferences])
 
+  useEffect(() => {
+    function onChange() {
+      setPreferences(readStored())
+    }
+    window.addEventListener('storage', onChange)
+    window.addEventListener('biddr:preferences-changed', onChange)
+    return () => {
+      window.removeEventListener('storage', onChange)
+      window.removeEventListener('biddr:preferences-changed', onChange)
+    }
+  }, [])
+
   const update = useCallback((patch) => {
     setPreferences((prev) => ({ ...prev, ...patch }))
   }, [])
