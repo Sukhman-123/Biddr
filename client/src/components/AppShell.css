@@ -90,6 +90,29 @@
   flex-shrink: 1;
 }
 
+.appshell-brand-link,
+.appshell-drawer-brand {
+  display: inline-flex;
+  align-items: center;
+  text-decoration: none;
+  color: inherit;
+  border-radius: 8px;
+  padding: 2px 4px;
+  margin: -2px -4px;
+  transition: opacity 0.15s ease;
+}
+
+.appshell-brand-link:hover,
+.appshell-drawer-brand:hover {
+  opacity: 0.85;
+}
+
+.appshell-drawer-brand {
+  margin-bottom: 6px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
 .appshell-nav-links {
   display: inline-flex;
   align-items: center;

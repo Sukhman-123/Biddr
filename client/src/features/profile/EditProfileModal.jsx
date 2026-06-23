@@ -18,6 +18,7 @@ const ACCENT_PRESETS = [
 function EditProfileModal({ user, onClose, onSaved }) {
   const [fullName, setFullName] = useState(user?.fullName ?? '')
   const [phone, setPhone] = useState(user?.phone ?? '')
+  const [role, setRole] = useState(user?.role === 'auctioneer' ? 'auctioneer' : 'viewer')
   const [password, setPassword] = useState('')
   const [showPassword, setShowPassword] = useState(false)
   const [accentColor, setAccentColor] = useState(
@@ -66,6 +67,9 @@ function EditProfileModal({ user, onClose, onSaved }) {
       }
       if (trimmedPhone && trimmedPhone !== (user?.phone ?? '').trim()) {
         patch.phone = trimmedPhone
+      }
+      if (role !== (user?.role === 'auctioneer' ? 'auctioneer' : 'viewer')) {
+        patch.role = role
       }
       const updated = await updateMeRequest(patch)
 
@@ -203,6 +207,32 @@ function EditProfileModal({ user, onClose, onSaved }) {
                 style={{ '--preview': accentColor }}
               >
                 Live preview on the cover and tournament cards.
+              </div>
+            </div>
+
+            <div className="profile-edit-field">
+              <span>Role</span>
+              <div className="profile-edit-role" role="radiogroup" aria-label="Role">
+                <button
+                  type="button"
+                  role="radio"
+                  aria-checked={role === 'viewer'}
+                  className={`profile-edit-role-option${role === 'viewer' ? ' is-active' : ''}`}
+                  onClick={() => setRole('viewer')}
+                >
+                  <strong>Viewer</strong>
+                  <span>Watch auctions and bid as a franchise captain.</span>
+                </button>
+                <button
+                  type="button"
+                  role="radio"
+                  aria-checked={role === 'auctioneer'}
+                  className={`profile-edit-role-option${role === 'auctioneer' ? ' is-active' : ''}`}
+                  onClick={() => setRole('auctioneer')}
+                >
+                  <strong>Auctioneer</strong>
+                  <span>Host tournaments, run rooms, and hammer the gavel.</span>
+                </button>
               </div>
             </div>
 

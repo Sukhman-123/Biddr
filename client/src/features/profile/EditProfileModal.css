@@ -270,3 +270,60 @@
   opacity: 0.6;
   cursor: not-allowed;
 }
+
+/* ----- Role segmented control ----- */
+
+.profile-edit-role {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+.profile-edit-role-option {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  text-align: left;
+  padding: 14px 14px 16px;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid var(--border, rgba(255, 255, 255, 0.08));
+  color: var(--ink-soft, rgba(255, 255, 255, 0.7));
+  cursor: pointer;
+  transition: border-color 0.15s ease, background-color 0.15s ease,
+    color 0.15s ease, transform 0.12s ease;
+}
+
+.profile-edit-role-option:hover {
+  border-color: rgba(255, 255, 255, 0.2);
+  color: var(--ink-strong, #fff);
+}
+
+.profile-edit-role-option:active {
+  transform: translateY(1px);
+}
+
+.profile-edit-role-option.is-active {
+  background: rgba(245, 185, 74, 0.08);
+  border-color: var(--gold, #f5b94a);
+  color: var(--ink-strong, #fff);
+}
+
+.profile-edit-role-option strong {
+  font-size: 14px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+
+.profile-edit-role-option span {
+  font-size: 12.5px;
+  line-height: 1.45;
+  color: inherit;
+  opacity: 0.85;
+}
+
+@media (max-width: 480px) {
+  .profile-edit-role {
+    grid-template-columns: 1fr;
+  }
+}

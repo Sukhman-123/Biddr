@@ -302,4 +302,34 @@ describe('PATCH /api/auth/me', () => {
       .send({ fullName: 'Hacker' })
     expect(res.status).toBe(401)
   })
+
+  it('promotes a viewer to auctioneer', async () => {
+    const reg = await registerUser(app, {
+      fullName: 'Role Flip',
+      email: 'roleflip@example.com',
+      password: 'hunter2hunter2',
+      phone: '+91 98765 99999',
+    })
+    expect(reg.body.user.role).toBe('viewer')
+    const res = await request(app)
+      .patch('/api/auth/me')
+      .set('Authorization', `Bearer ${reg.body.token}`)
+      .send({ role: 'auctioneer' })
+    expect(res.status).toBe(200)
+    expect(res.body.user.role).toBe('auctioneer')
+  })
+
+  it('rejects an invalid role', async () => {
+    const reg = await registerUser(app, {
+      fullName: 'Role Bad',
+      email: 'rolebad@example.com',
+      password: 'hunter2hunter2',
+      phone: '+91 98765 99998',
+    })
+    const res = await request(app)
+      .patch('/api/auth/me')
+      .set('Authorization', `Bearer ${reg.body.token}`)
+      .send({ role: 'admin' })
+    expect(res.status).toBe(400)
+  })
 })

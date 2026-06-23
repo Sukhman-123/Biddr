@@ -8,6 +8,7 @@ import './AppShell.css'
 const NAV_LINKS = [
   { to: '/home', label: 'Home', end: true },
   { to: '/tournaments', label: 'Tournaments' },
+  { to: '/squad', label: 'Squad' },
   { to: '/analytics', label: 'Analytics' },
 ]
 
@@ -42,7 +43,13 @@ function AppShell({ children, liveRoomCount = 0 }) {
       {/* Fixed navbar — outside the scrollable page */}
       <header className="appshell-nav">
         <div className="appshell-nav-left">
-          <AuthBrand compact size={26} />
+          <Link
+            to="/home"
+            className="appshell-brand-link"
+            aria-label="Biddr home"
+          >
+            <AuthBrand compact size={26} />
+          </Link>
           <nav className="appshell-nav-links" aria-label="Primary">
             {NAV_LINKS.map((link) => (
               <NavLink
@@ -113,6 +120,14 @@ function AppShell({ children, liveRoomCount = 0 }) {
         className={`appshell-drawer${drawerOpen ? ' is-open' : ''}`}
         hidden={!drawerOpen}
       >
+        <Link
+          to="/home"
+          className="appshell-drawer-brand"
+          aria-label="Biddr home"
+          onClick={closeDrawer}
+        >
+          <AuthBrand compact size={22} />
+        </Link>
         {NAV_LINKS.map((link) => (
           <NavLink
             key={link.to}

@@ -50,7 +50,7 @@ const fadeIn = {
 }
 
 function UserProfilePage() {
-  const { user, logout } = useAuth()
+  const { user, setUser, logout } = useAuth()
   const { preferences, update, reset } = usePreferences()
   const queryClient = useQueryClient()
   const [editing, setEditing] = useState(false)
@@ -420,7 +420,8 @@ function UserProfilePage() {
         <EditProfileModal
           user={user}
           onClose={() => setEditing(false)}
-          onSaved={() => {
+          onSaved={(updated) => {
+            if (updated) setUser(updated)
             queryClient.invalidateQueries({ queryKey: ['user-stats'] })
             queryClient.invalidateQueries({ queryKey: ['auth-me'] })
             // Trigger a re-read of localStorage so the page's preferences hook updates.

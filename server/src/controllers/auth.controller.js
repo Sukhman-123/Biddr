@@ -41,6 +41,14 @@ const updateMe = async (req, res, next) => {
       return res.status(404).json({ message: 'User not found' });
     }
     const { fullName, password, phone } = req.body || {};
+    if (req.body?.role !== undefined) {
+      if (!isValidRole(req.body.role)) {
+        return res
+          .status(400)
+          .json({ message: 'Role must be either "viewer" or "auctioneer"' });
+      }
+      user.role = req.body.role;
+    }
     if (fullName !== undefined) {
       if (typeof fullName !== 'string' || fullName.trim().length < 2) {
         return res
