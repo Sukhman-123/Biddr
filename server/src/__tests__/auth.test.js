@@ -4,6 +4,7 @@ const {
   stopTestEnv,
   clearDatabase,
   registerUser,
+  loginUser,
 } = require('../test/testServer')
 
 let app
@@ -29,6 +30,7 @@ describe('POST /api/auth/register', () => {
     })
     expect(res.status).toBe(201)
     expect(res.body.user.email).toBe('test@example.com')
+    expect(res.body.user.phone).toBeTruthy()
     expect(res.body.user.role).toBe('viewer')
     expect(res.body.token).toBeTruthy()
   })
@@ -73,6 +75,45 @@ describe('POST /api/auth/register', () => {
     })
     expect(res.status).toBe(400)
   })
+
+  it('rejects missing phone', async () => {
+    const res = await request(app)
+      .post('/api/auth/register')
+      .send({
+        fullName: 'No Phone',
+        email: 'nophone@example.com',
+        password: 'hunter2hunter2',
+      })
+    expect(res.status).toBe(400)
+  })
+
+  it('rejects invalid phone format', async () => {
+    const res = await request(app)
+      .post('/api/auth/register')
+      .send({
+        fullName: 'Bad Phone',
+        email: 'badphone@example.com',
+        password: 'hunter2hunter2',
+        phone: 'abc',
+      })
+    expect(res.status).toBe(400)
+  })
+
+  it('rejects duplicate phone numbers', async () => {
+    await registerUser(app, {
+      fullName: 'Phone Owner',
+      email: 'one@example.com',
+      password: 'hunter2hunter2',
+      phone: '+91 98765 43210',
+    })
+    const res = await registerUser(app, {
+      fullName: 'Phone Other',
+      email: 'two@example.com',
+      password: 'hunter2hunter2',
+      phone: '+91 98765 43210',
+    })
+    expect(res.status).toBe(409)
+  })
 })
 
 describe('POST /api/auth/login', () => {
@@ -81,29 +122,65 @@ describe('POST /api/auth/login', () => {
       fullName: 'Login User',
       email: 'login@example.com',
       password: 'hunter2hunter2',
+      phone: '+91 98765 11111',
     })
   })
 
-  it('returns a token for valid credentials', async () => {
-    const res = await request(app)
-      .post('/api/auth/login')
-      .send({ email: 'login@example.com', password: 'hunter2hunter2' })
+  it('returns a token for valid email credentials', async () => {
+    const res = await loginUser(app, {
+      identifier: 'login@example.com',
+      password: 'hunter2hunter2',
+    })
     expect(res.status).toBe(200)
     expect(res.body.token).toBeTruthy()
   })
 
+  it('returns a token for valid phone credentials', async () => {
+    const res = await loginUser(app, {
+      identifier: '+91 98765 11111',
+      password: 'hunter2hunter2',
+    })
+    expect(res.status).toBe(200)
+    expect(res.body.token).toBeTruthy()
+  })
+
+  it('trims surrounding whitespace before lookup', async () => {
+    const res = await loginUser(app, {
+      identifier: '   +91 98765 11111   ',
+      password: 'hunter2hunter2',
+    })
+    expect(res.status).toBe(200)
+  })
+
   it('rejects wrong password', async () => {
-    const res = await request(app)
-      .post('/api/auth/login')
-      .send({ email: 'login@example.com', password: 'wrongpassword' })
+    const res = await loginUser(app, {
+      identifier: 'login@example.com',
+      password: 'wrongpassword',
+    })
     expect(res.status).toBe(401)
   })
 
   it('rejects unknown email', async () => {
+    const res = await loginUser(app, {
+      identifier: 'nobody@example.com',
+      password: 'hunter2hunter2',
+    })
+    expect(res.status).toBe(401)
+  })
+
+  it('rejects unknown phone', async () => {
+    const res = await loginUser(app, {
+      identifier: '+91 99999 99999',
+      password: 'hunter2hunter2',
+    })
+    expect(res.status).toBe(401)
+  })
+
+  it('rejects missing identifier', async () => {
     const res = await request(app)
       .post('/api/auth/login')
-      .send({ email: 'nobody@example.com', password: 'hunter2hunter2' })
-    expect(res.status).toBe(401)
+      .send({ password: 'hunter2hunter2' })
+    expect(res.status).toBe(400)
   })
 })
 
@@ -121,6 +198,7 @@ describe('GET /api/auth/me', () => {
       .set('Authorization', `Bearer ${token}`)
     expect(res.status).toBe(200)
     expect(res.body.user.email).toBe('me@example.com')
+    expect(res.body.user.phone).toBeTruthy()
   })
 
   it('rejects missing token', async () => {
@@ -143,6 +221,7 @@ describe('PATCH /api/auth/me', () => {
       fullName: 'Original',
       email: 'me2@example.com',
       password: 'hunter2hunter2',
+      phone: '+91 98765 22222',
     })
     token = reg.body.token
   })
@@ -179,10 +258,42 @@ describe('PATCH /api/auth/me', () => {
       .send({ password: 'newlongerpassword' })
     expect(res.status).toBe(200)
 
-    const login = await request(app)
-      .post('/api/auth/login')
-      .send({ email: 'me2@example.com', password: 'newlongerpassword' })
+    const login = await loginUser(app, {
+      identifier: 'me2@example.com',
+      password: 'newlongerpassword',
+    })
     expect(login.status).toBe(200)
+  })
+
+  it('updates the phone number', async () => {
+    const res = await request(app)
+      .patch('/api/auth/me')
+      .set('Authorization', `Bearer ${token}`)
+      .send({ phone: '+1 415 555 0001' })
+    expect(res.status).toBe(200)
+    expect(res.body.user.phone).toBe('+1 415 555 0001')
+  })
+
+  it('rejects invalid phone format', async () => {
+    const res = await request(app)
+      .patch('/api/auth/me')
+      .set('Authorization', `Bearer ${token}`)
+      .send({ phone: 'nope' })
+    expect(res.status).toBe(400)
+  })
+
+  it('rejects duplicate phone on update', async () => {
+    await registerUser(app, {
+      fullName: 'Other',
+      email: 'other@example.com',
+      password: 'hunter2hunter2',
+      phone: '+91 98765 33333',
+    })
+    const res = await request(app)
+      .patch('/api/auth/me')
+      .set('Authorization', `Bearer ${token}`)
+      .send({ phone: '+91 98765 33333' })
+    expect(res.status).toBe(409)
   })
 
   it('requires authentication', async () => {

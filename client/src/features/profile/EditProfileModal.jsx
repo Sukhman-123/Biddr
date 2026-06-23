@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Eye, EyeOff, RefreshCw, X } from 'lucide-react'
+import { Eye, EyeOff, Phone, RefreshCw, X } from 'lucide-react'
 import { updateMeRequest } from '../auth/auth.api'
+import { PHONE_REGEX } from '../auth/auth.validation'
 import './EditProfileModal.css'
 
 const ACCENT_PRESETS = [
@@ -16,6 +17,7 @@ const ACCENT_PRESETS = [
 
 function EditProfileModal({ user, onClose, onSaved }) {
   const [fullName, setFullName] = useState(user?.fullName ?? '')
+  const [phone, setPhone] = useState(user?.phone ?? '')
   const [password, setPassword] = useState('')
   const [showPassword, setShowPassword] = useState(false)
   const [accentColor, setAccentColor] = useState(
@@ -47,6 +49,11 @@ function EditProfileModal({ user, onClose, onSaved }) {
       setError('Password must be at least 8 characters')
       return
     }
+    const trimmedPhone = phone.trim()
+    if (trimmedPhone && !PHONE_REGEX.test(trimmedPhone)) {
+      setError('Enter a valid phone number')
+      return
+    }
 
     setSaving(true)
     try {
@@ -57,9 +64,11 @@ function EditProfileModal({ user, onClose, onSaved }) {
       if (password) {
         patch.password = password
       }
+      if (trimmedPhone && trimmedPhone !== (user?.phone ?? '').trim()) {
+        patch.phone = trimmedPhone
+      }
       const updated = await updateMeRequest(patch)
 
-      // Persist accent change to localStorage as the existing preferences hook expects
       const currentPrefs = JSON.parse(
         localStorage.getItem('biddr:profile-preferences') || '{}',
       )
@@ -125,6 +134,22 @@ function EditProfileModal({ user, onClose, onSaved }) {
                 autoComplete="name"
                 required
               />
+            </label>
+
+            <label className="profile-edit-field">
+              <span>Phone</span>
+              <div className="profile-edit-input-icon">
+                <Phone size={14} />
+                <input
+                  type="tel"
+                  inputMode="tel"
+                  autoComplete="tel"
+                  placeholder="+91 98765 43210"
+                  value={phone}
+                  onChange={(e) => setPhone(e.target.value)}
+                  maxLength={20}
+                />
+              </div>
             </label>
 
             <label className="profile-edit-field">

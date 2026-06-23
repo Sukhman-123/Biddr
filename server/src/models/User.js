@@ -3,6 +3,8 @@ const bcrypt = require('bcryptjs');
 
 const ROLES = ['auctioneer', 'viewer'];
 
+const PHONE_RE = /^[\+]?[\d\s\-]{7,20}$/;
+
 const userSchema = new mongoose.Schema(
   {
     fullName: {
@@ -19,6 +21,20 @@ const userSchema = new mongoose.Schema(
       lowercase: true,
       trim: true,
       match: [/^[^\s@]+@[^\s@]+\.[^\s@]+$/, 'Please provide a valid email'],
+    },
+    phone: {
+      type: String,
+      required: [
+        function phoneRequired() {
+          // Google sign-ins can fill this in later via the profile editor.
+          return !this.googleSub;
+        },
+        'Phone number is required',
+      ],
+      trim: true,
+      unique: true,
+      sparse: true,
+      match: [PHONE_RE, 'Please provide a valid phone number'],
     },
     password: {
       type: String,
@@ -67,6 +83,7 @@ userSchema.methods.toSafeJSON = function toSafeJSON() {
     id: this._id.toString(),
     fullName: this.fullName,
     email: this.email,
+    phone: this.phone ?? null,
     role: this.role,
     authProvider: this.googleSub ? 'google' : 'local',
     createdAt: this.createdAt,

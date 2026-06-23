@@ -4,6 +4,7 @@ function FormField({
   error,
   icon,
   id,
+  inputMode,
   label,
   name = id,
   onChange,
@@ -30,6 +31,7 @@ function FormField({
           id={id}
           name={name}
           type={type}
+          inputMode={inputMode}
           autoComplete={autoComplete}
           placeholder={placeholder}
           value={value}

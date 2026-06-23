@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react'
-import { Navigate, useLocation } from 'react-router-dom'
+import { Link, Navigate, useLocation, useNavigate } from 'react-router-dom'
 import { AnimatePresence, motion } from 'framer-motion'
+import { ArrowLeft } from 'lucide-react'
 import { AUTH_MODES } from './auth.constants'
 import { getPasswordStrength } from './auth.utils'
 import { validateLogin, validateRegister } from './auth.validation'
@@ -14,17 +15,30 @@ import './AuthPage.css'
 const initialForm = {
   fullName: '',
   email: '',
+  phone: '',
+  identifier: '',
   password: '',
 }
 
 const EMPTY_ERRORS = {}
 
-function AuthPage() {
-  const { isAuthenticated, isLoading } = useAuth()
-  const location = useLocation()
-  const nextPath = location.state?.next || '/'
+const modeFromPath = (pathname) =>
+  pathname === '/register' ? AUTH_MODES.REGISTER : AUTH_MODES.LOGIN
 
-  const [mode, setMode] = useState(AUTH_MODES.LOGIN)
+function AuthPage() {
+  const { isAuthenticated, isLoading, login, loginWithGoogle, register } =
+    useAuth()
+  const location = useLocation()
+  const navigate = useNavigate()
+  const nextPath = location.state?.next || '/home'
+
+  // Mode is derived from the URL — no separate state needed. Clicking a tab
+  // navigates between /login and /register and the form re-renders for that
+  // mode. Visiting either URL directly (e.g. from the landing page) lands on
+  // the correct screen.
+  const mode = modeFromPath(location.pathname)
+  const isRegister = mode === AUTH_MODES.REGISTER
+
   const [showPassword, setShowPassword] = useState(false)
   const [form, setForm] = useState(initialForm)
   const [errors, setErrors] = useState(EMPTY_ERRORS)
@@ -32,9 +46,6 @@ function AuthPage() {
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [isGoogleLoading, setIsGoogleLoading] = useState(false)
 
-  const { login, loginWithGoogle, register } = useAuth()
-
-  const isRegister = mode === AUTH_MODES.REGISTER
   const strength = useMemo(
     () => getPasswordStrength(form.password),
     [form.password],
@@ -75,10 +86,13 @@ function AuthPage() {
 
   const switchMode = (nextMode) => {
     if (nextMode === mode) return
-    setMode(nextMode)
+    const target = nextMode === AUTH_MODES.REGISTER ? '/register' : '/login'
+    // Reset transient UI on the next render (derives from URL change).
+    setForm(initialForm)
     setErrors(EMPTY_ERRORS)
     setServerError(null)
     setShowPassword(false)
+    navigate(target, { replace: true })
   }
 
   const handleLogin = async (event) => {
@@ -92,8 +106,11 @@ function AuthPage() {
     setServerError(null)
     setIsSubmitting(true)
     try {
+      const identifier = form.identifier.trim()
       await login({
-        email: form.email.trim().toLowerCase(),
+        identifier: identifier.includes('@')
+          ? identifier.toLowerCase()
+          : identifier,
         password: form.password,
       })
       setForm(initialForm)
@@ -118,6 +135,7 @@ function AuthPage() {
       await register({
         fullName: form.fullName.trim(),
         email: form.email.trim().toLowerCase(),
+        phone: form.phone.trim(),
         password: form.password,
       })
       setForm(initialForm)
@@ -218,6 +236,11 @@ function AuthPage() {
             )}
           </AnimatePresence>
         </motion.section>
+
+        <Link to="/" className="auth-back-home">
+          <ArrowLeft size={14} />
+          Back to home
+        </Link>
       </main>
     </div>
   )

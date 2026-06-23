@@ -6,7 +6,7 @@ import AuthBrand from '../features/auth/components/AuthBrand'
 import './AppShell.css'
 
 const NAV_LINKS = [
-  { to: '/', label: 'Home', end: true },
+  { to: '/home', label: 'Home', end: true },
   { to: '/tournaments', label: 'Tournaments' },
   { to: '/analytics', label: 'Analytics' },
 ]

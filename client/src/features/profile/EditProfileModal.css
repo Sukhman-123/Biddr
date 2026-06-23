@@ -107,6 +107,23 @@
   align-items: center;
 }
 
+.profile-edit-input-icon {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.profile-edit-input-icon svg {
+  position: absolute;
+  left: 12px;
+  color: var(--muted);
+  pointer-events: none;
+}
+
+.profile-edit-input-icon input {
+  padding-left: 36px;
+}
+
 .profile-edit-password input {
   flex: 1;
   padding-right: 40px;

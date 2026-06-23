@@ -13,11 +13,12 @@ const wrapError = (error, fallback) => {
   return wrapped
 }
 
-export async function registerRequest({ fullName, email, password }) {
+export async function registerRequest({ fullName, email, phone, password }) {
   try {
     const { data } = await api.post('/auth/register', {
       fullName,
       email,
+      phone,
       password,
     })
     if (data?.token) tokenStorage.set(data.token)
@@ -27,13 +28,13 @@ export async function registerRequest({ fullName, email, password }) {
   }
 }
 
-export async function loginRequest({ email, password }) {
+export async function loginRequest({ identifier, password }) {
   try {
-    const { data } = await api.post('/auth/login', { email, password })
+    const { data } = await api.post('/auth/login', { identifier, password })
     if (data?.token) tokenStorage.set(data.token)
     return data
   } catch (error) {
-    throw wrapError(error, 'Invalid email or password')
+    throw wrapError(error, 'Invalid email/phone or password')
   }
 }
 

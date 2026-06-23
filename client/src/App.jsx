@@ -6,6 +6,7 @@ import TournamentsPage from './features/tournaments/TournamentsPage'
 import TournamentLobbyPage from './features/tournaments/TournamentLobbyPage'
 import CreateTournamentPage from './features/tournaments/CreateTournamentPage'
 import UserProfilePage from './features/profile/UserProfilePage'
+import LandingPage from './features/landing/LandingPage'
 import AppShell from './components/AppShell'
 
 function Shell({ children }) {
@@ -15,17 +16,17 @@ function Shell({ children }) {
 function App() {
   return (
     <Routes>
+      <Route path="/" element={<LandingPage />} />
       <Route path="/login" element={<AuthPage />} />
       <Route path="/register" element={<AuthPage />} />
-      <Route path="/" element={<AuthGate><Shell><HomePage /></Shell></AuthGate>} />
+      <Route path="/home" element={<AuthGate><Shell><HomePage /></Shell></AuthGate>} />
       <Route path="/tournaments" element={<AuthGate><Shell><TournamentsPage /></Shell></AuthGate>} />
       <Route path="/tournaments/new" element={<AuthGate><Shell><CreateTournamentPage /></Shell></AuthGate>} />
       <Route path="/tournaments/:id" element={<AuthGate><Shell><TournamentLobbyPage /></Shell></AuthGate>} />
       <Route path="/profile" element={<AuthGate><Shell><UserProfilePage /></Shell></AuthGate>} />
-      <Route path="/profile" element={<AuthGate><Shell><UserProfilePage /></Shell></AuthGate>} />
       <Route path="/squad" element={<AuthGate><Shell><ComingSoon label="Squad" /></Shell></AuthGate>} />
       <Route path="/analytics" element={<AuthGate><Shell><ComingSoon label="Analytics" /></Shell></AuthGate>} />
-      <Route path="*" element={<AuthGate><Shell><HomePage /></Shell></AuthGate>} />
+      <Route path="*" element={<LandingPage />} />
     </Routes>
   )
 }

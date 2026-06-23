@@ -1,0 +1,131 @@
+.landing-stage {
+  position: relative;
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  background: var(--bg, #0a0d16);
+  overflow: hidden;
+}
+
+.landing-header {
+  position: relative;
+  z-index: 1;
+  padding: 18px 28px;
+}
+
+.landing-brand {
+  display: inline-flex;
+  text-decoration: none;
+  color: inherit;
+}
+
+.landing-main {
+  position: relative;
+  z-index: 1;
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+}
+
+.landing-hero {
+  max-width: 640px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 18px;
+}
+
+.landing-eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border-radius: 999px;
+  border: 1px solid rgba(245, 185, 74, 0.3);
+  background: rgba(245, 185, 74, 0.08);
+  color: var(--gold, #f5b94a);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+}
+
+.landing-title {
+  margin: 0;
+  font-size: clamp(36px, 6vw, 64px);
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  line-height: 1.05;
+  color: var(--ink-strong, #fff);
+}
+
+.landing-title-accent {
+  color: var(--gold, #f5b94a);
+}
+
+.landing-subtitle {
+  margin: 0;
+  max-width: 520px;
+  font-size: 16px;
+  line-height: 1.6;
+  color: var(--muted, rgba(255, 255, 255, 0.6));
+}
+
+.landing-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 14px;
+  border-radius: 999px;
+  border: 1px solid var(--border, rgba(255, 255, 255, 0.1));
+  background: rgba(255, 255, 255, 0.04);
+  color: var(--muted, rgba(255, 255, 255, 0.65));
+  font-size: 12px;
+}
+
+.landing-status-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--gold, #f5b94a);
+  box-shadow: 0 0 8px rgba(245, 185, 74, 0.5);
+}
+
+.landing-actions {
+  display: inline-flex;
+  gap: 10px;
+  margin-top: 4px;
+}
+
+.landing-btn {
+  padding: 12px 22px;
+  border-radius: 999px;
+  font-size: 14px;
+  font-weight: 700;
+  text-decoration: none;
+  cursor: pointer;
+  transition: filter 0.15s ease, border-color 0.15s ease;
+}
+
+.landing-btn--primary {
+  background: var(--gold, #f5b94a);
+  color: #1a1206;
+}
+
+.landing-btn--primary:hover {
+  filter: brightness(1.05);
+}
+
+.landing-btn--secondary {
+  background: transparent;
+  border: 1px solid var(--border-strong, rgba(255, 255, 255, 0.2));
+  color: var(--ink-strong, #fff);
+}
+
+.landing-btn--secondary:hover {
+  border-color: var(--gold, #f5b94a);
+  color: var(--gold, #f5b94a);
+}

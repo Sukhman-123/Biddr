@@ -42,19 +42,22 @@ async function clearDatabase() {
   }
 }
 
-async function registerUser(app, { fullName, email, password }) {
+let phoneCounter = 0
+
+async function registerUser(app, { fullName, email, password, phone }) {
   const request = require('supertest')
+  const finalPhone = phone ?? `+1555${String(phoneCounter++).padStart(7, '0')}`
   const res = await request(app)
     .post('/api/auth/register')
-    .send({ fullName, email, password })
+    .send({ fullName, email, password, phone: finalPhone })
   return res
 }
 
-async function loginUser(app, { email, password }) {
+async function loginUser(app, { email, identifier, password }) {
   const request = require('supertest')
   const res = await request(app)
     .post('/api/auth/login')
-    .send({ email, password })
+    .send({ identifier: identifier ?? email, password })
   return res
 }
 

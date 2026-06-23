@@ -1,4 +1,4 @@
-import { Mail, Sparkles } from 'lucide-react'
+import { Mail, Phone, Sparkles } from 'lucide-react'
 import { motion } from 'framer-motion'
 import { AUTH_MODES } from '../auth.constants'
 import AuthLegal from './AuthLegal'
@@ -32,7 +32,7 @@ function RegisterForm({
           id="fullName"
           label="Full Name"
           autoComplete="name"
-          placeholder="Rohit Sharma"
+          placeholder="Virat Kohli"
           value={form.fullName}
           onChange={onChange('fullName')}
           error={errors.fullName}
@@ -50,6 +50,20 @@ function RegisterForm({
           onChange={onChange('email')}
           error={errors.email}
           icon={<Mail size={18} />}
+        />
+      </div>
+
+      <div className="field-row">
+        <FormField
+          id="phone"
+          label="Phone"
+          autoComplete="tel"
+          inputMode="tel"
+          placeholder="+91 98765 43210"
+          value={form.phone}
+          onChange={onChange('phone')}
+          error={errors.phone}
+          icon={<Phone size={18} />}
         />
       </div>
 

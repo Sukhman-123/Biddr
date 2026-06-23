@@ -27,14 +27,13 @@ function LoginForm({
 
       <div className="field-row">
         <FormField
-          id="email"
-          label="Email"
-          type="email"
-          autoComplete="email"
-          placeholder="you@example.com"
-          value={form.email}
-          onChange={onChange('email')}
-          error={errors.email}
+          id="identifier"
+          label="Email or phone"
+          autoComplete="username"
+          placeholder="you@example.com or +91 98765 43210"
+          value={form.identifier}
+          onChange={onChange('identifier')}
+          error={errors.identifier}
           icon={<Mail size={18} />}
         />
       </div>
