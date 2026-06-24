@@ -16,18 +16,24 @@
   # Tell Netlify the build is a Vite SPA so it auto-sets
   # the right asset caching headers.
   NPM_FLAGS    = "--no-audit --no-fund"
-
-# ===========================================================
-# SPA fallback — every unknown route serves index.html so
-# client-side routing (React Router) works on refresh.
-# ===========================================================
-[[redirects]]
-  from   = "/*"
-  to     = "/index.html"
-  status = 200
+  # Netlify's secrets scanner treats any VITE_* env var as a secret
+  # by default, but VITE_API_BASE and VITE_SOCKET_BASE are just
+  # URL paths (e.g. "/api" and "") — not secrets. Tell the scanner
+  # to ignore them so the build doesn't fail on a false positive.
+  # The actual Google OAuth client ID is also safe to commit (it's
+  # designed to be public).
+  SECRETS_SCAN_OMIT_KEYS = "VITE_API_BASE,VITE_SOCKET_BASE,VITE_GOOGLE_CLIENT_ID"
 
 # ===========================================================
 # API + Socket.IO proxy → Render backend.
+# ===========================================================
+# IMPORTANT: these rules MUST be listed BEFORE the SPA fallback
+# below. Netlify's redirect engine matches the FIRST rule that
+# fits, so if `/*` is on top it catches /api/* and returns
+# index.html (the symptom is /api/auth/register returning HTML
+# instead of JSON). The `force = true` flag tells Netlify to
+# override any other matching rule.
+#
 # This means the browser always talks to the same origin
 # (biddr.netlify.app), so we sidestep CORS entirely and
 # Socket.IO's WebSocket upgrade just works.
@@ -46,6 +52,16 @@
   to   = "https://biddr-34vz.onrender.com/socket.io/:splat"
   status = 200
   force = true
+
+# ===========================================================
+# SPA fallback — listed LAST so the API rules above win.
+# Every unknown route serves index.html so client-side
+# routing (React Router) works on refresh.
+# ===========================================================
+[[redirects]]
+  from   = "/*"
+  to     = "/index.html"
+  status = 200
 
 # ===========================================================
 # Security headers — light touch, just a few sane defaults.
