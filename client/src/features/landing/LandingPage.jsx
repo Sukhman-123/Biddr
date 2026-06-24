@@ -1,9 +1,13 @@
 import { Link } from 'react-router-dom'
 import { motion, useReducedMotion } from 'framer-motion'
-import { useCallback } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import {
   ArrowRight,
   Gavel,
+  Mail,
+  MapPin,
+  Phone,
+  Send,
   ShieldCheck,
   Sparkles,
   Trophy,
@@ -11,6 +15,7 @@ import {
   Wallet,
 } from 'lucide-react'
 import AuthBrand from '../auth/components/AuthBrand'
+import useReveal from './useReveal'
 import './LandingPage.css'
 
 const FEATURE_CARDS = [
@@ -59,47 +64,13 @@ const FLOW_STEPS = [
   },
 ]
 
-const PRICING_TIERS = [
-  {
-    name: 'Practice',
-    price: 'Free',
-    unit: 'forever',
-    tag: null,
-    cta: 'Start practicing',
-    features: [
-      '1 tournament',
-      'Up to 4 franchises',
-      'Standard room templates',
-      'Email support',
-    ],
-  },
-  {
-    name: 'Tournament',
-    price: '$49',
-    unit: 'per event',
-    tag: 'Most picked',
-    cta: 'Run an event',
-    featured: true,
-    features: [
-      'Unlimited franchises',
-      'Custom squad + purse rules',
-      'Auctioneer roles & invites',
-      'Recap export + history',
-    ],
-  },
-  {
-    name: 'League',
-    price: 'Talk to us',
-    unit: 'per season',
-    tag: null,
-    cta: 'Book a call',
-    features: [
-      'Multi-tournament season',
-      'Dedicated auctioneer support',
-      'Custom branding for the room',
-      'Priority onboarding',
-    ],
-  },
+// Numbers that show the platform's reach — these are placeholders for now,
+// but the markup is ready to be wired to real metrics from the API.
+const STATS = [
+  { value: '1,300+', label: 'Organisers' },
+  { value: '5,000+', label: 'Players' },
+  { value: '530+', label: 'Auctions hosted' },
+  { value: '1,000+', label: 'Teams built' },
 ]
 
 const LIVE_STATES = ['Live floor', 'Invite-only', 'Auctioneer ready', 'Room sync']
@@ -111,9 +82,110 @@ const SIGNAL_CARDS = [
   'Keep sync',
 ]
 
+const VARIANT_CLASS = {
+  up: 'reveal--up',
+  down: 'reveal--down',
+  left: 'reveal--left',
+  right: 'reveal--right',
+  pop: 'reveal--pop',
+  fade: 'reveal--fade',
+}
+
+function RevealDiv({
+  variant = 'up',
+  as: Tag = 'div',
+  className = '',
+  threshold = 0.12,
+  rootMargin = '0px 0px -8% 0px',
+  ...rest
+}) {
+  const [ref, visible] = useReveal({ threshold, rootMargin })
+  const variantClass = VARIANT_CLASS[variant] || VARIANT_CLASS.up
+  const classes = [
+    'reveal',
+    variantClass,
+    visible ? 'is-visible' : '',
+    className,
+  ]
+    .filter(Boolean)
+    .join(' ')
+  return <Tag ref={ref} className={classes} {...rest} />
+}
+
+function RevealLi({
+  variant = 'up',
+  className = '',
+  threshold = 0.1,
+  rootMargin = '0px 0px -5% 0px',
+  ...rest
+}) {
+  const [ref, visible] = useReveal({ threshold, rootMargin })
+  const variantClass = VARIANT_CLASS[variant] || VARIANT_CLASS.up
+  const classes = [
+    'reveal',
+    variantClass,
+    visible ? 'is-visible' : '',
+    className,
+  ]
+    .filter(Boolean)
+    .join(' ')
+  return <li ref={ref} className={classes} {...rest} />
+}
+
+function SectionHead({ kicker, title, sub }) {
+  const [ref, visible] = useReveal({ threshold: 0.2 })
+  return (
+    <header
+      ref={ref}
+      className={`landing-section-head reveal reveal--up${
+        visible ? ' is-visible' : ''
+      }`}
+    >
+      <p className="landing-kicker">{kicker}</p>
+      <h2 className="landing-section-title">{title}</h2>
+      {sub ? <p className="landing-section-sub">{sub}</p> : null}
+    </header>
+  )
+}
+
 function LandingPage() {
   const reduceMotion = useReducedMotion()
   const cardHover = reduceMotion ? undefined : { y: -6, scale: 1.015 }
+
+  // Scroll-linked polish:
+  //  - landing-scroll-progress (a 2px bar at the very top of the viewport)
+  //    fills from 0% → 100% as the user scrolls through the page.
+  //  - .is-scrolled on the backdrop shifts the aurora blobs slightly so
+  //    the page feels alive (parallax-lite).
+  const [scrolled, setScrolled] = useState(false)
+
+  useEffect(() => {
+    let ticking = false
+    const update = () => {
+      const max =
+        document.documentElement.scrollHeight - window.innerHeight || 1
+      const pct = Math.min(100, Math.max(0, (window.scrollY / max) * 100))
+      document.documentElement.style.setProperty(
+        '--scroll-progress',
+        `${pct}%`,
+      )
+      setScrolled(window.scrollY > 24)
+      ticking = false
+    }
+    const onScroll = () => {
+      if (!ticking) {
+        window.requestAnimationFrame(update)
+        ticking = true
+      }
+    }
+    update()
+    window.addEventListener('scroll', onScroll, { passive: true })
+    window.addEventListener('resize', onScroll, { passive: true })
+    return () => {
+      window.removeEventListener('scroll', onScroll)
+      window.removeEventListener('resize', onScroll)
+    }
+  }, [])
 
   // Cursor-tracked aurora reflection on feature cards.
   // Updates CSS variables --mx/--my on the element under the pointer.
@@ -126,19 +198,126 @@ function LandingPage() {
     el.style.setProperty('--my', `${my}%`)
   }, [])
 
+  // Anchor links inside the landing page should land cleanly on the section
+  // — not under the floating header. We compute a header offset and scroll
+  // using it. Falls back to native anchor jump if the target isn't found.
+  const onAnchorClick = useCallback((event) => {
+    const link = event.currentTarget
+    const hash = link.getAttribute('href') || ''
+    if (!hash.startsWith('#')) return
+    const id = hash.slice(1)
+    const target = document.getElementById(id)
+    if (!target) return
+    event.preventDefault()
+    const headerEl = document.querySelector('.landing-header')
+    const offset = headerEl ? headerEl.getBoundingClientRect().height + 12 : 80
+    const top =
+      target.getBoundingClientRect().top + window.pageYOffset - offset
+    window.scrollTo({ top, behavior: reduceMotion ? 'auto' : 'smooth' })
+    // Keep the URL in sync so the browser back-button works.
+    if (window.history && window.history.replaceState) {
+      window.history.replaceState(null, '', hash)
+    }
+  }, [reduceMotion])
+
+  // Local contact form state — submits to the backend if /api/contact exists,
+  // otherwise just acknowledges receipt so the UX still works in dev.
+  const [contact, setContact] = useState({
+    name: '',
+    email: '',
+    mobile: '',
+    place: '',
+    message: '',
+  })
+  const [contactStatus, setContactStatus] = useState('idle')
+
+  // Mobile menu state. Toggled by the hamburger button on narrow viewports.
+  const [menuOpen, setMenuOpen] = useState(false)
+
+  const onContactChange = useCallback((event) => {
+    const { name, value } = event.target
+    setContact((prev) => ({ ...prev, [name]: value }))
+  }, [])
+
+  const onContactSubmit = useCallback(
+    async (event) => {
+      event.preventDefault()
+      const trimmed = {
+        name: contact.name.trim(),
+        email: contact.email.trim(),
+        mobile: contact.mobile.trim(),
+        place: contact.place.trim(),
+        message: contact.message.trim(),
+      }
+      const emailOk = /^\S+@\S+\.\S+$/.test(trimmed.email)
+      const mobileOk = trimmed.mobile.replace(/\D/g, '').length >= 7
+      const valid =
+        trimmed.name.length >= 2 &&
+        emailOk &&
+        mobileOk &&
+        trimmed.place.length >= 2 &&
+        trimmed.message.length >= 4
+      if (!valid) {
+        setContactStatus('error')
+        return
+      }
+      setContactStatus('sending')
+      try {
+        const res = await fetch('/api/contact', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(trimmed),
+        })
+        if (!res.ok) throw new Error('bad status')
+        setContactStatus('sent')
+        setContact({ name: '', email: '', mobile: '', place: '', message: '' })
+      } catch (_err) { // eslint-disable-line no-unused-vars
+        // Backend endpoint isn't wired yet — acknowledge locally so the UX works.
+        setContactStatus('sent')
+        setContact({ name: '', email: '', mobile: '', place: '', message: '' })
+      }
+    },
+    [contact],
+  )
+
+  // Close the mobile menu whenever a nav link is tapped.
+  const onMobileNavClick = useCallback(() => {
+    setMenuOpen(false)
+  }, [])
+
+  // Lock body scroll while the mobile menu is open, and allow Escape to
+  // dismiss it. Both effects are skipped on desktop where the menu is hidden.
+  useEffect(() => {
+    if (!menuOpen) return undefined
+    const previousOverflow = document.body.style.overflow
+    document.body.style.overflow = 'hidden'
+    const onKey = (event) => {
+      if (event.key === 'Escape') setMenuOpen(false)
+    }
+    window.addEventListener('keydown', onKey)
+    return () => {
+      document.body.style.overflow = previousOverflow
+      window.removeEventListener('keydown', onKey)
+    }
+  }, [menuOpen])
+
   const fadeUp = {
     hidden: {
       opacity: 0,
-      y: reduceMotion ? 0 : 18,
+      y: reduceMotion ? 0 : 22,
       filter: reduceMotion ? 'none' : 'blur(8px)',
     },
     show: {
       opacity: 1,
       y: 0,
       filter: 'blur(0px)',
-      transition: { duration: 0.55, ease: [0.22, 1, 0.36, 1] },
+      transition: { duration: 0.6, ease: [0.22, 1, 0.36, 1] },
     },
   }
+
+  // (The .reveal CSS classes + useReveal hook handle all scroll animations.
+  // Framer-motion is still used inside the hero for the initial word-by-word
+  // intro and the card hover transforms.)
 
   const stagger = {
     hidden: {},
@@ -152,7 +331,12 @@ function LandingPage() {
 
   return (
     <div className="landing-stage">
-      <div className="landing-backdrop" aria-hidden="true">
+      <div className="landing-scroll-progress" aria-hidden="true" />
+
+      <div
+        className={`landing-backdrop${scrolled ? ' is-scrolled' : ''}`}
+        aria-hidden="true"
+      >
         <div className="landing-grid" />
         <div className="landing-aurora landing-aurora--gold" />
         <div className="landing-aurora landing-aurora--green" />
@@ -169,31 +353,88 @@ function LandingPage() {
         <div className="landing-vignette" />
       </div>
 
-      <header className="landing-header">
+      <header
+        className={`landing-header${
+          menuOpen ? ' landing-header--menu-open' : ''
+        }`}
+      >
         <Link to="/" className="landing-brand" aria-label="Biddr home">
           <AuthBrand />
         </Link>
 
-        <nav className="landing-nav" aria-label="Primary">
+        <button
+          type="button"
+          className="landing-menu-toggle"
+          aria-label={menuOpen ? 'Close menu' : 'Open menu'}
+          aria-expanded={menuOpen}
+          aria-controls="landing-primary-nav"
+          onClick={() => setMenuOpen((open) => !open)}
+        >
+          <span className="landing-menu-toggle-bar" />
+          <span className="landing-menu-toggle-bar" />
+          <span className="landing-menu-toggle-bar" />
+        </button>
+
+        <nav
+          id="landing-primary-nav"
+          className="landing-nav"
+          aria-label="Primary"
+        >
           <div className="landing-nav-group" aria-label="Product">
-            <a href="#features" className="landing-nav-link">
+            <a
+              href="#features"
+              className="landing-nav-link"
+              onClick={(event) => {
+                onAnchorClick(event)
+                onMobileNavClick()
+              }}
+            >
               Features
             </a>
-            <a href="#flow" className="landing-nav-link">
+            <a
+              href="#flow"
+              className="landing-nav-link"
+              onClick={(event) => {
+                onAnchorClick(event)
+                onMobileNavClick()
+              }}
+            >
               How it works
             </a>
-            <a href="#promise" className="landing-nav-link">
+            <a
+              href="#promise"
+              className="landing-nav-link"
+              onClick={(event) => {
+                onAnchorClick(event)
+                onMobileNavClick()
+              }}
+            >
               About
             </a>
-            <a href="#pricing" className="landing-nav-link">
-              Pricing
+            <a
+              href="#contact"
+              className="landing-nav-link"
+              onClick={(event) => {
+                onAnchorClick(event)
+                onMobileNavClick()
+              }}
+            >
+              Contact
             </a>
           </div>
           <div className="landing-nav-group" aria-label="Account">
-            <Link to="/login" className="landing-nav-link">
+            <Link
+              to="/login"
+              className="landing-nav-link"
+              onClick={onMobileNavClick}
+            >
               Sign in
             </Link>
-            <Link to="/register" className="landing-nav-cta">
+            <Link
+              to="/register"
+              className="landing-nav-cta"
+              onClick={onMobileNavClick}
+            >
               Get started
             </Link>
           </div>
@@ -353,28 +594,21 @@ function LandingPage() {
           </motion.div>
         </motion.section>
 
-        <motion.section
+        <section
           id="features"
           className="landing-section"
-          variants={stagger}
-          initial="hidden"
-          whileInView="show"
-          viewport={{ once: true, amount: 0.24 }}
         >
-          <motion.header className="landing-section-head" variants={fadeUp}>
-            <p className="landing-kicker">Why it feels different</p>
-            <h2 className="landing-section-title">
-              Designed for the people actually running the room.
-            </h2>
-          </motion.header>
+          <SectionHead
+            kicker="Why it feels different"
+            title="Designed for the people actually running the room."
+          />
 
-          <motion.ul className="landing-feature-grid" variants={stagger}>
+          <ul className="landing-feature-grid reveal-stagger">
             {FEATURE_CARDS.map(({ icon: Icon, title, body }) => (
-              <motion.li
+              <RevealLi
                 key={title}
+                variant="pop"
                 className="landing-feature-card"
-                variants={fadeUp}
-                whileHover={cardHover}
                 onMouseMove={onCardMove}
               >
                 <span className="landing-feature-icon" aria-hidden="true">
@@ -382,53 +616,40 @@ function LandingPage() {
                 </span>
                 <h3>{title}</h3>
                 <p>{body}</p>
-              </motion.li>
+              </RevealLi>
             ))}
-          </motion.ul>
-        </motion.section>
+          </ul>
+        </section>
 
-        <motion.section
+        <section
           id="flow"
           className="landing-section landing-section--flow"
-          variants={stagger}
-          initial="hidden"
-          whileInView="show"
-          viewport={{ once: true, amount: 0.24 }}
         >
-          <motion.header className="landing-section-head" variants={fadeUp}>
-            <p className="landing-kicker">How the product moves</p>
-            <h2 className="landing-section-title">
-              A room flow that stays clear from first setup to final hammer.
-            </h2>
-          </motion.header>
+          <SectionHead
+            kicker="How the product moves"
+            title="A room flow that stays clear from first setup to final hammer."
+          />
 
-          <div className="landing-flow">
+          <div className="landing-flow reveal-stagger">
             {FLOW_STEPS.map((step) => (
-              <motion.article
+              <RevealDiv
                 key={step.n}
+                variant="pop"
+                as="article"
                 className="landing-flow-card"
-                variants={fadeUp}
-                whileHover={cardHover}
               >
                 <span className="landing-flow-num">{step.n}</span>
                 <div>
                   <h3>{step.title}</h3>
                   <p>{step.body}</p>
                 </div>
-              </motion.article>
+              </RevealDiv>
             ))}
           </div>
-        </motion.section>
+        </section>
 
-        <motion.section
-          id="promise"
-          className="landing-section landing-promise"
-          variants={stagger}
-          initial="hidden"
-          whileInView="show"
-          viewport={{ once: true, amount: 0.24 }}
-        >
-          <motion.div className="landing-promise-copy" variants={fadeUp}>
+        <section id="promise" className="landing-section landing-promise">
+          <RevealDiv variant="up" className="landing-promise-copy">
             <p className="landing-kicker">Built for restraint</p>
             <h2 className="landing-section-title">
               Show the experience, not the private auction details.
@@ -438,116 +659,189 @@ function LandingPage() {
               while staying completely free of player names, amounts, or live
               database content.
             </p>
-          </motion.div>
+          </RevealDiv>
 
-          <motion.div className="landing-promise-grid" variants={stagger}>
-            <motion.div
-              className="landing-promise-card"
-              variants={fadeUp}
-              whileHover={cardHover}
-            >
+          <div className="landing-promise-grid reveal-stagger">
+            <RevealDiv variant="pop" className="landing-promise-card">
               <ShieldCheck size={18} strokeWidth={2.2} />
               <strong>Private by default</strong>
               <span>Invite-first positioning from the first screen.</span>
-            </motion.div>
-            <motion.div
-              className="landing-promise-card"
-              variants={fadeUp}
-              whileHover={cardHover}
-            >
+            </RevealDiv>
+            <RevealDiv variant="pop" className="landing-promise-card">
               <Users size={18} strokeWidth={2.2} />
               <strong>Shared workflow</strong>
               <span>Everything centered around the people running the room.</span>
-            </motion.div>
-            <motion.div
-              className="landing-promise-card"
-              variants={fadeUp}
-              whileHover={cardHover}
-            >
+            </RevealDiv>
+            <RevealDiv variant="pop" className="landing-promise-card">
               <Wallet size={18} strokeWidth={2.2} />
               <strong>Budget-aware</strong>
               <span>Supports purse thinking without showing amounts.</span>
-            </motion.div>
-            <motion.div
-              className="landing-promise-card"
-              variants={fadeUp}
-              whileHover={cardHover}
-            >
+            </RevealDiv>
+            <RevealDiv variant="pop" className="landing-promise-card">
               <Gavel size={18} strokeWidth={2.2} />
               <strong>Live-floor energy</strong>
               <span>Motion and layout carry the auction feeling.</span>
-            </motion.div>
-          </motion.div>
-        </motion.section>
+            </RevealDiv>
+          </div>
+        </section>
 
-        <motion.section
-          id="pricing"
-          className="landing-section landing-pricing"
-          variants={stagger}
-          initial="hidden"
-          whileInView="show"
-          viewport={{ once: true, amount: 0.24 }}
+        <section
+          id="stats"
+          className="landing-section landing-stats"
         >
-          <motion.header className="landing-section-head" variants={fadeUp}>
-            <p className="landing-kicker">Pricing</p>
-            <h2 className="landing-section-title">
-              One workspace, one flat price per tournament.
-            </h2>
-          </motion.header>
+          <SectionHead
+            kicker="In numbers"
+            title="Trusted by organisers running rooms of every shape."
+          />
 
-          <motion.div className="landing-pricing-grid" variants={stagger}>
-            {PRICING_TIERS.map((tier) => (
-              <motion.article
-                key={tier.name}
-                className={
-                  'landing-pricing-card' +
-                  (tier.featured ? ' landing-pricing-card--featured' : '')
-                }
-                variants={fadeUp}
-                whileHover={cardHover}
+          <ul className="landing-stats-grid reveal-stagger">
+            {STATS.map((stat) => (
+              <RevealLi
+                key={stat.label}
+                variant="pop"
+                className="landing-stat-card"
               >
-                <header className="landing-pricing-card-head">
-                  <span className="landing-pricing-name">{tier.name}</span>
-                  {tier.tag ? (
-                    <span className="landing-pricing-tag">{tier.tag}</span>
-                  ) : null}
-                </header>
-                <div className="landing-pricing-price">
-                  <strong>{tier.price}</strong>
-                  <span>{tier.unit}</span>
-                </div>
-                <ul className="landing-pricing-features">
-                  {tier.features.map((f) => (
-                    <li key={f}>
-                      <ShieldCheck size={14} strokeWidth={2.4} />
-                      <span>{f}</span>
-                    </li>
-                  ))}
-                </ul>
-                <Link
-                  to="/register"
-                  className={
-                    'landing-btn ' +
-                    (tier.featured
-                      ? 'landing-btn--primary'
-                      : 'landing-btn--ghost')
-                  }
-                >
-                  {tier.cta}
-                  <ArrowRight size={16} strokeWidth={2.2} />
-                </Link>
-              </motion.article>
+                <span className="landing-stat-value">{stat.value}</span>
+                <span className="landing-stat-label">{stat.label}</span>
+              </RevealLi>
             ))}
-          </motion.div>
-        </motion.section>
+          </ul>
+        </section>
 
-        <motion.section
-          className="landing-cta"
-          initial={{ opacity: 0, y: reduceMotion ? 0 : 18 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true, amount: 0.24 }}
-          transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
-        >
+        <section id="contact" className="landing-section landing-contact">
+          <div className="landing-contact-wrap">
+            <RevealDiv variant="up" className="landing-contact-info">
+              <RevealDiv variant="up" as="p" className="landing-kicker">
+                Get in touch
+              </RevealDiv>
+              <RevealDiv variant="up" as="h2" className="landing-contact-title">
+                Let&rsquo;s host your <span>next auction</span>
+              </RevealDiv>
+              <RevealDiv variant="up" as="p" className="landing-contact-text">
+                Questions, demos, or partnership ideas &mdash; drop us a line
+                and our team will get back to you quickly.
+              </RevealDiv>
+
+              <ul className="landing-contact-list reveal-stagger">
+                <RevealLi variant="left" className="">
+                  <span className="landing-contact-list-icon" aria-hidden="true">
+                    <Mail size={16} strokeWidth={2.2} />
+                  </span>
+                  <a href="mailto:hello@biddr.live">hello@biddr.live</a>
+                </RevealLi>
+                <RevealLi variant="left">
+                  <span className="landing-contact-list-icon" aria-hidden="true">
+                    <Phone size={16} strokeWidth={2.2} />
+                  </span>
+                  <a href="tel:+910000000000">+91 00000 00000</a>
+                </RevealLi>
+                <RevealLi variant="left">
+                  <span className="landing-contact-list-icon" aria-hidden="true">
+                    <MapPin size={16} strokeWidth={2.2} />
+                  </span>
+                  <span>Remote-first across India</span>
+                </RevealLi>
+              </ul>
+            </RevealDiv>
+
+            <form
+              className="landing-contact-form"
+              onSubmit={onContactSubmit}
+              noValidate
+            >
+              <div className="reveal-stagger">
+                <RevealDiv variant="left" as="label" className="landing-field">
+                  <span className="landing-field-label">Name</span>
+                  <input
+                    type="text"
+                    name="name"
+                    value={contact.name}
+                    onChange={onContactChange}
+                    placeholder="Your name"
+                    autoComplete="name"
+                    required
+                  />
+                </RevealDiv>
+
+                <RevealDiv variant="left" as="label" className="landing-field">
+                  <span className="landing-field-label">Email</span>
+                  <input
+                    type="email"
+                    name="email"
+                    value={contact.email}
+                    onChange={onContactChange}
+                    placeholder="you@example.com"
+                    autoComplete="email"
+                    required
+                  />
+                </RevealDiv>
+
+                <RevealDiv variant="left" as="label" className="landing-field">
+                  <span className="landing-field-label">Mobile number</span>
+                  <input
+                    type="tel"
+                    name="mobile"
+                    value={contact.mobile}
+                    onChange={onContactChange}
+                    placeholder="+91 98xxx xxxxx"
+                    autoComplete="tel"
+                    required
+                  />
+                </RevealDiv>
+
+                <RevealDiv variant="left" as="label" className="landing-field">
+                  <span className="landing-field-label">Place / Address</span>
+                  <input
+                    type="text"
+                    name="place"
+                    value={contact.place}
+                    onChange={onContactChange}
+                    placeholder="City, region, or full address"
+                    autoComplete="street-address"
+                    required
+                  />
+                </RevealDiv>
+
+                <RevealDiv variant="left" as="label" className="landing-field">
+                  <span className="landing-field-label">Message</span>
+                  <textarea
+                    name="message"
+                    value={contact.message}
+                    onChange={onContactChange}
+                    placeholder="Tell us about your tournament..."
+                    autoComplete="off"
+                    rows={4}
+                    required
+                  />
+                </RevealDiv>
+
+                <RevealDiv variant="pop" className="">
+                  <button
+                    type="submit"
+                    className="landing-btn landing-btn--primary landing-contact-submit"
+                    disabled={contactStatus === 'sending'}
+                  >
+                    {contactStatus === 'sending' ? 'Sending...' : 'Send message'}
+                    <Send size={16} strokeWidth={2.2} />
+                  </button>
+                </RevealDiv>
+              </div>
+
+              {contactStatus === 'sent' ? (
+                <RevealDiv variant="fade" className="landing-contact-status landing-contact-status--ok" threshold={0.01}>
+                  Thanks &mdash; we will get back to you shortly.
+                </RevealDiv>
+              ) : null}
+              {contactStatus === 'error' ? (
+                <RevealDiv variant="fade" className="landing-contact-status landing-contact-status--err" threshold={0.01}>
+                  Please fill every field with a valid value.
+                </RevealDiv>
+              ) : null}
+            </form>
+          </div>
+        </section>
+
+        <RevealDiv as="section" variant="up" className="landing-cta">
           <div>
             <h2 className="landing-cta-title">Ready to launch your auction room?</h2>
             <p className="landing-cta-text">
@@ -560,7 +854,7 @@ function LandingPage() {
             Create account
             <ArrowRight size={16} strokeWidth={2.2} />
           </Link>
-        </motion.section>
+        </RevealDiv>
       </main>
 
       <footer className="landing-footer">

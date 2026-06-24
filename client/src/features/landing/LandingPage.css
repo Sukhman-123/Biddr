@@ -1,7 +1,6 @@
 .landing-stage {
   position: relative;
   min-height: 100svh;
-  overflow: hidden;
   background:
     radial-gradient(ellipse at 20% 0%, rgba(245, 185, 74, 0.14) 0%, transparent 34%),
     radial-gradient(ellipse at 82% 12%, rgba(43, 217, 122, 0.1) 0%, transparent 32%),
@@ -10,8 +9,10 @@
   isolation: isolate;
 }
 
+/* The backdrop clips itself so aurora blobs / conic borders don't leak,
+   but the stage stays scrollable so anchor links work. */
 .landing-backdrop {
-  position: absolute;
+  position: fixed;
   inset: 0;
   z-index: 0;
   pointer-events: none;
@@ -248,9 +249,9 @@
 }
 
 .landing-header {
-  width: min(1200px, calc(100% - 48px));
+  width: min(1280px, calc(100% - 48px));
   margin: 0 auto;
-  padding: 24px 0 10px;
+  padding: 24px 0 12px;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -405,24 +406,25 @@
 }
 
 .landing-main {
-  width: min(1200px, calc(100% - 48px));
+  width: min(1280px, calc(100% - 48px));
   margin: 0 auto;
-  padding: 22px 0 48px;
+  padding: 22px 0 80px;
 }
 
 .landing-hero {
   display: grid;
   grid-template-columns: minmax(0, 1.05fr) minmax(360px, 0.95fr);
-  gap: 34px;
+  gap: 48px;
   align-items: center;
-  min-height: calc(100svh - 180px);
+  min-height: calc(100svh - 160px);
+  padding: 20px 0 40px;
 }
 
 .landing-hero-copy {
   display: flex;
   flex-direction: column;
-  gap: 18px;
-  max-width: 680px;
+  gap: 20px;
+  max-width: 720px;
 }
 
 .landing-eyebrow,
@@ -452,17 +454,17 @@
 
 .landing-title {
   margin: 0;
-  font-size: 68px;
-  line-height: 0.98;
-  letter-spacing: 0;
+  font-size: clamp(48px, 5.6vw, 84px);
+  line-height: 1.0;
+  letter-spacing: -0.015em;
   color: var(--heading);
-  max-width: 12ch;
+  max-width: 14ch;
 }
 
 .landing-subtitle {
   margin: 0;
   max-width: 620px;
-  font-size: 18px;
+  font-size: clamp(15px, 1.2vw, 19px);
   line-height: 1.6;
   color: var(--text-soft);
 }
@@ -845,7 +847,6 @@
   z-index: 1;
   display: inline-flex;
   width: fit-content;
-  margin-bottom: 20px;
   color: #ffd56b;
   font-size: 11px;
   font-weight: 800;
@@ -985,15 +986,17 @@
 }
 
 .landing-section {
-  padding-top: 72px;
+  padding-top: 80px;
+  padding-bottom: 24px;
+  scroll-margin-top: 84px;
 }
 
 .landing-section-head {
   display: flex;
   flex-direction: column;
-  gap: 12px;
-  margin-bottom: 28px;
-  max-width: 780px;
+  gap: 14px;
+  margin-bottom: 44px;
+  max-width: 880px;
 }
 
 .landing-kicker {
@@ -1006,9 +1009,9 @@
 .landing-section-title {
   margin: 0;
   color: var(--heading);
-  font-size: 42px;
-  line-height: 1.05;
-  letter-spacing: 0;
+  font-size: clamp(28px, 3.4vw, 46px);
+  line-height: 1.1;
+  letter-spacing: -0.01em;
 }
 
 .landing-feature-grid {
@@ -1290,9 +1293,9 @@
 }
 
 .landing-footer {
-  width: min(1200px, calc(100% - 48px));
+  width: min(1280px, calc(100% - 48px));
   margin: 0 auto;
-  padding: 24px 0 34px;
+  padding: 32px 0 40px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -1407,12 +1410,20 @@
 
   .landing-header {
     padding-top: 18px;
-    align-items: flex-start;
-    flex-direction: column;
+    align-items: center;
+    flex-direction: row;
+    flex-wrap: wrap;
+    gap: 12px;
   }
 
   .landing-nav {
     width: 100%;
+    justify-content: flex-start;
+    gap: 10px;
+  }
+
+  .landing-nav-group {
+    flex-wrap: wrap;
     justify-content: flex-start;
   }
 
@@ -1422,7 +1433,7 @@
   }
 
   .landing-title {
-    font-size: 48px;
+    font-size: clamp(36px, 9vw, 56px);
   }
 
   .landing-subtitle {
@@ -1430,11 +1441,8 @@
   }
 
   .landing-section {
-    padding-top: 58px;
-  }
-
-  .landing-section-title {
-    font-size: 30px;
+    padding-top: 64px;
+    padding-bottom: 20px;
   }
 
   .landing-feature-grid,
@@ -1463,7 +1471,8 @@
 
 @media (max-width: 520px) {
   .landing-title {
-    font-size: 40px;
+    font-size: 38px;
+    line-height: 1.08;
   }
 
   .landing-console-shell {
@@ -1484,149 +1493,678 @@
   }
 }
 
-/* ============================================================
-   Pricing section
-   ============================================================ */
-.landing-pricing {
-  width: min(1200px, calc(100% - 48px));
-  margin: 0 auto;
-  padding: 80px 0 60px;
+/* Ultra-narrow phones (320–420px): keep everything usable, no overflow. */
+@media (max-width: 420px) {
+  .landing-header,
+  .landing-main,
+  .landing-footer {
+    width: calc(100% - 24px);
+  }
+
+  .landing-nav-group {
+    padding: 3px;
+    gap: 2px;
+  }
+
+  .landing-nav-group .landing-nav-link,
+  .landing-nav-group .landing-nav-cta {
+    padding: 0 10px;
+    min-height: 32px;
+    font-size: 12px;
+  }
+
+  .landing-title {
+    font-size: 32px;
+    line-height: 1.06;
+  }
+
+  .landing-subtitle {
+    font-size: 14px;
+  }
+
+  .landing-section {
+    padding-top: 48px;
+  }
+
+  .landing-cta {
+    padding: 20px 16px;
+  }
+
+  .landing-console-shell {
+    padding: 10px;
+    border-radius: 18px;
+  }
+
+  .landing-console-track,
+  .landing-lottie-scene {
+    display: none;
+  }
+
+  .landing-console-card {
+    padding: 14px 12px;
+  }
+
+  .landing-console-card-title {
+    font-size: 18px;
+  }
+
+  .landing-feature-card,
+  .landing-flow-card,
+  .landing-promise-card {
+    padding: 16px;
+  }
+
+  .landing-btn {
+    padding: 0 18px;
+    min-height: 44px;
+    font-size: 14px;
+  }
 }
 
-.landing-pricing-grid {
+/* ============================================================
+   Stats section
+   ============================================================ */
+.landing-stats {
+  width: min(1200px, calc(100% - 48px));
+  margin: 0 auto;
+  padding: 60px 0 40px;
+  scroll-margin-top: 80px;
+}
+
+.landing-section-head--center {
+  text-align: center;
+  align-items: center;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.landing-stats-grid {
+  list-style: none;
+  margin: 0;
+  padding: 0;
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 18px;
   margin-top: 40px;
 }
 
-.landing-pricing-card {
+.landing-stat-card {
   position: relative;
   overflow: hidden;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 20px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 18px;
   background:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.05) 0%, rgba(255, 255, 255, 0.02) 100%);
+    linear-gradient(180deg, rgba(255, 255, 255, 0.04) 0%, rgba(255, 255, 255, 0.01) 100%);
   padding: 28px 24px;
   display: flex;
   flex-direction: column;
-  gap: 18px;
-  backdrop-filter: blur(20px) saturate(150%);
-  -webkit-backdrop-filter: blur(20px) saturate(150%);
-  box-shadow:
-    0 1px 0 rgba(255, 255, 255, 0.06) inset,
-    0 -18px 36px rgba(0, 0, 0, 0.18) inset;
+  align-items: center;
+  text-align: center;
+  gap: 10px;
+  backdrop-filter: blur(14px) saturate(140%);
+  -webkit-backdrop-filter: blur(14px) saturate(140%);
   transition:
     transform 280ms cubic-bezier(0.22, 1, 0.36, 1),
     border-color 240ms ease,
     box-shadow 240ms ease;
 }
 
-.landing-pricing-card--featured {
-  border-color: rgba(245, 185, 74, 0.55);
-  background:
-    radial-gradient(ellipse at top, rgba(245, 185, 74, 0.12) 0%, transparent 60%),
-    linear-gradient(180deg, rgba(255, 255, 255, 0.06) 0%, rgba(255, 255, 255, 0.02) 100%);
-  box-shadow:
-    0 1px 0 rgba(255, 255, 255, 0.1) inset,
-    0 -18px 36px rgba(0, 0, 0, 0.18) inset,
-    0 0 0 1px rgba(245, 185, 74, 0.18);
+.landing-stat-card::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(
+    circle at 50% 0%,
+    rgba(245, 185, 74, 0.12) 0%,
+    transparent 60%
+  );
+  opacity: 0;
+  transition: opacity 280ms ease;
+  pointer-events: none;
 }
 
-.landing-pricing-card:hover {
-  transform: translateY(-4px);
-  box-shadow:
-    0 1px 0 rgba(255, 255, 255, 0.08) inset,
-    0 32px 60px rgba(0, 0, 0, 0.45),
-    0 0 0 1px rgba(245, 185, 74, 0.32);
+.landing-stat-card:hover {
+  transform: translateY(-3px);
+  border-color: rgba(245, 185, 74, 0.3);
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.35);
 }
 
-.landing-pricing-card-head {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
+.landing-stat-card:hover::after {
+  opacity: 1;
 }
 
-.landing-pricing-name {
-  font-size: 16px;
-  font-weight: 700;
-  color: var(--heading);
-}
-
-.landing-pricing-tag {
-  font-size: 10px;
+.landing-stat-value {
+  font-size: clamp(32px, 4vw, 48px);
   font-weight: 800;
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-  padding: 4px 10px;
-  border-radius: 999px;
-  background: linear-gradient(180deg, #ffe08a 0%, #f5b94a 100%);
-  color: #1a1206;
-}
-
-.landing-pricing-price {
-  display: flex;
-  align-items: baseline;
-  gap: 8px;
-}
-
-.landing-pricing-price strong {
-  font-size: 36px;
-  font-weight: 800;
-  color: var(--heading);
-  line-height: 1;
+  color: #f5b94a;
   letter-spacing: -0.02em;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
 }
 
-.landing-pricing-price span {
-  font-size: 13px;
+.landing-stat-label {
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
   color: var(--text-soft);
 }
 
-.landing-pricing-features {
-  list-style: none;
+@media (max-width: 880px) {
+  .landing-stats-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 420px) {
+  .landing-stat-card {
+    padding: 22px 16px;
+  }
+}
+
+/* ============================================================
+   Contact section (2-column: info + form)
+   ============================================================ */
+.landing-contact {
+  width: min(1200px, calc(100% - 48px));
+  margin: 0 auto;
+  padding: 80px 0 80px;
+  scroll-margin-top: 80px;
+}
+
+.landing-contact-wrap {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.05fr);
+  gap: 48px;
+  align-items: start;
+  position: relative;
+  border-radius: 28px;
+  padding: 48px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background:
+    radial-gradient(ellipse at top left, rgba(245, 185, 74, 0.06) 0%, transparent 60%),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.035) 0%, rgba(255, 255, 255, 0.01) 100%);
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.06) inset,
+    0 30px 80px rgba(0, 0, 0, 0.35);
+}
+
+.landing-contact-info {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  padding: 8px 4px;
+}
+
+.landing-contact-title {
   margin: 0;
+  font-size: clamp(32px, 4vw, 48px);
+  line-height: 1.05;
+  letter-spacing: -0.01em;
+  color: var(--heading);
+  font-weight: 800;
+}
+
+.landing-contact-title span {
+  color: #f5b94a;
+}
+
+.landing-contact-text {
+  margin: 0;
+  color: var(--text-soft);
+  font-size: 15px;
+  line-height: 1.6;
+  max-width: 440px;
+}
+
+.landing-contact-list {
+  list-style: none;
+  margin: 16px 0 0;
   padding: 0;
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 12px;
 }
 
-.landing-pricing-features li {
+.landing-contact-list li {
   display: flex;
   align-items: center;
-  gap: 10px;
-  color: var(--text-soft);
+  gap: 12px;
   font-size: 14px;
-  line-height: 1.4;
+  color: var(--text);
 }
 
-.landing-pricing-features li svg {
-  color: #2bd97a;
+.landing-contact-list li a {
+  color: var(--text);
+  text-decoration: none;
+  border-bottom: 1px dashed transparent;
+  transition:
+    color 160ms ease,
+    border-color 160ms ease;
+}
+
+.landing-contact-list li a:hover {
+  color: #f5b94a;
+  border-bottom-color: rgba(245, 185, 74, 0.4);
+}
+
+.landing-contact-list-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  color: #f5b94a;
   flex-shrink: 0;
 }
 
-.landing-pricing-card .landing-btn {
-  margin-top: auto;
+.landing-contact-form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 28px;
+  border-radius: 20px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.04) 0%, rgba(255, 255, 255, 0.015) 100%);
+  backdrop-filter: blur(18px) saturate(150%);
+  -webkit-backdrop-filter: blur(18px) saturate(150%);
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.06) inset,
+    0 0 60px rgba(245, 185, 74, 0.06),
+    0 -18px 36px rgba(0, 0, 0, 0.18) inset;
+}
+
+.landing-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.landing-field-label {
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-soft);
+}
+
+.landing-field input,
+.landing-field textarea {
   width: 100%;
-  justify-content: center;
+  min-height: 48px;
+  padding: 12px 14px;
+  font-size: 15px;
+  font-family: inherit;
+  color: var(--heading);
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
+  outline: none;
+  resize: vertical;
+  transition:
+    border-color 160ms ease,
+    background-color 160ms ease,
+    box-shadow 160ms ease;
 }
 
-.landing-btn--ghost {
-  background: rgba(255, 255, 255, 0.04);
-  color: var(--text);
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  box-shadow: none;
+.landing-field textarea {
+  min-height: 120px;
+  line-height: 1.5;
 }
 
-.landing-btn--ghost:hover {
-  background: rgba(255, 255, 255, 0.08);
-  border-color: rgba(255, 255, 255, 0.2);
-  transform: translateY(-1px);
+.landing-field input::placeholder,
+.landing-field textarea::placeholder {
+  color: rgba(255, 255, 255, 0.32);
 }
 
-@media (max-width: 980px) {
-  .landing-pricing-grid {
+.landing-field input:hover,
+.landing-field textarea:hover {
+  border-color: rgba(255, 255, 255, 0.18);
+  background: rgba(255, 255, 255, 0.045);
+}
+
+.landing-field input:focus,
+.landing-field textarea:focus {
+  border-color: rgba(245, 185, 74, 0.55);
+  background: rgba(255, 255, 255, 0.05);
+  box-shadow: 0 0 0 4px rgba(245, 185, 74, 0.12);
+}
+
+.landing-contact-submit {
+  margin-top: 6px;
+  align-self: flex-start;
+  min-width: 180px;
+}
+
+.landing-contact-status {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.landing-contact-status--ok {
+  color: #2bd97a;
+}
+
+.landing-contact-status--err {
+  color: #ff7a7a;
+}
+
+@media (max-width: 880px) {
+  .landing-contact-wrap {
     grid-template-columns: 1fr;
+    gap: 32px;
+    padding: 28px 22px;
   }
+}
+
+@media (max-width: 720px) {
+  .landing-contact-wrap {
+    padding: 22px 18px;
+  }
+  .landing-contact-form {
+    padding: 22px 18px;
+  }
+  .landing-contact-submit {
+    width: 100%;
+  }
+}
+
+@media (max-width: 420px) {
+  .landing-contact-wrap {
+    padding: 18px 14px;
+    border-radius: 22px;
+  }
+  .landing-contact-form {
+    padding: 18px 14px;
+    border-radius: 18px;
+  }
+  .landing-field input,
+  .landing-field textarea {
+    min-height: 44px;
+    font-size: 14px;
+  }
+  .landing-contact-submit {
+    min-width: 0;
+  }
+}
+
+/* ============================================================
+   Mobile hamburger menu
+   - 3-line toggle is hidden on desktop
+   - On <=720px the nav becomes a slide-down panel anchored
+     under the header; hero sits below the expanded panel.
+   ============================================================ */
+.landing-menu-toggle {
+  display: none;
+  appearance: none;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  cursor: pointer;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  gap: 4px;
+  transition:
+    background-color 160ms ease,
+    border-color 160ms ease;
+}
+
+.landing-menu-toggle:hover {
+  background: rgba(255, 255, 255, 0.06);
+  border-color: rgba(255, 255, 255, 0.18);
+}
+
+.landing-menu-toggle-bar {
+  display: block;
+  width: 20px;
+  height: 2px;
+  background: #f5b94a;
+  border-radius: 2px;
+  transition:
+    transform 220ms cubic-bezier(0.22, 1, 0.36, 1),
+    opacity 180ms ease;
+  transform-origin: center;
+}
+
+/* Animate the bars into an X when the menu is open. */
+.landing-header--menu-open .landing-menu-toggle-bar:nth-child(1) {
+  transform: translateY(6px) rotate(45deg);
+}
+.landing-header--menu-open .landing-menu-toggle-bar:nth-child(2) {
+  opacity: 0;
+}
+.landing-header--menu-open .landing-menu-toggle-bar:nth-child(3) {
+  transform: translateY(-6px) rotate(-45deg);
+}
+
+@media (max-width: 720px) {
+  .landing-header {
+    align-items: center;
+    flex-direction: row;
+    flex-wrap: nowrap;
+    gap: 12px;
+    position: relative;
+  }
+
+  /* Brand keeps its space; hamburger sits at the right. */
+  .landing-brand {
+    flex: 1 1 auto;
+    min-width: 0;
+  }
+
+  .landing-menu-toggle {
+    display: inline-flex;
+    flex: 0 0 auto;
+  }
+
+  /* Hide the inline nav by default on mobile. The .--menu-open modifier
+     turns it into a slide-down panel that pushes the hero below. */
+  .landing-nav {
+    display: none;
+    width: 100%;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 10px;
+    margin: 12px 0 0;
+    padding: 16px;
+    border-radius: 18px;
+    background:
+      linear-gradient(180deg, rgba(255, 255, 255, 0.04) 0%, rgba(255, 255, 255, 0.01) 100%);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    backdrop-filter: blur(18px) saturate(150%);
+    -webkit-backdrop-filter: blur(18px) saturate(150%);
+    box-shadow: 0 24px 60px rgba(0, 0, 0, 0.45);
+    /* Header uses flex-wrap:nowrap, so the nav ends up on its own line
+       and animates in from above. */
+    order: 99;
+    animation: nav-slide-down 240ms cubic-bezier(0.22, 1, 0.36, 1);
+  }
+
+  .landing-header--menu-open .landing-nav {
+    display: flex;
+  }
+
+  .landing-nav-group {
+    width: 100%;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 2px;
+    padding: 4px;
+    background: transparent;
+    border: 0;
+  }
+
+  .landing-nav-group .landing-nav-link,
+  .landing-nav-group .landing-nav-cta {
+    width: 100%;
+    justify-content: flex-start;
+    min-height: 42px;
+    padding: 0 14px;
+  }
+
+  .landing-nav-group + .landing-nav-group {
+    border-top: 1px solid rgba(255, 255, 255, 0.06);
+    padding-top: 8px;
+    margin-top: 6px;
+  }
+}
+
+@keyframes nav-slide-down {
+  from {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* ============================================================
+   Scroll-reveal system
+   - All elements start hidden via the .reveal class.
+   - The useReveal hook adds .is-visible when the element scrolls
+     into view, triggering the keyframe animation.
+   - The animation respects prefers-reduced-motion automatically
+     (the hook skips observing and just sets visible=true).
+   ============================================================ */
+@keyframes reveal-up {
+  from {
+    opacity: 0;
+    transform: translate3d(0, 24px, 0);
+    filter: blur(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translate3d(0, 0, 0);
+    filter: blur(0);
+  }
+}
+
+@keyframes reveal-down {
+  from {
+    opacity: 0;
+    transform: translate3d(0, -20px, 0);
+  }
+  to {
+    opacity: 1;
+    transform: translate3d(0, 0, 0);
+  }
+}
+
+@keyframes reveal-left {
+  from {
+    opacity: 0;
+    transform: translate3d(-32px, 0, 0);
+  }
+  to {
+    opacity: 1;
+    transform: translate3d(0, 0, 0);
+  }
+}
+
+@keyframes reveal-right {
+  from {
+    opacity: 0;
+    transform: translate3d(32px, 0, 0);
+  }
+  to {
+    opacity: 1;
+    transform: translate3d(0, 0, 0);
+  }
+}
+
+@keyframes reveal-pop {
+  from {
+    opacity: 0;
+    transform: scale(0.92) translate3d(0, 18px, 0);
+    filter: blur(6px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translate3d(0, 0, 0);
+    filter: blur(0);
+  }
+}
+
+@keyframes reveal-fade {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+/* Default hidden state — anything with the .reveal class
+   starts invisible until .is-visible is added. */
+.reveal {
+  opacity: 0;
+  will-change: transform, opacity, filter;
+}
+
+.reveal--up.is-visible       { animation: reveal-up 700ms cubic-bezier(0.22, 1, 0.36, 1) both; }
+.reveal--down.is-visible     { animation: reveal-down 700ms cubic-bezier(0.22, 1, 0.36, 1) both; }
+.reveal--left.is-visible     { animation: reveal-left 700ms cubic-bezier(0.22, 1, 0.36, 1) both; }
+.reveal--right.is-visible    { animation: reveal-right 700ms cubic-bezier(0.22, 1, 0.36, 1) both; }
+.reveal--pop.is-visible      { animation: reveal-pop 720ms cubic-bezier(0.22, 1, 0.36, 1) both; }
+.reveal--fade.is-visible     { animation: reveal-fade 800ms ease-out both; }
+
+/* Stagger helpers — apply a delay so groups of elements cascade in. */
+.reveal-stagger > .reveal:nth-child(1) { animation-delay: 0ms; }
+.reveal-stagger > .reveal:nth-child(2) { animation-delay: 80ms; }
+.reveal-stagger > .reveal:nth-child(3) { animation-delay: 160ms; }
+.reveal-stagger > .reveal:nth-child(4) { animation-delay: 240ms; }
+.reveal-stagger > .reveal:nth-child(5) { animation-delay: 320ms; }
+.reveal-stagger > .reveal:nth-child(6) { animation-delay: 400ms; }
+.reveal-stagger > .reveal:nth-child(7) { animation-delay: 480ms; }
+.reveal-stagger > .reveal:nth-child(8) { animation-delay: 560ms; }
+
+/* Stagger-only delay helper — keep the element visible by default,
+   then animate in when its parent .is-visible fires. */
+.reveal-child {
+  opacity: 0;
+  will-change: transform, opacity, filter;
+}
+.reveal-stagger > .reveal-child:nth-child(1) { animation-delay: 0ms; }
+.reveal-stagger > .reveal-child:nth-child(2) { animation-delay: 80ms; }
+.reveal-stagger > .reveal-child:nth-child(3) { animation-delay: 160ms; }
+.reveal-stagger > .reveal-child:nth-child(4) { animation-delay: 240ms; }
+.reveal-stagger > .reveal-child:nth-child(5) { animation-delay: 320ms; }
+.reveal-stagger > .reveal-child:nth-child(6) { animation-delay: 400ms; }
+.reveal-stagger > .reveal-child:nth-child(7) { animation-delay: 480ms; }
+.reveal-stagger > .reveal-child:nth-child(8) { animation-delay: 560ms; }
+
+.reveal-child--up.is-visible    { animation: reveal-up 600ms cubic-bezier(0.22, 1, 0.36, 1) both; }
+.reveal-child--left.is-visible  { animation: reveal-left 600ms cubic-bezier(0.22, 1, 0.36, 1) both; }
+.reveal-child--pop.is-visible   { animation: reveal-pop 620ms cubic-bezier(0.22, 1, 0.36, 1) both; }
+.reveal-child--fade.is-visible  { animation: reveal-fade 700ms ease-out both; }
+
+/* ============================================================
+   Parallax (subtle) — aurora blobs scroll at a different rate
+   ============================================================ */
+.landing-backdrop.is-scrolled .landing-aurora-blob--a { transform: translate3d(0, 4vw, 0) scale(1.05); }
+.landing-backdrop.is-scrolled .landing-aurora-blob--b { transform: translate3d(0, -3vw, 0) scale(1.02); }
+.landing-backdrop.is-scrolled .landing-aurora-blob--c { transform: translate3d(0, 5vw, 0) scale(1.04); }
+.landing-backdrop.is-scrolled .landing-aurora-blob--d { transform: translate3d(0, -4vw, 0) scale(1.03); }
+
+/* ============================================================
+   Scroll progress bar — fixed to the very top of the page,
+   fills as you scroll down. Tells the user motion is happening.
+   ============================================================ */
+.landing-scroll-progress {
+  position: fixed;
+  top: 0;
+  left: 0;
+  height: 2px;
+  width: var(--scroll-progress, 0%);
+  background: linear-gradient(90deg, #f5b94a 0%, #2bd97a 100%);
+  z-index: 60;
+  transition: width 80ms linear;
+  pointer-events: none;
 }
