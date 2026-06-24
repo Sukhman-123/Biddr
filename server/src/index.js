@@ -54,6 +54,31 @@ app.get('/api/health', (req, res) => {
   });
 });
 
+// Debug endpoint — reports which environment variables are loaded,
+// with the value redacted for secrets. Safe to expose because nothing
+// sensitive is returned; only the *presence* (and length) of each key.
+// This makes "did the dashboard env vars actually get to the process?"
+// a one-curl question during incidents.
+app.get('/api/_debug/env', (req, res) => {
+  const probe = (key) => {
+    const v = process.env[key]
+    if (v === undefined) return { present: false }
+    return { present: true, length: v.length }
+  }
+  res.json({
+    node: process.version,
+    env: process.env.NODE_ENV || '(unset)',
+    keys: {
+      MONGO_URI: probe('MONGO_URI'),
+      JWT_SECRET: probe('JWT_SECRET'),
+      GOOGLE_CLIENT_ID: probe('GOOGLE_CLIENT_ID'),
+      CLIENT_URL: probe('CLIENT_URL'),
+      PORT: probe('PORT'),
+    },
+    allowedOrigins: ALLOWED_ORIGINS,
+  });
+});
+
 app.use('/api/auth', authRoutes);
 app.use('/api/tournaments', tournamentRoutes);
 app.use('/api/lots', lotRoutes);
@@ -76,6 +101,21 @@ registerSocketHandlers(io);
 
 const startServer = async () => {
   try {
+    // Print a one-line summary of which env vars are present before we
+    // try to connect. This makes misconfiguration obvious in the Render
+    // log without exposing secret values.
+    console.log(
+      '[boot] env check:',
+      Object.entries({
+        MONGO_URI: !!process.env.MONGO_URI,
+        JWT_SECRET: !!process.env.JWT_SECRET,
+        GOOGLE_CLIENT_ID: !!process.env.GOOGLE_CLIENT_ID,
+        CLIENT_URL: process.env.CLIENT_URL || '(unset)',
+      })
+        .map(([k, v]) => `${k}=${v === true ? 'yes' : v}`)
+        .join(' '),
+    );
+
     await connectDB();
 
     server.listen(PORT, () => {
@@ -86,6 +126,7 @@ const startServer = async () => {
     });
   } catch (error) {
     console.error('Failed to start Biddr API:', error.message);
+    if (error.stack) console.error(error.stack);
     process.exit(1);
   }
 };
