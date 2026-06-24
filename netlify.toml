@@ -28,21 +28,22 @@
 
 # ===========================================================
 # API + Socket.IO proxy → Render backend.
-# Replace biddr-api.onrender.com below with the URL Render
-# shows you once the Web Service is live (Environment →
-# "External URL"). This means the browser always talks to
-# the same origin (biddr.netlify.app), so we sidestep CORS
-# entirely and Socket.IO's WebSocket upgrade just works.
+# This means the browser always talks to the same origin
+# (biddr.netlify.app), so we sidestep CORS entirely and
+# Socket.IO's WebSocket upgrade just works.
+#
+# If you ever rename the Render service, update both `to`
+# values below and commit — Netlify will redeploy.
 # ===========================================================
 [[redirects]]
   from = "/api/*"
-  to   = "https://biddr-api.onrender.com/api/:splat"
+  to   = "https://biddr-34vz.onrender.com/api/:splat"
   status = 200
   force = true
 
 [[redirects]]
   from = "/socket.io/*"
-  to   = "https://biddr-api.onrender.com/socket.io/:splat"
+  to   = "https://biddr-34vz.onrender.com/socket.io/:splat"
   status = 200
   force = true
 
