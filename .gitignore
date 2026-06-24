@@ -2,11 +2,15 @@ node_modules/
 client/node_modules/
 server/node_modules/
 
+# Real env files (secrets) — never commit
 .env
-*.env
 server/config.env
 client/.env
 client/.env.*
+server/.env
+server/.env.*
+!server/config.env.example
+!client/.env.example
 
 dist/
 build/

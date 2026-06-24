@@ -1,0 +1,46 @@
+# ===========================================================
+# Render "Blueprint" for the Biddr backend.
+# Deploy: https://dashboard.render.com/ → New → Blueprint
+# → point at this repo. Render will create the Web Service
+# defined below. You still need to fill in the secret env
+# vars in the dashboard before the service is healthy.
+# ===========================================================
+
+services:
+  - type: web
+    name: biddr-api
+    runtime: node
+    plan: free
+    rootDir: server
+    # Render's default Node version is fine, but pinning it avoids
+    # surprise upgrades. Matches the engines.node field in
+    # server/package.json.
+    envVars:
+      - key: NODE_VERSION
+        value: 20.18.0
+      # Render sets PORT automatically on free web services,
+      # but we declare it here for clarity.
+      - key: PORT
+        value: 10000
+      # Secrets — render.yaml uses `generateValue: true` for any
+      # secret that should be created on first deploy. The others
+      # (sync: false) you'll set manually in the Render dashboard.
+      - key: JWT_SECRET
+        generateValue: true
+      - key: MONGO_URI
+        sync: false
+      - key: GOOGLE_CLIENT_ID
+        sync: false
+      - key: CLIENT_URL
+        sync: false
+    buildCommand: npm install
+    startCommand: npm start
+    healthCheckPath: /api/health
+    autoDeploy: true
+
+# NOTE about Render's free tier:
+# - The service spins down after 15 minutes of inactivity.
+#   First request after a sleep takes ~30–60s.
+# - To keep it warm, point a free cron service (e.g.
+#   cron-job.org or UptimeRobot) at https://biddr-api.onrender.com/api/health
+#   every 14 minutes.
