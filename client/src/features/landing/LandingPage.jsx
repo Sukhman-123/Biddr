@@ -59,6 +59,49 @@ const FLOW_STEPS = [
   },
 ]
 
+const PRICING_TIERS = [
+  {
+    name: 'Practice',
+    price: 'Free',
+    unit: 'forever',
+    tag: null,
+    cta: 'Start practicing',
+    features: [
+      '1 tournament',
+      'Up to 4 franchises',
+      'Standard room templates',
+      'Email support',
+    ],
+  },
+  {
+    name: 'Tournament',
+    price: '$49',
+    unit: 'per event',
+    tag: 'Most picked',
+    cta: 'Run an event',
+    featured: true,
+    features: [
+      'Unlimited franchises',
+      'Custom squad + purse rules',
+      'Auctioneer roles & invites',
+      'Recap export + history',
+    ],
+  },
+  {
+    name: 'League',
+    price: 'Talk to us',
+    unit: 'per season',
+    tag: null,
+    cta: 'Book a call',
+    features: [
+      'Multi-tournament season',
+      'Dedicated auctioneer support',
+      'Custom branding for the room',
+      'Priority onboarding',
+    ],
+  },
+]
+
 const LIVE_STATES = ['Live floor', 'Invite-only', 'Auctioneer ready', 'Room sync']
 
 const SIGNAL_CARDS = [
@@ -131,13 +174,29 @@ function LandingPage() {
           <AuthBrand />
         </Link>
 
-        <nav className="landing-nav" aria-label="Account">
-          <Link to="/login" className="landing-nav-link">
-            Sign in
-          </Link>
-          <Link to="/register" className="landing-nav-cta">
-            Get started
-          </Link>
+        <nav className="landing-nav" aria-label="Primary">
+          <div className="landing-nav-group" aria-label="Product">
+            <a href="#features" className="landing-nav-link">
+              Features
+            </a>
+            <a href="#flow" className="landing-nav-link">
+              How it works
+            </a>
+            <a href="#promise" className="landing-nav-link">
+              About
+            </a>
+            <a href="#pricing" className="landing-nav-link">
+              Pricing
+            </a>
+          </div>
+          <div className="landing-nav-group" aria-label="Account">
+            <Link to="/login" className="landing-nav-link">
+              Sign in
+            </Link>
+            <Link to="/register" className="landing-nav-cta">
+              Get started
+            </Link>
+          </div>
         </nav>
       </header>
 
@@ -295,6 +354,7 @@ function LandingPage() {
         </motion.section>
 
         <motion.section
+          id="features"
           className="landing-section"
           variants={stagger}
           initial="hidden"
@@ -328,6 +388,7 @@ function LandingPage() {
         </motion.section>
 
         <motion.section
+          id="flow"
           className="landing-section landing-section--flow"
           variants={stagger}
           initial="hidden"
@@ -360,6 +421,7 @@ function LandingPage() {
         </motion.section>
 
         <motion.section
+          id="promise"
           className="landing-section landing-promise"
           variants={stagger}
           initial="hidden"
@@ -415,6 +477,67 @@ function LandingPage() {
               <strong>Live-floor energy</strong>
               <span>Motion and layout carry the auction feeling.</span>
             </motion.div>
+          </motion.div>
+        </motion.section>
+
+        <motion.section
+          id="pricing"
+          className="landing-section landing-pricing"
+          variants={stagger}
+          initial="hidden"
+          whileInView="show"
+          viewport={{ once: true, amount: 0.24 }}
+        >
+          <motion.header className="landing-section-head" variants={fadeUp}>
+            <p className="landing-kicker">Pricing</p>
+            <h2 className="landing-section-title">
+              One workspace, one flat price per tournament.
+            </h2>
+          </motion.header>
+
+          <motion.div className="landing-pricing-grid" variants={stagger}>
+            {PRICING_TIERS.map((tier) => (
+              <motion.article
+                key={tier.name}
+                className={
+                  'landing-pricing-card' +
+                  (tier.featured ? ' landing-pricing-card--featured' : '')
+                }
+                variants={fadeUp}
+                whileHover={cardHover}
+              >
+                <header className="landing-pricing-card-head">
+                  <span className="landing-pricing-name">{tier.name}</span>
+                  {tier.tag ? (
+                    <span className="landing-pricing-tag">{tier.tag}</span>
+                  ) : null}
+                </header>
+                <div className="landing-pricing-price">
+                  <strong>{tier.price}</strong>
+                  <span>{tier.unit}</span>
+                </div>
+                <ul className="landing-pricing-features">
+                  {tier.features.map((f) => (
+                    <li key={f}>
+                      <ShieldCheck size={14} strokeWidth={2.4} />
+                      <span>{f}</span>
+                    </li>
+                  ))}
+                </ul>
+                <Link
+                  to="/register"
+                  className={
+                    'landing-btn ' +
+                    (tier.featured
+                      ? 'landing-btn--primary'
+                      : 'landing-btn--ghost')
+                  }
+                >
+                  {tier.cta}
+                  <ArrowRight size={16} strokeWidth={2.2} />
+                </Link>
+              </motion.article>
+            ))}
           </motion.div>
         </motion.section>
 
