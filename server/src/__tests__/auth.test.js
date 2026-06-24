@@ -333,3 +333,90 @@ describe('PATCH /api/auth/me', () => {
     expect(res.status).toBe(400)
   })
 })
+
+// ============================================================
+// Google OAuth (POST /api/auth/google)
+// ============================================================
+//
+// These tests stub out the real Google token verifier because we
+// can't reach Google's servers in CI / offline. The stub returns a
+// payload shaped like Google's, so the controller logic is exercised
+// end-to-end (validation, user creation, user lookup, token sign).
+
+jest.mock('../services/googleAuth', () => ({
+  verifyGoogleIdToken: jest.fn(),
+}))
+
+const { verifyGoogleIdToken } = require('../services/googleAuth')
+
+const googlePayload = (overrides = {}) => ({
+  sub: 'google-sub-123',
+  email: 'googleuser@example.com',
+  email_verified: true,
+  name: 'Google User',
+  ...overrides,
+})
+
+describe('POST /api/auth/google', () => {
+  beforeEach(() => {
+    verifyGoogleIdToken.mockReset()
+  })
+
+  it('rejects missing idToken', async () => {
+    const res = await request(app).post('/api/auth/google').send({})
+    expect(res.status).toBe(400)
+    expect(res.body.message).toMatch(/idToken is required/)
+  })
+
+  it('creates a new user from a verified Google token (no password)', async () => {
+    verifyGoogleIdToken.mockResolvedValueOnce(googlePayload())
+
+    const res = await request(app)
+      .post('/api/auth/google')
+      .send({ idToken: 'fake-token' })
+
+    expect(res.status).toBe(200)
+    expect(res.body.token).toBeTruthy()
+    expect(res.body.user.email).toBe('googleuser@example.com')
+    expect(res.body.user.authProvider).toBe('google')
+    // The signup didn't send a phone — Google users can add one later.
+    expect(res.body.user.phone).toBeFalsy()
+  })
+
+  it('signs in an existing Google user without duplicating', async () => {
+    // First call creates the user.
+    verifyGoogleIdToken.mockResolvedValueOnce(googlePayload())
+    const first = await request(app)
+      .post('/api/auth/google')
+      .send({ idToken: 'fake-token-1' })
+    expect(first.status).toBe(200)
+
+    // Second call with the same sub should find the existing user.
+    verifyGoogleIdToken.mockResolvedValueOnce(googlePayload())
+    const second = await request(app)
+      .post('/api/auth/google')
+      .send({ idToken: 'fake-token-2' })
+    expect(second.status).toBe(200)
+    expect(second.body.user.email).toBe('googleuser@example.com')
+  })
+
+  it('rejects when the Google token is invalid', async () => {
+    verifyGoogleIdToken.mockRejectedValueOnce(new Error('bad token'))
+    const res = await request(app)
+      .post('/api/auth/google')
+      .send({ idToken: 'bad-token' })
+    expect(res.status).toBe(401)
+    expect(res.body.message).toMatch(/Google sign-in failed/)
+  })
+
+  it('rejects unverified Google emails on first signup', async () => {
+    verifyGoogleIdToken.mockResolvedValueOnce(
+      googlePayload({ email_verified: false }),
+    )
+    const res = await request(app)
+      .post('/api/auth/google')
+      .send({ idToken: 'fake-token' })
+    expect(res.status).toBe(403)
+    expect(res.body.message).toMatch(/not verified/)
+  })
+})

@@ -38,7 +38,14 @@ const userSchema = new mongoose.Schema(
     },
     password: {
       type: String,
-      required: [true, 'Password is required'],
+      // Password is required for local sign-up, but optional when the
+      // user comes in via Google OAuth (we just need googleSub). The
+      // controller layer should set this to a hashed random string
+      // for Google users so comparePassword() still works if the user
+      // later links a local password via the profile editor.
+      required: function passwordRequired() {
+        return !this.googleSub;
+      },
       minlength: [8, 'Password must be at least 8 characters'],
       select: false,
     },
@@ -75,6 +82,9 @@ userSchema.pre('save', async function hashPassword(next) {
 });
 
 userSchema.methods.comparePassword = function comparePassword(candidate) {
+  // Google-only users never set a password; treat any local login
+  // attempt as a mismatch instead of crashing on bcrypt.
+  if (!this.password) return false;
   return bcrypt.compare(candidate, this.password);
 };
 
