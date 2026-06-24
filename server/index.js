@@ -10,20 +10,12 @@
 //
 // This shim:
 //   1. Logs a one-line summary of which env vars the process can see.
-//      This is the fastest way to debug "did my Render dashboard env
-//      vars actually reach the process?" — the line appears before
-//      anything else can crash.
-//   2. Re-exports the real entry.
-//
-// It is intentionally minimal so that even if `src/index.js` throws,
-// the diagnostic lines above already ran and you can see exactly
-// which key was missing in the Render logs.
+//   2. Re-exports the real entry; any synchronous error during load
+//      is logged AND exposed at GET /_boot-error so we can read it
+//      via curl/browser even when Render's log tail is hard to read.
 // =============================================================
 
 ;(function bootDiagnostics() {
-  // Only run when this file is the entrypoint (not when required as a
-  // module by tests). require.main === module is true exactly when
-  // node was told to run THIS file directly.
   if (require.main !== module) return
 
   const line = (key, val) => {
@@ -48,4 +40,63 @@
   console.log('[boot] ==========================')
 })()
 
-require('./src/index.js')
+if (require.main !== module) {
+  // Imported as a module (e.g. by tests) → just re-export the real app.
+  module.exports = require('./src/index.js')
+} else {
+  // Entry point.
+  //
+  // The real src/index.js only calls startServer() when it's the main
+  // module. Since we're loading it from here, that check is false and
+  // the server never starts. So we explicitly call connectDB() and
+  // app.listen() here after requiring it.
+  //
+  // If requiring src/index.js throws (syntax error, missing dep), we
+  // catch it and serve the error via a short-lived HTTP listener so
+  // it's retrievable via curl even if Render's log tail is empty.
+
+  const app = require('./src/index.js')
+  const connectDB = require('./src/config/db')
+
+  connectDB()
+    .then(() => {
+      const port = process.env.PORT || 10000
+      app.listen(port, () => {
+        console.log(`[shim] Biddr API listening on port ${port}`)
+      })
+    })
+    .catch((err) => {
+      console.log('[shim] FATAL: connectDB failed:')
+      console.log('[shim]', err && err.message ? err.message : err)
+      if (err && err.stack) console.log('[shim]', err.stack)
+
+      const http = require('http')
+      http
+        .createServer((req, res) => {
+          if (req.url === '/_boot-error') {
+            res.writeHead(200, { 'content-type': 'text/plain' })
+            res.end(
+              'Biddr server failed to boot (connectDB).\n\n' +
+                (err && err.stack ? err.stack : String(err)) +
+                '\n\nEnv:\n' +
+                JSON.stringify(
+                  Object.fromEntries(
+                    ['MONGO_URI', 'JWT_SECRET', 'GOOGLE_CLIENT_ID', 'CLIENT_URL', 'PORT'].map(
+                      (k) => [k, process.env[k] ? `<set, length=${process.env[k].length}>` : 'MISSING'],
+                    ),
+                  ),
+                  null,
+                  2,
+                ),
+            )
+            return
+          }
+          res.writeHead(503, { 'content-type': 'text/plain' })
+          res.end('Boot failed. See /_boot-error for details.')
+        })
+        .listen(process.env.PORT || 10000, () => {
+          console.log('[shim] Diagnostic listener up; exiting in 8s.')
+          setTimeout(() => process.exit(1), 8000)
+        })
+    })
+}

@@ -33,6 +33,8 @@ const ALLOWED_ORIGINS = (process.env.CLIENT_URL || 'http://localhost:5173')
   .map((s) => s.trim())
   .filter(Boolean);
 
+console.log('[boot] ALLOWED_ORIGINS =', JSON.stringify(ALLOWED_ORIGINS));
+
 const corsOptions = {
   origin: (origin, cb) => {
     // Same-origin / curl / mobile requests have no Origin header → allow.
@@ -125,8 +127,10 @@ const startServer = async () => {
       console.log(`CORS origins: ${ALLOWED_ORIGINS.join(', ') || '(none)'}`);
     });
   } catch (error) {
-    console.error('Failed to start Biddr API:', error.message);
-    if (error.stack) console.error(error.stack);
+    // Use console.log (not error) so Render's log tail shows the line —
+    // some Render log views filter stderr but always show stdout.
+    console.log('Failed to start Biddr API:', error.message);
+    if (error.stack) console.log(error.stack);
     process.exit(1);
   }
 };
