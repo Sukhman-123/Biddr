@@ -31,6 +31,15 @@ export async function updateTournamentRequest(id, patch) {
   }
 }
 
+export async function startAuctionRequest(id) {
+  try {
+    const { data } = await api.post(`/tournaments/${id}/start`)
+    return data?.tournament ?? null
+  } catch (error) {
+    throw wrapError(error, 'Could not start the auction')
+  }
+}
+
 export async function listInvitesRequest(id) {
   try {
     const { data } = await api.get(`/tournaments/${id}/invites`)

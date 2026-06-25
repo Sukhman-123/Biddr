@@ -5,6 +5,7 @@ const {
   getTournament,
   createTournament,
   updateTournament,
+  startAuction,
   listInvites,
   createInvite,
   revokeInvite,
@@ -49,6 +50,7 @@ router.get('/', listTournaments);
 router.get('/:id', getTournament);
 router.post('/', createTournament);
 router.patch('/:id', updateTournament);
+router.post('/:id/start', startAuction);
 router.get('/:id/invites', listInvites);
 router.post('/:id/invites', createInvite);
 router.delete('/:id/invites/:inviteId', revokeInvite);

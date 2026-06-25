@@ -291,6 +291,66 @@ const updateTournament = async (req, res, next) => {
   }
 };
 
+// =============================================================
+// startAuction — flip an upcoming tournament to "live".
+//
+// Host-only. The start date must have arrived (we don't allow
+// starting early). Idempotent: if the tournament is already live
+// the call returns the tournament unchanged with 200.
+//
+// Why a dedicated endpoint rather than PATCH /tournaments/:id?
+//   1. Makes the transition explicit and easy to reason about.
+//   2. Lets us enforce the start-date gate here without polluting
+//      the generic PATCH (which validates edits to name/region/etc).
+//   3. Matches the "auctioneer starts the auction" mental model —
+//      one click → one transition.
+// =============================================================
+const startAuction = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    const tournament = await Tournament.findById(id);
+    if (!tournament) {
+      return res.status(404).json({ message: 'Tournament not found' });
+    }
+    if (tournament.ownerId.toString() !== req.user._id.toString()) {
+      return res
+        .status(403)
+        .json({ message: 'Only the host can start the auction' });
+    }
+
+    // Idempotent: if it's already live, just return it.
+    if (tournament.status === 'live') {
+      return res.status(200).json({ tournament: tournament.toDetailJSON() });
+    }
+    if (tournament.status === 'completed') {
+      return res
+        .status(400)
+        .json({ message: 'A completed auction cannot be restarted' });
+    }
+
+    // Enforce the start date gate. The host must wait until the
+    // configured startDate. If startDate is missing we accept that
+    // as "host didn't set a date — let them go whenever"; but we
+    // surface a warning in that case.
+    if (tournament.startDate && new Date() < new Date(tournament.startDate)) {
+      return res.status(400).json({
+        message: 'The auction start date has not arrived yet',
+        startDate: tournament.startDate,
+      });
+    }
+
+    tournament.status = 'live';
+    await tournament.save();
+
+    return res.status(200).json({ tournament: tournament.toDetailJSON() });
+  } catch (error) {
+    if (error?.name === 'CastError') {
+      return res.status(404).json({ message: 'Tournament not found' });
+    }
+    return next(error);
+  }
+};
+
 const ensureHost = async (req, res) => {
   const tournament = await Tournament.findById(req.params.id);
   if (!tournament) {
@@ -396,6 +456,7 @@ module.exports = {
   getTournament,
   createTournament,
   updateTournament,
+  startAuction,
   listInvites,
   createInvite,
   revokeInvite,

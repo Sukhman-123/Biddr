@@ -31,8 +31,10 @@ import {
   listInvitesRequest,
   createInviteRequest,
   revokeInviteRequest,
+  startAuctionRequest,
 } from './tournament.api'
 import { fetchRoomSnapshotRequest } from '../auction/auctionRoom.api'
+import StartAuctionModal from './StartAuctionModal'
 import './TournamentLobbyPage.css'
 
 async function fetchTournament(id) {
@@ -76,6 +78,14 @@ function TournamentLobbyPage() {
   const [inviteBusy, setInviteBusy] = useState(false)
   const [inviteError, setInviteError] = useState(null)
 
+  // Start-auction modal state. `open` controls the modal; `busy`
+  // and `errorMessage` are surfaced from the API call. The
+  // tournament is re-fetched on success so the lobby's status
+  // pill and Enter-a-room button update.
+  const [startOpen, setStartOpen] = useState(false)
+  const [startBusy, setStartBusy] = useState(false)
+  const [startError, setStartError] = useState(null)
+
   const sendInvite = async (e) => {
     e.preventDefault()
     if (inviteBusy) return
@@ -108,6 +118,28 @@ function TournamentLobbyPage() {
       setInviteError(err?.message ?? 'Could not revoke invite')
     } finally {
       setInviteBusy(false)
+    }
+  }
+
+  const onStartAuction = async () => {
+    if (startBusy) return
+    setStartBusy(true)
+    setStartError(null)
+    try {
+      const updated = await startAuctionRequest(id)
+      // Re-fetch so the lobby's status pill, copy, and
+      // Enter-a-room button all reflect the new state.
+      await refetch()
+      queryClient.invalidateQueries({ queryKey: ['auction-room-probe', id] })
+      if (updated?.status) {
+        // The success path closes the modal; if the server returned
+        // an already-live tournament (idempotent), we still close.
+        setStartOpen(false)
+      }
+    } catch (err) {
+      setStartError(err?.message ?? 'Could not start the auction')
+    } finally {
+      setStartBusy(false)
     }
   }
 
@@ -288,11 +320,17 @@ function TournamentLobbyPage() {
               : 'Squads are locked. Browse the recap.'}
           </p>
           {(() => {
-            // Wire the "Enter a room" button to the live room when
-            // there's an active lot. Otherwise fall back to the
-            // status-specific placeholder copy so the lobby stays
-            // truthful for upcoming / completed tournaments.
+            // Wire the lobby CTA based on status + role:
+            //   live + active lot → "Enter the room" link
+            //   live + no lot yet → "Enter a room (waiting)" disabled
+            //   upcoming + host   → "Start the auction" (gated by startDate)
+            //   upcoming + viewer → "Notify me when live" disabled
+            //   completed         → "View recap" disabled
             const liveLot = roomSnapshot?.activeLot
+            const startDateArrived =
+              !tournament.startDate ||
+              new Date(tournament.startDate).getTime() <= Date.now()
+
             if (tournament.status === 'live' && liveLot) {
               return (
                 <Link
@@ -306,13 +344,63 @@ function TournamentLobbyPage() {
                 </Link>
               )
             }
+            if (tournament.status === 'live') {
+              return (
+                <button
+                  type="button"
+                  className="cta-btn"
+                  disabled
+                  title="Waiting for the auctioneer to bring the first lot to the floor"
+                >
+                  <span className="cta-btn-content">
+                    <Gavel size={16} />
+                    Enter a room (waiting)
+                  </span>
+                </button>
+              )
+            }
+            if (tournament.status === 'upcoming' && isHost) {
+              if (!startDateArrived) {
+                return (
+                  <button
+                    type="button"
+                    className="cta-btn"
+                    disabled
+                    title="The auction starts on the configured start date"
+                  >
+                    <span className="cta-btn-content">
+                      <Gavel size={16} />
+                      Starts on{' '}
+                      {new Date(tournament.startDate).toLocaleDateString([], {
+                        day: 'numeric',
+                        month: 'short',
+                        year: 'numeric',
+                      })}
+                    </span>
+                  </button>
+                )
+              }
+              return (
+                <button
+                  type="button"
+                  className="cta-btn"
+                  onClick={() => setStartOpen(true)}
+                  data-testid="start-auction-button"
+                >
+                  <span className="cta-btn-content">
+                    <Gavel size={16} />
+                    Start the auction
+                  </span>
+                </button>
+              )
+            }
             if (tournament.status === 'upcoming') {
               return (
                 <button
                   type="button"
                   className="cta-btn"
                   disabled
-                  title="The auction starts when the host begins the first lot"
+                  title="The host will start the auction when the date arrives"
                 >
                   <span className="cta-btn-content">
                     <Gavel size={16} />
@@ -336,19 +424,7 @@ function TournamentLobbyPage() {
                 </button>
               )
             }
-            return (
-              <button
-                type="button"
-                className="cta-btn"
-                disabled
-                title="Waiting for the auctioneer to start"
-              >
-                <span className="cta-btn-content">
-                  <Gavel size={16} />
-                  Enter a room (waiting)
-                </span>
-              </button>
-            )
+            return null
           })()}
         </div>
       </section>
@@ -443,6 +519,18 @@ function TournamentLobbyPage() {
           }}
         />
       ) : null}
+      <StartAuctionModal
+        open={startOpen}
+        tournament={tournament}
+        busy={startBusy}
+        errorMessage={startError}
+        onConfirm={onStartAuction}
+        onCancel={() => {
+          if (startBusy) return
+          setStartOpen(false)
+          setStartError(null)
+        }}
+      />
     </main>
   )
 }
