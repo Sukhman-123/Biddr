@@ -49,7 +49,10 @@ if (require.main !== module) {
   // The real src/index.js only calls startServer() when it's the main
   // module. Since we're loading it from here, that check is false and
   // the server never starts. So we explicitly call connectDB() and
-  // app.listen() here after requiring it.
+  // httpServer.listen() here after requiring it.
+  //
+  // We listen on the http.Server (not app.listen) so socket.io,
+  // which is wired to that server in src/index.js, stays attached.
   //
   // If requiring src/index.js throws (syntax error, missing dep), we
   // catch it and serve the error via a short-lived HTTP listener so
@@ -61,7 +64,7 @@ if (require.main !== module) {
   connectDB()
     .then(() => {
       const port = process.env.PORT || 10000
-      app.listen(port, () => {
+      app.httpServer.listen(port, () => {
         console.log(`[shim] Biddr API listening on port ${port}`)
       })
     })

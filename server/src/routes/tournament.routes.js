@@ -18,6 +18,10 @@ const {
   streamCsvTemplate,
   streamXlsxTemplate,
 } = require('../controllers/lot.controller');
+const {
+  activateLot,
+  getRoomSnapshot,
+} = require('../controllers/auctionRoom.controller');
 const { auth } = require('../middleware/auth');
 
 const router = express.Router();
@@ -55,5 +59,11 @@ router.post('/:id/lots', createLot);
 router.post('/:id/lots/bulk', upload.single('file'), bulkUploadLots);
 router.get('/:id/lots/template.csv', streamCsvTemplate);
 router.get('/:id/lots/template.xlsx', streamXlsxTemplate);
+
+// Auction room — host-driven lot lifecycle. The host (auctioneer) is
+// the only one who can activate / hammer / pass; see
+// /Users/onehash/.claude/plans/spicy-greeting-hickey.md.
+router.get('/:id/room', getRoomSnapshot);
+router.post('/:id/lots/:lotId/activate', activateLot);
 
 module.exports = router;

@@ -32,6 +32,7 @@ import {
   createInviteRequest,
   revokeInviteRequest,
 } from './tournament.api'
+import { fetchRoomSnapshotRequest } from '../auction/auctionRoom.api'
 import './TournamentLobbyPage.css'
 
 async function fetchTournament(id) {
@@ -48,6 +49,17 @@ function TournamentLobbyPage() {
     queryKey: ['tournament', id],
     queryFn: () => fetchTournament(id),
     enabled: Boolean(id),
+  })
+
+  // Light-weight probe of the room: just enough to know whether
+  // there's an active lot so we can light up the "Enter a room"
+  // button on the lobby. We don't render the full room here — the
+  // user clicks through to /tournaments/:id/rooms/:lotId.
+  const { data: roomSnapshot } = useQuery({
+    queryKey: ['auction-room-probe', id],
+    queryFn: () => fetchRoomSnapshotRequest(id),
+    enabled: Boolean(id),
+    staleTime: 5_000,
   })
 
   const isOwner = Boolean(user && tournament && tournament.ownerId === user.id)
@@ -275,21 +287,69 @@ function TournamentLobbyPage() {
               ? 'The auctioneer will spin up rooms once the auction starts.'
               : 'Squads are locked. Browse the recap.'}
           </p>
-          <button
-            type="button"
-            className="cta-btn"
-            disabled
-            title="Coming next phase"
-          >
-            <span className="cta-btn-content">
-              <Gavel size={16} />
-              {tournament.status === 'live'
-                ? 'Enter a room (soon)'
-                : tournament.status === 'upcoming'
-                ? 'Notify me when live'
-                : 'View recap'}
-            </span>
-          </button>
+          {(() => {
+            // Wire the "Enter a room" button to the live room when
+            // there's an active lot. Otherwise fall back to the
+            // status-specific placeholder copy so the lobby stays
+            // truthful for upcoming / completed tournaments.
+            const liveLot = roomSnapshot?.activeLot
+            if (tournament.status === 'live' && liveLot) {
+              return (
+                <Link
+                  to={`/tournaments/${id}/rooms/${liveLot.id}`}
+                  className="cta-btn"
+                >
+                  <span className="cta-btn-content">
+                    <Gavel size={16} />
+                    Enter the room — {liveLot.name}
+                  </span>
+                </Link>
+              )
+            }
+            if (tournament.status === 'upcoming') {
+              return (
+                <button
+                  type="button"
+                  className="cta-btn"
+                  disabled
+                  title="The auction starts when the host begins the first lot"
+                >
+                  <span className="cta-btn-content">
+                    <Gavel size={16} />
+                    Notify me when live
+                  </span>
+                </button>
+              )
+            }
+            if (tournament.status === 'completed') {
+              return (
+                <button
+                  type="button"
+                  className="cta-btn"
+                  disabled
+                  title="Recap is coming next phase"
+                >
+                  <span className="cta-btn-content">
+                    <Gavel size={16} />
+                    View recap
+                  </span>
+                </button>
+              )
+            }
+            return (
+              <button
+                type="button"
+                className="cta-btn"
+                disabled
+                title="Waiting for the auctioneer to start"
+              >
+                <span className="cta-btn-content">
+                  <Gavel size={16} />
+                  Enter a room (waiting)
+                </span>
+              </button>
+            )
+          })()}
         </div>
       </section>
 

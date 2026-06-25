@@ -10,6 +10,11 @@ const TEMPLATE_COLUMNS = [
   'basePrice',
   'photoUrl',
   'set',
+  // bidIncrement is optional. The host can set it per-lot or in bulk;
+  // if it's missing on a lot, the server refuses to activate that lot
+  // until the host sets it. See /Users/onehash/.claude/plans/spicy-greeting-hickey.md
+  // (total-host-control invariant #6).
+  'bidIncrement',
 ];
 
 const TEMPLATE_HEADER_ROW = [
@@ -19,6 +24,7 @@ const TEMPLATE_HEADER_ROW = [
   'basePrice',
   'photoUrl',
   'set',
+  'bidIncrement',
 ];
 
 const TEMPLATE_EXAMPLE_ROW = [
@@ -28,6 +34,7 @@ const TEMPLATE_EXAMPLE_ROW = [
   '2000000',
   'https://example.com/photos/virat-kohli.jpg',
   'Marquee',
+  '500000',
 ];
 
 const PHOTO_RE = /^https?:\/\//i;
@@ -132,9 +139,21 @@ const validateRow = (row, rowNumber) => {
     return { ok: false, message: 'set must be 60 characters or fewer' };
   }
 
+  // bidIncrement is optional. Empty / missing means "host hasn't set
+  // it" — keep the field null so the activate endpoint refuses to
+  // bring the lot to the floor until the host decides a value.
+  let bidIncrement = null;
+  if (row.bidIncrement !== undefined && row.bidIncrement !== null && row.bidIncrement !== '') {
+    const parsed = Number(row.bidIncrement);
+    if (!Number.isFinite(parsed) || parsed < 0) {
+      return { ok: false, message: 'bidIncrement must be a non-negative number' };
+    }
+    bidIncrement = parsed;
+  }
+
   return {
     ok: true,
-    data: { name, style, country, basePrice, photoUrl, set },
+    data: { name, style, country, basePrice, photoUrl, set, bidIncrement },
   };
 };
 
@@ -196,6 +215,12 @@ const listLots = async (req, res, next) => {
         photoUrl: lot.photoUrl,
         set: lot.set,
         status: lot.status,
+        auctionStatus: lot.auctionStatus,
+        currentBid: lot.currentBid,
+        currentBidderFranchiseId: lot.currentBidderFranchiseId,
+        bidIncrement: lot.bidIncrement,
+        soldToFranchiseId: lot.soldToFranchiseId,
+        soldPrice: lot.soldPrice,
         createdAt: lot.createdAt,
         updatedAt: lot.updatedAt,
       })),
@@ -209,8 +234,8 @@ const createLot = async (req, res, next) => {
   try {
     const tournament = await ensureHost(req, res);
     if (!tournament) return;
-    const { name, style, country, basePrice, photoUrl, set } = req.body || {};
-    const candidate = { name, style, country, basePrice, photoUrl, set };
+    const { name, style, country, basePrice, photoUrl, set, bidIncrement } = req.body || {};
+    const candidate = { name, style, country, basePrice, photoUrl, set, bidIncrement };
     const validation = validateRow(candidate, 1);
     if (!validation.ok) {
       return res.status(400).json({ message: validation.message });
@@ -284,7 +309,7 @@ const updateLot = async (req, res, next) => {
     const found = await ensureHostForLot(req, res);
     if (!found) return;
     const { lot } = found;
-    const { name, style, country, basePrice, photoUrl, set } = req.body || {};
+    const { name, style, country, basePrice, photoUrl, set, bidIncrement } = req.body || {};
     const candidate = {
       name: name !== undefined ? name : lot.name,
       style: style !== undefined ? style : lot.style,
@@ -292,6 +317,7 @@ const updateLot = async (req, res, next) => {
       basePrice: basePrice !== undefined ? basePrice : lot.basePrice,
       photoUrl: photoUrl !== undefined ? photoUrl : lot.photoUrl,
       set: set !== undefined ? set : lot.set,
+      bidIncrement: bidIncrement !== undefined ? bidIncrement : lot.bidIncrement,
     };
     const validation = validateRow(candidate, 1);
     if (!validation.ok) {

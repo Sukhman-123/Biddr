@@ -389,7 +389,7 @@ describe('GET /api/tournaments/:id/lots/template.{csv,xlsx}', () => {
     expect(res.status).toBe(200)
     expect(res.headers['content-type']).toMatch(/text\/csv/)
     expect(res.text.split('\n')[0]).toBe(
-      'name,style,country,basePrice,photoUrl,set',
+      'name,style,country,basePrice,photoUrl,set,bidIncrement',
     )
   })
 
@@ -416,6 +416,6 @@ describe('GET /api/tournaments/:id/lots/template.{csv,xlsx}', () => {
     const wb = xlsx.read(res.body, { type: 'buffer' })
     const sheet = wb.Sheets[wb.SheetNames[0]]
     const rows = xlsx.utils.sheet_to_json(sheet, { header: 1 })
-    expect(rows[0]).toEqual(['name', 'style', 'country', 'basePrice', 'photoUrl', 'set'])
+    expect(rows[0]).toEqual(['name', 'style', 'country', 'basePrice', 'photoUrl', 'set', 'bidIncrement'])
   })
 })

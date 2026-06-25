@@ -99,6 +99,13 @@ const io = new Server(server, {
   transports: ['websocket', 'polling'],
 });
 
+// Share `io` with REST controllers so they can broadcast room
+// events (lot:activated, lot:hammered, lot:passed) using
+// `req.app.get('io').to('tournament:<id>').emit(...)`. This is the
+// standard Express + Socket.IO sharing pattern. See
+// /Users/onehash/.claude/plans/spicy-greeting-hickey.md.
+app.set('io', io);
+
 registerSocketHandlers(io);
 
 const startServer = async () => {
@@ -139,4 +146,8 @@ if (require.main === module) {
   startServer();
 }
 
+// Export both the Express app (for supertest) and the http.Server
+// (for the Render shim, which calls `server.listen()` so socket.io
+// is attached to the same listener).
 module.exports = app;
+module.exports.httpServer = server;

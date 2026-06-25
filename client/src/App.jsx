@@ -9,6 +9,8 @@ import CreateTournamentPage from './features/tournaments/CreateTournamentPage'
 import UserProfilePage from './features/profile/UserProfilePage'
 import LandingPage from './features/landing/LandingPage'
 import AppShell from './components/AppShell'
+import AuctionRoomPage from './features/auction/AuctionRoomPage'
+import { ToastProvider } from './components/ToastProvider'
 
 function Shell({ children }) {
   return <AppShell>{children}</AppShell>
@@ -19,29 +21,35 @@ function App() {
   const reduceMotion = useReducedMotion()
 
   return (
-    <AnimatePresence mode="wait" initial={false}>
-      <motion.div
-        key={location.pathname}
-        initial={reduceMotion ? false : { opacity: 0, y: 8, filter: 'blur(6px)' }}
-        animate={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
-        exit={reduceMotion ? { opacity: 0 } : { opacity: 0, y: -6, filter: 'blur(4px)' }}
-        transition={{ duration: 0.22, ease: [0.22, 1, 0.36, 1] }}
-      >
-        <Routes location={location}>
-          <Route path="/" element={<LandingPage />} />
-          <Route path="/login" element={<AuthPage />} />
-          <Route path="/register" element={<AuthPage />} />
-          <Route path="/home" element={<AuthGate><Shell><HomePage /></Shell></AuthGate>} />
-          <Route path="/tournaments" element={<AuthGate><Shell><TournamentsPage /></Shell></AuthGate>} />
-          <Route path="/tournaments/new" element={<AuthGate><Shell><CreateTournamentPage /></Shell></AuthGate>} />
-          <Route path="/tournaments/:id" element={<AuthGate><Shell><TournamentLobbyPage /></Shell></AuthGate>} />
-          <Route path="/profile" element={<AuthGate><Shell><UserProfilePage /></Shell></AuthGate>} />
-          <Route path="/squad" element={<AuthGate><Shell><ComingSoon label="Squad" /></Shell></AuthGate>} />
-          <Route path="/analytics" element={<AuthGate><Shell><ComingSoon label="Analytics" /></Shell></AuthGate>} />
-          <Route path="*" element={<LandingPage />} />
-        </Routes>
-      </motion.div>
-    </AnimatePresence>
+    // ToastProvider mounts once for the whole app. Routes can call
+    // useToast() to push notifications; the region is rendered at the
+    // bottom-right of the viewport regardless of which page is active.
+    <ToastProvider>
+      <AnimatePresence mode="wait" initial={false}>
+        <motion.div
+          key={location.pathname}
+          initial={reduceMotion ? false : { opacity: 0, y: 8, filter: 'blur(6px)' }}
+          animate={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
+          exit={reduceMotion ? { opacity: 0 } : { opacity: 0, y: -6, filter: 'blur(4px)' }}
+          transition={{ duration: 0.22, ease: [0.22, 1, 0.36, 1] }}
+        >
+          <Routes location={location}>
+            <Route path="/" element={<LandingPage />} />
+            <Route path="/login" element={<AuthPage />} />
+            <Route path="/register" element={<AuthPage />} />
+            <Route path="/home" element={<AuthGate><Shell><HomePage /></Shell></AuthGate>} />
+            <Route path="/tournaments" element={<AuthGate><Shell><TournamentsPage /></Shell></AuthGate>} />
+            <Route path="/tournaments/new" element={<AuthGate><Shell><CreateTournamentPage /></Shell></AuthGate>} />
+            <Route path="/tournaments/:id" element={<AuthGate><Shell><TournamentLobbyPage /></Shell></AuthGate>} />
+            <Route path="/tournaments/:id/rooms/:lotId" element={<AuthGate><Shell><AuctionRoomPage /></Shell></AuthGate>} />
+            <Route path="/profile" element={<AuthGate><Shell><UserProfilePage /></Shell></AuthGate>} />
+            <Route path="/squad" element={<AuthGate><Shell><ComingSoon label="Squad" /></Shell></AuthGate>} />
+            <Route path="/analytics" element={<AuthGate><Shell><ComingSoon label="Analytics" /></Shell></AuthGate>} />
+            <Route path="*" element={<LandingPage />} />
+          </Routes>
+        </motion.div>
+      </AnimatePresence>
+    </ToastProvider>
   )
 }
 

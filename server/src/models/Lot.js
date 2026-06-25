@@ -2,6 +2,9 @@ const mongoose = require('mongoose');
 
 const LOT_STYLES = ['Batsman', 'Bowler', 'All-rounder', 'Wicket-keeper'];
 const LOT_STATUSES = ['queued', 'sold', 'unsold'];
+// Auction-room lifecycle for a lot. Mutated ONLY by host actions
+// (activate / hammer / pass). The server never auto-transitions.
+const LOT_AUCTION_STATUSES = ['idle', 'active', 'hammered', 'unsold'];
 
 const lotSchema = new mongoose.Schema(
   {
@@ -62,12 +65,70 @@ const lotSchema = new mongoose.Schema(
       ref: 'User',
       required: [true, 'Creator is required'],
     },
+
+    // ============================================================
+    // Auction-room state. Mutated ONLY by host actions via the
+    // auctionRoom controller. The server never auto-advances these
+    // fields — see /Users/onehash/.claude/plans/spicy-greeting-hickey.md
+    // for the total-host-control invariants.
+    // ============================================================
+    auctionStatus: {
+      type: String,
+      enum: {
+        values: LOT_AUCTION_STATUSES,
+        message: `auctionStatus must be one of: ${LOT_AUCTION_STATUSES.join(', ')}`,
+      },
+      default: 'idle',
+      index: true,
+    },
+    currentBid: {
+      type: Number,
+      default: 0,
+      min: [0, 'currentBid cannot be negative'],
+    },
+    currentBidderFranchiseId: {
+      type: String,
+      default: null,
+    },
+    currentBidByUserId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'User',
+      default: null,
+    },
+    currentBidAt: {
+      type: Date,
+      default: null,
+    },
+    // Host-editable. No default — if missing, the host must set it
+    // before this lot can be activated. v1 doesn't read this field,
+    // but the no-default rule enforces "host decides everything".
+    bidIncrement: {
+      type: Number,
+      min: [0, 'bidIncrement cannot be negative'],
+      default: null,
+    },
+    // The franchise that won the lot when it was hammered. Stays
+    // null until the host explicitly assigns one (or until v2 lets
+    // the host hammer the high bidder as default).
+    soldToFranchiseId: {
+      type: String,
+      default: null,
+    },
+    // Final price recorded on hammer. Stays at basePrice until the
+    // host hammers a bid.
+    soldPrice: {
+      type: Number,
+      default: null,
+      min: [0, 'soldPrice cannot be negative'],
+    },
   },
   { timestamps: true },
 );
 
 lotSchema.index({ tournamentId: 1, status: 1 });
 lotSchema.index({ tournamentId: 1, set: 1 });
+// Fast lookup of "is there an active lot in this tournament right now?"
+lotSchema.index({ tournamentId: 1, auctionStatus: 1 });
 
 lotSchema.methods.toJSON = function toJSON() {
   const obj = this.toObject({ versionKey: false });
@@ -81,6 +142,14 @@ lotSchema.methods.toJSON = function toJSON() {
     photoUrl: obj.photoUrl,
     set: obj.set,
     status: obj.status,
+    auctionStatus: obj.auctionStatus,
+    currentBid: obj.currentBid,
+    currentBidderFranchiseId: obj.currentBidderFranchiseId,
+    currentBidByUserId: obj.currentBidByUserId?.toString?.() ?? obj.currentBidByUserId ?? null,
+    currentBidAt: obj.currentBidAt,
+    bidIncrement: obj.bidIncrement,
+    soldToFranchiseId: obj.soldToFranchiseId,
+    soldPrice: obj.soldPrice,
     createdAt: obj.createdAt,
     updatedAt: obj.updatedAt,
   };
@@ -89,3 +158,4 @@ lotSchema.methods.toJSON = function toJSON() {
 module.exports = mongoose.model('Lot', lotSchema);
 module.exports.LOT_STYLES = LOT_STYLES;
 module.exports.LOT_STATUSES = LOT_STATUSES;
+module.exports.LOT_AUCTION_STATUSES = LOT_AUCTION_STATUSES;

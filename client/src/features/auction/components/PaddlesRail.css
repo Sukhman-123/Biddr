@@ -1,0 +1,113 @@
+.paddles-rail {
+  background: var(--surface, rgba(22, 22, 26, 0.72));
+  border: 1px solid var(--border, rgba(255, 255, 255, 0.08));
+  border-radius: 18px;
+  padding: 18px;
+}
+
+.paddles-rail-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  margin-bottom: 12px;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.paddles-rail-title {
+  font-size: 13px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--heading, #f4f4f6);
+}
+
+.paddles-rail-sub {
+  font-size: 12px;
+  color: var(--muted, #8a8a94);
+}
+
+.paddles-rail-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 10px;
+}
+
+.paddle {
+  --paddle-color: #f5b94a;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 14px;
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid var(--border, rgba(255, 255, 255, 0.08));
+  border-radius: 14px;
+  color: var(--text, #e6e6ec);
+  cursor: pointer;
+  text-align: left;
+  font: inherit;
+  transition: transform 0.15s ease, background 0.15s ease, border-color 0.15s ease;
+}
+
+.paddle.is-active:hover {
+  transform: translateY(-1px);
+  background: rgba(255, 255, 255, 0.05);
+  border-color: color-mix(in srgb, var(--paddle-color) 50%, transparent);
+}
+
+.paddle.is-inactive {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.paddle-shape {
+  position: relative;
+  width: 18px;
+  height: 32px;
+  flex-shrink: 0;
+}
+
+.paddle-handle {
+  position: absolute;
+  left: 50%;
+  top: 0;
+  width: 3px;
+  height: 100%;
+  background: color-mix(in srgb, var(--paddle-color) 60%, #2a2a30);
+  border-radius: 2px;
+  transform: translateX(-50%);
+}
+
+.paddle-blade {
+  position: absolute;
+  inset: 2px 2px 14px 2px;
+  background: var(--paddle-color);
+  border-radius: 4px 4px 8px 8px;
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--paddle-color) 50%, transparent);
+}
+
+.paddle-meta {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.paddle-name {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--heading, #f4f4f6);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.paddle-city {
+  font-size: 12px;
+  color: var(--muted, #8a8a94);
+}
+
+.paddles-rail-empty {
+  text-align: center;
+  color: var(--text-soft, #b6b6c0);
+  font-size: 13px;
+}

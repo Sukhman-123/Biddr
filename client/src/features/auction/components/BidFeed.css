@@ -1,0 +1,107 @@
+.bid-feed {
+  background: var(--surface, rgba(22, 22, 26, 0.72));
+  border: 1px solid var(--border, rgba(255, 255, 255, 0.08));
+  border-radius: 18px;
+  padding: 18px;
+  display: flex;
+  flex-direction: column;
+  max-height: 540px;
+  min-height: 320px;
+}
+
+.bid-feed-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  margin-bottom: 14px;
+}
+
+.bid-feed-title {
+  font-size: 13px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--heading, #f4f4f6);
+}
+
+.bid-feed-sub {
+  font-size: 12px;
+  color: var(--muted, #8a8a94);
+}
+
+.bid-feed-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  overflow-y: auto;
+  flex: 1 1 auto;
+}
+
+.bid-feed-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 10px 12px;
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid var(--border, rgba(255, 255, 255, 0.06));
+  border-radius: 10px;
+}
+
+.bid-feed-item.is-activated { border-left: 3px solid var(--gold, #f5b94a); }
+.bid-feed-item.is-hammered { border-left: 3px solid var(--green, #2bd97a); }
+.bid-feed-item.is-passed   { border-left: 3px solid #ff5a5a; }
+
+.bid-feed-icon {
+  width: 24px;
+  height: 24px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.04);
+  color: var(--text-soft, #b6b6c0);
+}
+.bid-feed-item.is-activated .bid-feed-icon { color: var(--gold, #f5b94a); }
+.bid-feed-item.is-hammered .bid-feed-icon { color: var(--green, #2bd97a); }
+.bid-feed-item.is-passed .bid-feed-icon   { color: #ff5a5a; }
+
+.bid-feed-body {
+  min-width: 0;
+  flex: 1 1 auto;
+}
+
+.bid-feed-line {
+  margin: 0;
+  font-size: 13px;
+  color: var(--text, #e6e6ec);
+  line-height: 1.4;
+}
+
+.bid-feed-line strong {
+  color: var(--heading, #f4f4f6);
+  font-weight: 600;
+}
+
+.bid-feed-time {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 11px;
+  color: var(--muted, #8a8a94);
+  margin-top: 4px;
+}
+
+.bid-feed-empty {
+  flex: 1 1 auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  color: var(--muted, #8a8a94);
+  font-size: 13px;
+  padding: 32px 12px;
+}

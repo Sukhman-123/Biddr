@@ -13,6 +13,34 @@ async function startTestEnv() {
   const app = require('../index')
   const connectDB = require('../config/db')
   await connectDB()
+
+  // Attach a mock Socket.IO instance to the app. Room endpoints
+  // (activate/hammer/pass) call `req.app.get('io').to(...).emit(...)`,
+  // and the helper gracefully no-ops if `io` is missing — but tests
+  // that want to assert broadcasts need a mock. We expose a fresh
+  // emitter per test via `app.locals.mockIo`.
+  const { EventEmitter } = require('events')
+  const rooms = new Set()
+  const emits = []
+  const mockIo = {
+    rooms,
+    to(room) {
+      rooms.add(room)
+      return {
+        emit(event, payload) {
+          emits.push({ room, event, payload })
+        },
+      }
+    },
+    emits,
+    reset() {
+      rooms.clear()
+      emits.length = 0
+    },
+  }
+  app.set('io', mockIo)
+  app.locals.mockIo = mockIo
+
   return app
 }
 
