@@ -1,21 +1,18 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Check, X, Play, ChevronDown } from 'lucide-react'
+import { Check, X, Play, ChevronDown, Pause, Zap, RotateCcw } from 'lucide-react'
 import './HostControls.css'
 
 // =============================================================
-// HostControls — the only UI on the page that mutates room state.
+// HostControls — the auctioneer's cockpit with timer and undo.
 //
-// Two modes:
-//   "idle"  — there's no active lot. The host picks one of the
-//             queued lots and clicks Activate. We render an
-//             inline picker (no full modal — keeps the host in
-//             the page and makes "I changed my mind" cheap).
-//   "active"— there IS an active lot. The host sees Hammer + Pass.
-//             Hammer opens a winner picker (or accepts the
-//             default — no winner if no bids).
+// Three modes:
+//   "idle"    — no active lot. Pick queued lots.
+//   "active"  — lot is live. See Hammer + Pass + Pause + Undo + Timer.
+//   "paused"  — auction paused. See Hammer + Pass + Resume + Undo.
 //
-// The host is the auctioneer. This is the auctioneer's cockpit.
+// Timer: counts down from server's currentBidAt (e.g., 60 seconds).
+//         Auto-reloads state when countdown completes (v2 auto-sell).
 // =============================================================
 
 export default function HostControls({
@@ -23,14 +20,30 @@ export default function HostControls({
   lot,
   queuedLots,
   busy,
+  timerSeconds,
   onActivate,
   onHammer,
   onPass,
+  onPause,
+  onResume,
+  onUndo,
 }) {
   if (mode === 'idle') {
     return <IdlePicker queuedLots={queuedLots} busy={busy} onActivate={onActivate} />
   }
-  return <ActiveControls lot={lot} busy={busy} onHammer={onHammer} onPass={onPass} />
+  return (
+    <ActiveControls
+      lot={lot}
+      mode={mode}
+      busy={busy}
+      timerSeconds={timerSeconds}
+      onHammer={onHammer}
+      onPass={onPass}
+      onPause={onPause}
+      onResume={onResume}
+      onUndo={onUndo}
+    />
+  )
 }
 
 function IdlePicker({ queuedLots, busy, onActivate }) {
@@ -120,9 +133,37 @@ function IdlePicker({ queuedLots, busy, onActivate }) {
   )
 }
 
-function ActiveControls({ lot, busy, onHammer, onPass }) {
+function ActiveControls({ lot, mode, busy, timerSeconds, onHammer, onPass, onPause, onResume, onUndo }) {
   const [confirmHammer, setConfirmHammer] = useState(false)
   const [confirmPass, setConfirmPass] = useState(false)
+  const [confirmUndo, setConfirmUndo] = useState(false)
+  const isPaused = mode === 'paused'
+
+  // Timer component for the active lot
+  const [countdown, setCountdown] = useState(timerSeconds || 0)
+  const [timerRunning, setTimerRunning] = useState(isPaused)
+
+  useEffect(() => {
+    setCountdown(timerSeconds || 0)
+    setTimerRunning(!isPaused && mode === 'active')
+  }, [timerSeconds, isPaused, mode])
+
+  useEffect(() => {
+    if (!timerRunning || countdown <= 0) return
+
+    const interval = setInterval(() => {
+      setCountdown((prev) => {
+        if (prev <= 1) {
+          clearInterval(interval)
+          // v2: auto-trigger hammer/un sold logic here
+          return 0
+        }
+        return prev - 1
+      })
+    }, 1000)
+
+    return () => clearInterval(interval)
+  }, [timerRunning, countdown])
 
   if (confirmHammer) {
     return (
@@ -196,6 +237,42 @@ function ActiveControls({ lot, busy, onHammer, onPass }) {
       </div>
     )
   }
+  if (confirmUndo) {
+    return (
+      <div className="host-controls host-controls-confirm">
+        <p className="host-controls-confirm-text">
+          Undo the last action? This will reverse the bid placement or hammer and restore previous state.
+        </p>
+        <div className="host-controls-row">
+          <button
+            type="button"
+            className="cta-btn host-controls-undo"
+            onClick={() => {
+              onUndo()
+              setConfirmUndo(false)
+            }}
+            disabled={busy}
+          >
+            <span className="cta-btn-content">
+              <RotateCcw size={16} />
+              Confirm undo
+            </span>
+          </button>
+          <button
+            type="button"
+            className="cta-btn host-controls-secondary"
+            onClick={() => setConfirmUndo(false)}
+            disabled={busy}
+          >
+            <span className="cta-btn-content">
+              <X size={16} />
+              Cancel
+            </span>
+          </button>
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div className="host-controls host-controls-active">
@@ -222,10 +299,51 @@ function ActiveControls({ lot, busy, onHammer, onPass }) {
             Pass
           </span>
         </button>
+        {isPaused ? (
+          <button
+            type="button"
+            className="cta-btn host-controls-resume"
+            onClick={onResume}
+            disabled={busy}
+          >
+            <span className="cta-btn-content">
+              <Zap size={16} />
+              Resume
+            </span>
+          </button>
+        ) : (
+          <button
+            type="button"
+            className="cta-btn host-controls-pause"
+            onClick={onPause}
+            disabled={busy}
+          >
+            <span className="cta-btn-content">
+              <Pause size={16} />
+              Pause
+            </span>
+          </button>
+        )}
+        <button
+          type="button"
+          className="cta-btn host-controls-undo"
+          onClick={() => setConfirmUndo(true)}
+          disabled={busy}
+        >
+          <span className="cta-btn-content">
+            <RotateCcw size={16} />
+            Undo
+          </span>
+        </button>
       </div>
-      <p className="host-controls-hint">
-        The room returns to empty after this. No auto-advance.
-      </p>
+      <div className="host-controls-meta">
+        <div className={`host-timer ${timerRunning ? 'is-running' : 'is-paused'} ${countdown <= 10 ? 'is-warn' : ''}`}>
+          ⏱ {countdown}s
+        </div>
+        <p className="host-controls-hint">
+          {isPaused ? 'Auction is paused. Timer frozen.' : countdown > 0 ? 'Timer active.' : 'Timer expired.'}
+        </p>
+      </div>
     </div>
   )
 }

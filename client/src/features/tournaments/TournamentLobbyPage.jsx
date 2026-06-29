@@ -307,14 +307,14 @@ function TournamentLobbyPage() {
           </span>
           <h2 className="lobby-status-title">
             {tournament.status === 'live'
-              ? '0 rooms live'
+              ? 'Auction room open'
               : tournament.status === 'upcoming'
               ? 'No live rooms yet'
               : 'Archive ready'}
           </h2>
           <p className="lobby-status-sub">
             {tournament.status === 'live'
-              ? 'Pick a room below to enter the bidding floor.'
+              ? 'Host can bring lots to the floor from the auction room.'
               : tournament.status === 'upcoming'
               ? 'The auctioneer will spin up rooms once the auction starts.'
               : 'Squads are locked. Browse the recap.'}
@@ -331,32 +331,21 @@ function TournamentLobbyPage() {
               !tournament.startDate ||
               new Date(tournament.startDate).getTime() <= Date.now()
 
-            if (tournament.status === 'live' && liveLot) {
+            if (tournament.status === 'live') {
+              // Link to the room — if there's an active lot, go directly to it;
+              // otherwise go to the generic room where the host can activate.
+              const roomUrl = liveLot
+                ? `/tournaments/${id}/rooms/${liveLot.id}`
+                : `/tournaments/${id}/room`
               return (
-                <Link
-                  to={`/tournaments/${id}/rooms/${liveLot.id}`}
-                  className="cta-btn"
-                >
+                <Link to={roomUrl} className="cta-btn">
                   <span className="cta-btn-content">
                     <Gavel size={16} />
-                    Enter the room — {liveLot.name}
+                    {liveLot
+                      ? `Enter the room — ${liveLot.name}`
+                      : 'Enter the auction room'}
                   </span>
                 </Link>
-              )
-            }
-            if (tournament.status === 'live') {
-              return (
-                <button
-                  type="button"
-                  className="cta-btn"
-                  disabled
-                  title="Waiting for the auctioneer to bring the first lot to the floor"
-                >
-                  <span className="cta-btn-content">
-                    <Gavel size={16} />
-                    Enter a room (waiting)
-                  </span>
-                </button>
               )
             }
             if (tournament.status === 'upcoming' && isHost) {

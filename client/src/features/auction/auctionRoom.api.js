@@ -76,3 +76,42 @@ export async function passLotRequest(lotId) {
     throw wrapError(error, 'Could not pass the lot')
   }
 }
+
+export async function placeBidRequest(lotId, { franchiseId, amount }) {
+  try {
+    const { data } = await api.post(`/lots/${lotId}/place-bid`, {
+      franchiseId,
+      amount,
+    })
+    return data?.lot ?? null
+  } catch (error) {
+    throw wrapError(error, 'Could not place bid')
+  }
+}
+
+export async function pauseLotRequest(lotId) {
+  try {
+    const { data } = await api.post(`/lots/${lotId}/pause`)
+    return data?.lot ?? null
+  } catch (error) {
+    throw wrapError(error, 'Could not pause the auction')
+  }
+}
+
+export async function resumeLotRequest(lotId) {
+  try {
+    const { data } = await api.post(`/lots/${lotId}/resume`)
+    return data?.lot ?? null
+  } catch (error) {
+    throw wrapError(error, 'Could not resume the auction')
+  }
+}
+
+export async function undoLastActionRequest(lotId) {
+  try {
+    const { data } = await api.post(`/lots/${lotId}/undo`)
+    return data
+  } catch (error) {
+    throw wrapError(error, 'Could not undo the last action')
+  }
+}

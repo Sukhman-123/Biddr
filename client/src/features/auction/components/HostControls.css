@@ -131,6 +131,48 @@
   background: linear-gradient(135deg, #6a3838 0%, #321f20 100%) !important;
 }
 
+/* Pause button — amber/neutral to signal "wait" */
+.host-controls-pause {
+  background: linear-gradient(135deg, #4a3520 0%, #2a1f14 100%) !important;
+  color: #ffc966 !important;
+  border-color: rgba(255, 180, 50, 0.25) !important;
+}
+.host-controls-pause::before,
+.host-controls-pause .cta-btn-shine {
+  display: none;
+}
+.host-controls-pause:hover {
+  background: linear-gradient(135deg, #5a4228 0%, #332618 100%) !important;
+}
+
+/* Resume button — green, signals "go" */
+.host-controls-resume {
+  background: linear-gradient(135deg, #1a4a28 0%, #102818 100%) !important;
+  color: #6effa0 !important;
+  border-color: rgba(80, 255, 130, 0.25) !important;
+}
+.host-controls-resume::before,
+.host-controls-resume .cta-btn-shine {
+  display: none;
+}
+.host-controls-resume:hover {
+  background: linear-gradient(135deg, #225a30 0%, #163218 100%) !important;
+}
+
+/* Undo button — purple, signals "go back" */
+.host-controls-undo {
+  background: linear-gradient(135deg, #2a2050 0%, #181430 100%) !important;
+  color: #c4b0ff !important;
+  border-color: rgba(160, 130, 255, 0.25) !important;
+}
+.host-controls-undo::before,
+.host-controls-undo .cta-btn-shine {
+  display: none;
+}
+.host-controls-undo:hover {
+  background: linear-gradient(135deg, #352860 0%, #201a38 100%) !important;
+}
+
 .host-controls-secondary {
   background: transparent !important;
   color: var(--text-soft, #b6b6c0) !important;

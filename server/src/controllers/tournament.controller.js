@@ -203,6 +203,14 @@ const createTournament = async (req, res, next) => {
                 typeof f.colorHex === 'string' && f.colorHex.startsWith('#')
                   ? f.colorHex
                   : '#f5b94a',
+              wallet: {
+                initial: pursePerFranchise > 0 ? pursePerFranchise : 0,
+                spent: 0,
+              },
+              squad: {
+                playerIds: [],
+                maxSize: typeof f.maxSquadSize === 'number' ? Math.min(f.maxSquadSize, 30) : 11,
+              },
             }))
         : [],
     });

@@ -41,6 +41,7 @@ function App() {
             <Route path="/tournaments" element={<AuthGate><Shell><TournamentsPage /></Shell></AuthGate>} />
             <Route path="/tournaments/new" element={<AuthGate><Shell><CreateTournamentPage /></Shell></AuthGate>} />
             <Route path="/tournaments/:id" element={<AuthGate><Shell><TournamentLobbyPage /></Shell></AuthGate>} />
+            <Route path="/tournaments/:id/room" element={<AuthGate><Shell><AuctionRoomPage /></Shell></AuthGate>} />
             <Route path="/tournaments/:id/rooms/:lotId" element={<AuthGate><Shell><AuctionRoomPage /></Shell></AuthGate>} />
             <Route path="/profile" element={<AuthGate><Shell><UserProfilePage /></Shell></AuthGate>} />
             <Route path="/squad" element={<AuthGate><Shell><ComingSoon label="Squad" /></Shell></AuthGate>} />

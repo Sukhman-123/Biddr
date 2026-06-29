@@ -13,6 +13,8 @@ import {
   activateLotRequest,
   hammerLotRequest,
   passLotRequest,
+  pauseLotRequest,
+  resumeLotRequest,
 } from './auctionRoom.api'
 import { formatPurse } from '../tournaments/tournament.utils'
 import TopBar from './components/TopBar'
@@ -164,18 +166,74 @@ export default function AuctionRoomPage() {
       )
       queryClient.invalidateQueries({ queryKey: ['auction-room-lots', tournamentId] })
     }
+    const onBidPlaced = ({ lot, franchise, amount, by, at }) => {
+      if (!lot) return
+      setActiveLot(lot)
+      setFeed((current) =>
+        [
+          {
+            id: `${lot.id}-bid-${at}`,
+            type: 'bid',
+            actor: by?.fullName || franchise?.name || 'Bidder',
+            lotName: lot.name,
+            franchiseName: franchise?.name,
+            amount,
+            at,
+          },
+          ...current,
+        ].slice(0, 30),
+      )
+    }
+    const onAuctionPaused = ({ lot, by, at }) => {
+      if (!lot) return
+      setActiveLot(lot)
+      setFeed((current) =>
+        [
+          {
+            id: `paused-${at}`,
+            type: 'paused',
+            actor: by?.fullName || 'Auctioneer',
+            at,
+          },
+          ...current,
+        ].slice(0, 30),
+      )
+      toast.warn('Auction paused by auctioneer')
+    }
+    const onAuctionResumed = ({ lot, by, at }) => {
+      if (!lot) return
+      setActiveLot(lot)
+      setFeed((current) =>
+        [
+          {
+            id: `resumed-${at}`,
+            type: 'resumed',
+            actor: by?.fullName || 'Auctioneer',
+            at,
+          },
+          ...current,
+        ].slice(0, 30),
+      )
+      toast.info('Auction resumed')
+    }
 
     if (socket.connected) onConnect()
     socket.on('connect', onConnect)
     socket.on('lot:activated', onLotActivated)
     socket.on('lot:hammered', onLotHammered)
     socket.on('lot:passed', onLotPassed)
+    socket.on('bid:placed', onBidPlaced)
+    socket.on('auction:paused', onAuctionPaused)
+    socket.on('auction:resumed', onAuctionResumed)
 
     return () => {
       socket.off('connect', onConnect)
       socket.off('lot:activated', onLotActivated)
       socket.off('lot:hammered', onLotHammered)
       socket.off('lot:passed', onLotPassed)
+      socket.off('bid:placed', onBidPlaced)
+      socket.off('auction:paused', onAuctionPaused)
+      socket.off('auction:resumed', onAuctionResumed)
       if (joinedRef.current) {
         socket.emit('room:leave', { tournamentId })
         joinedRef.current = false
@@ -189,6 +247,23 @@ export default function AuctionRoomPage() {
     () => (lotsQuery.data || []).filter((l) => l.status === 'queued' && l.auctionStatus === 'idle'),
     [lotsQuery.data],
   )
+
+  // Timer: derive seconds remaining from activeLot.currentBidAt.
+  // We treat currentBidAt as "the timer started now" and count down
+  // from 60s. The server owns the truth; this is just for UX.
+  const [timerSeconds, setTimerSeconds] = useState(0)
+  useEffect(() => {
+    if (!activeLot?.currentBidAt) { setTimerSeconds(0); return }
+    const started = new Date(activeLot.currentBidAt).getTime()
+    const tick = () => {
+      const elapsed = Math.floor((Date.now() - started) / 1000)
+      const remaining = Math.max(0, 60 - elapsed)
+      setTimerSeconds(remaining)
+    }
+    tick()
+    const id = setInterval(tick, 1000)
+    return () => clearInterval(id)
+  }, [activeLot?.currentBidAt])
 
   // ============================================================
   // Host actions — only callable by the host. Each posts to the
@@ -230,6 +305,45 @@ export default function AuctionRoomPage() {
     setBusy(true)
     try {
       await passLotRequest(activeLot.id)
+    } catch (err) {
+      toast.error(err.message)
+    } finally {
+      setBusy(false)
+    }
+  }, [isHost, activeLot, toast])
+
+  const onPause = useCallback(async () => {
+    if (!isHost || !activeLot) return
+    setBusy(true)
+    try {
+      await pauseLotRequest(activeLot.id)
+      toast.info('Auction paused')
+    } catch (err) {
+      toast.error(err.message)
+    } finally {
+      setBusy(false)
+    }
+  }, [isHost, activeLot, toast])
+
+  const onResume = useCallback(async () => {
+    if (!isHost || !activeLot) return
+    setBusy(true)
+    try {
+      await resumeLotRequest(activeLot.id)
+      toast.info('Auction resumed')
+    } catch (err) {
+      toast.error(err.message)
+    } finally {
+      setBusy(false)
+    }
+  }, [isHost, activeLot, toast])
+
+  const onUndo = useCallback(async () => {
+    if (!isHost || !activeLot) return
+    setBusy(true)
+    try {
+      await undoLastActionRequest(activeLot.id)
+      toast.success('Action undone')
     } catch (err) {
       toast.error(err.message)
     } finally {
@@ -281,9 +395,13 @@ export default function AuctionRoomPage() {
             isHost={isHost}
             queuedLots={queuedLots}
             busy={busy}
+            timerSeconds={timerSeconds}
             onActivate={onActivate}
             onHammer={onHammer}
             onPass={onPass}
+            onPause={onPause}
+            onResume={onResume}
+            onUndo={onUndo}
           />
           <PaddlesRail
             franchises={tournament?.franchises || []}

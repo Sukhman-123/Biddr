@@ -1,6 +1,8 @@
 const Lot = require('../models/Lot');
 const Tournament = require('../models/Tournament');
 const { assertCanSeeTournament, HttpError } = require('../middleware/canSeeTournament');
+const { canAffordBid, getMinBid } = require('../utils/wallet');
+const { push, pop, peek, depth } = require('../services/undoService');
 
 // =============================================================
 // Auction-room controller.
@@ -126,13 +128,242 @@ const hammerLot = async (req, res, next) => {
       winnerFranchiseId = lot.currentBidderFranchiseId;
     }
 
+    const previousLot = { ...lot.toObject() }
+    // Snapshot franchise wallets before the sale so we can restore them on undo.
+    const previousWallets = tournament.franchises.map((f) => ({
+      id: f._id.toString(),
+      wallet: { ...f.wallet },
+      squad: { ...f.squad },
+    }))
+
     lot.status = 'sold';
     lot.auctionStatus = 'hammered';
     lot.soldToFranchiseId = winnerFranchiseId;
     lot.soldPrice = lot.currentBid > 0 ? lot.currentBid : lot.basePrice;
     await lot.save();
 
+    // Update the winning franchise's wallet.
+    if (winnerFranchiseId) {
+      const franchise = tournament.franchises.find(
+        (f) => f._id.toString() === winnerFranchiseId,
+      )
+      if (franchise) {
+        franchise.wallet.spent = (franchise.wallet.spent || 0) + lot.soldPrice
+        if (!franchise.squad) {
+          franchise.squad = { playerIds: [], maxSize: 11 }
+        }
+        if (!Array.isArray(franchise.squad.playerIds)) {
+          franchise.squad.playerIds = []
+        }
+        franchise.squad.playerIds.push(lot._id)
+        await tournament.save()
+      }
+    }
+
+    push(tournament._id.toString(), {
+      type: 'LOT_HAMMERED',
+      lotId: lot._id.toString(),
+      previousLot,
+      previousWallets,
+    });
+
     broadcast(req, tournament._id.toString(), 'lot:hammered', {
+      lot: lot.toJSON(),
+      by: { id: req.user._id.toString(), fullName: req.user.fullName },
+      at: new Date().toISOString(),
+    });
+
+    return res.status(200).json({ lot: lot.toJSON() });
+  } catch (error) {
+    if (error instanceof HttpError) {
+      return res.status(error.status).json({ message: error.message });
+    }
+    return next(error);
+  }
+};
+
+// POST /api/lots/:lotId/place-bid
+// Places a bid on behalf of a franchise.
+//
+// For REMOTE mode: any authenticated user in the tournament can bid.
+// For PHYSICAL mode: only the host can call this (to enter bids manually).
+//
+// Validates:
+//   - Lot is active (on the floor)
+//   - Bid is at least basePrice on first bid, or currentBid + bidIncrement
+//   - Franchise has sufficient wallet remaining
+//   - Franchise has squad slot available
+//
+// On success: updates lot.currentBid, lot.currentBidderFranchiseId,
+//             broadcasts 'bid:placed' to the room.
+const placeBid = async (req, res, next) => {
+  try {
+    const { lotId } = req.params;
+    const { franchiseId, amount } = req.body || {};
+
+    if (!franchiseId || typeof amount !== 'number') {
+      throw new HttpError(400, 'franchiseId and amount are required');
+    }
+
+    const lot = await Lot.findById(lotId);
+    if (!lot) {
+      throw new HttpError(404, 'Lot not found');
+    }
+
+    const tournament = await Tournament.findById(lot.tournamentId);
+    if (!tournament) {
+      throw new HttpError(404, 'Tournament not found');
+    }
+
+    // For physical mode, only the host can place bids (manual entry)
+    if (tournament.auctionMode === 'physical' && !isHost(tournament, req.user)) {
+      throw new HttpError(403, 'Only the auctioneer can enter bids in physical mode');
+    }
+
+    // For remote mode, any authenticated user can bid
+    // (v2 will add franchise assignment per user)
+    if (tournament.auctionMode === 'remote') {
+      // For now, allow any authenticated user who can see the tournament
+      await assertCanSeeTournament(tournament._id.toString(), req.user);
+    }
+
+    if (lot.auctionStatus !== 'active') {
+      throw new HttpError(400, `Lot is not active (auctionStatus: ${lot.auctionStatus})`);
+    }
+
+    if (amount < 0) {
+      throw new HttpError(400, 'Bid amount cannot be negative');
+    }
+
+    // Validate minimum bid
+    const minBid = getMinBid(lot, lot.basePrice, tournament.settings?.minBidIncrement);
+    if (amount < minBid) {
+      throw new HttpError(400, `Minimum bid is ${minBid.toLocaleString('en-IN')}`);
+    }
+
+    // Validate franchise exists
+    const franchise = tournament.franchises.find(
+      (f) => f._id.toString() === franchiseId,
+    );
+    if (!franchise) {
+      throw new HttpError(400, 'Franchise not found in this tournament');
+    }
+
+    // Check wallet and squad
+    const check = canAffordBid(franchise, amount, tournament.settings?.minBidIncrement);
+    if (!check.canBid) {
+      throw new HttpError(400, check.reason);
+    }
+
+    // Place the bid
+    const previousBid = { ...lot.toObject() }
+    lot.currentBid = amount;
+    lot.currentBidderFranchiseId = franchiseId;
+    lot.currentBidByUserId = req.user._id;
+    lot.currentBidAt = new Date();
+    await lot.save();
+
+    push(tournament._id.toString(), {
+      type: 'BID_PLACED',
+      lotId: lot._id.toString(),
+      previousBid,
+    });
+
+    broadcast(req, tournament._id.toString(), 'bid:placed', {
+      lot: lot.toJSON(),
+      franchise: { id: franchise._id.toString(), name: franchise.name },
+      amount,
+      by: { id: req.user._id.toString(), fullName: req.user.fullName },
+      at: new Date().toISOString(),
+    });
+
+    return res.status(200).json({ lot: lot.toJSON() });
+  } catch (error) {
+    if (error instanceof HttpError) {
+      return res.status(error.status).json({ message: error.message });
+    }
+    return next(error);
+  }
+};
+
+// POST /api/lots/:lotId/pause
+// Host-only. Pauses an active auction (timer stops, bids blocked).
+// Does NOT change the lot status, only auctionStatus='paused'.
+const pauseLot = async (req, res, next) => {
+  try {
+    const { lotId } = req.params;
+
+    const lot = await Lot.findById(lotId);
+    if (!lot) {
+      throw new HttpError(404, 'Lot not found');
+    }
+
+    const tournament = await Tournament.findById(lot.tournamentId);
+    if (!tournament) {
+      throw new HttpError(404, 'Tournament not found');
+    }
+
+    if (!isHost(tournament, req.user)) {
+      throw new HttpError(403, 'Only the auctioneer can pause auctions');
+    }
+
+    if (lot.auctionStatus !== 'active') {
+      throw new HttpError(
+        400,
+        `Lot is not active (current auctionStatus: ${lot.auctionStatus})`,
+      );
+    }
+
+    lot.auctionStatus = 'paused';
+    await lot.save();
+
+    broadcast(req, tournament._id.toString(), 'auction:paused', {
+      lot: lot.toJSON(),
+      by: { id: req.user._id.toString(), fullName: req.user.fullName },
+      at: new Date().toISOString(),
+    });
+
+    return res.status(200).json({ lot: lot.toJSON() });
+  } catch (error) {
+    if (error instanceof HttpError) {
+      return res.status(error.status).json({ message: error.message });
+    }
+    return next(error);
+  }
+};
+
+// POST /api/lots/:lotId/resume
+// Host-only. Resumes a paused auction (timer continues, bids allowed again).
+const resumeLot = async (req, res, next) => {
+  try {
+    const { lotId } = req.params;
+
+    const lot = await Lot.findById(lotId);
+    if (!lot) {
+      throw new HttpError(404, 'Lot not found');
+    }
+
+    const tournament = await Tournament.findById(lot.tournamentId);
+    if (!tournament) {
+      throw new HttpError(404, 'Tournament not found');
+    }
+
+    if (!isHost(tournament, req.user)) {
+      throw new HttpError(403, 'Only the auctioneer can resume auctions');
+    }
+
+    if (lot.auctionStatus !== 'paused') {
+      throw new HttpError(
+        400,
+        `Lot is not paused (current auctionStatus: ${lot.auctionStatus})`,
+      );
+    }
+
+    lot.auctionStatus = 'active';
+    lot.currentBidAt = new Date(); // Reset timer
+    await lot.save();
+
+    broadcast(req, tournament._id.toString(), 'auction:resumed', {
       lot: lot.toJSON(),
       by: { id: req.user._id.toString(), fullName: req.user.fullName },
       at: new Date().toISOString(),
@@ -221,9 +452,63 @@ const getRoomSnapshot = async (req, res, next) => {
   }
 };
 
+// POST /api/lots/:lotId/undo
+// Host-only. Reverses the last action (bid placement, hammer, etc).
+const undoLastAction = async (req, res, next) => {
+  try {
+    const { lotId } = req.params;
+    const lot = await Lot.findById(lotId);
+    if (!lot) throw new HttpError(404, 'Lot not found');
+    const tournament = await Tournament.findById(lot.tournamentId);
+    if (!tournament) throw new HttpError(404, 'Tournament not found');
+    if (!isHost(tournament, req.user)) throw new HttpError(403, 'Only the auctioneer can undo actions');
+
+    const action = pop(tournament._id.toString());
+    if (!action) throw new HttpError(400, 'No actions to undo');
+
+    let revertedLot = null;
+    switch (action.type) {
+      case 'BID_PLACED':
+        Object.assign(lot, action.previousBid);
+        await lot.save();
+        revertedLot = lot;
+        break;
+      case 'LOT_HAMMERED':
+        Object.assign(lot, action.previousLot);
+        await lot.save();
+        action.previousWallets.forEach((ws) => {
+          const f = tournament.franchises.find((fr) => fr._id.toString() === ws.id);
+          if (f) { f.wallet = ws.wallet; f.squad = ws.squad; }
+        });
+        await tournament.save();
+        revertedLot = lot;
+        break;
+      default:
+        throw new HttpError(400, `Cannot undo: ${action.type}`);
+    }
+
+    broadcast(req, tournament._id.toString(), 'lot:undone', {
+      action: { ...action, reverted: true },
+      tournamentId: tournament._id.toString(),
+    });
+
+    return res.status(200).json({
+      action: { ...action, reverted: true },
+      lot: revertedLot ? revertedLot.toJSON() : null,
+    });
+  } catch (error) {
+    if (error instanceof HttpError) return res.status(error.status).json({ message: error.message });
+    return next(error);
+  }
+};
+
 module.exports = {
   activateLot,
   hammerLot,
   passLot,
+  placeBid,
+  pauseLot,
+  resumeLot,
+  undoLastAction,
   getRoomSnapshot,
 };

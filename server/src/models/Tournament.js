@@ -2,6 +2,7 @@ const mongoose = require('mongoose');
 
 const TOURNAMENT_STATUSES = ['upcoming', 'live', 'completed'];
 const TOURNAMENT_VISIBILITIES = ['public', 'invite-only'];
+const AUCTION_MODES = ['remote', 'physical'];
 
 const coverSchema = new mongoose.Schema(
   {
@@ -51,6 +52,31 @@ const franchiseSlotSchema = new mongoose.Schema(
       trim: true,
       match: [/^#([0-9a-fA-F]{3}){1,2}$/, 'colorHex must be a hex color'],
       default: '#f5b94a',
+    },
+    wallet: {
+      initial: {
+        type: Number,
+        min: [0, 'Initial wallet cannot be negative'],
+        default: 0,
+      },
+      spent: {
+        type: Number,
+        min: [0, 'Spent amount cannot be negative'],
+        default: 0,
+      },
+    },
+    squad: {
+      playerIds: {
+        type: [mongoose.Schema.Types.ObjectId],
+        ref: 'Lot',
+        default: [],
+      },
+      maxSize: {
+        type: Number,
+        min: [1, 'Max squad size must be at least 1'],
+        max: [30, 'Max squad size cannot exceed 30'],
+        default: 11,
+      },
     },
   },
   { _id: true },
@@ -121,6 +147,36 @@ const tournamentSchema = new mongoose.Schema(
       },
       default: 'public',
     },
+    auctionMode: {
+      type: String,
+      enum: {
+        values: AUCTION_MODES,
+        message: 'Auction mode must be remote or physical',
+      },
+      default: 'remote',
+    },
+    settings: {
+      minBidIncrement: {
+        type: Number,
+        min: [1, 'Minimum bid increment must be at least 1'],
+        default: 1000,
+      },
+      autoExtendSeconds: {
+        type: Number,
+        min: [0, 'Auto extend cannot be negative'],
+        default: 10,
+      },
+      maxSquadSize: {
+        type: Number,
+        min: [1, 'Max squad size must be at least 1'],
+        max: [30, 'Max squad size cannot exceed 30'],
+        default: 11,
+      },
+      allowReAuction: {
+        type: Boolean,
+        default: true,
+      },
+    },
     ownerId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'User',
@@ -158,6 +214,16 @@ tournamentSchema.virtual('franchiseCount').get(function getFranchiseCount() {
   return this.franchises?.length ?? 0;
 });
 
+// Virtual: remaining wallet balance for a franchise
+franchiseSlotSchema.virtual('remaining').get(function getRemaining() {
+  return (this.wallet?.initial ?? 0) - (this.wallet?.spent ?? 0);
+});
+
+// Virtual: current squad size
+franchiseSlotSchema.virtual('squadSize').get(function getSquadSize() {
+  return this.squad?.playerIds?.length ?? 0;
+});
+
 tournamentSchema.methods.toSummaryJSON = function toSummaryJSON() {
   return {
     id: this._id.toString(),
@@ -189,11 +255,23 @@ tournamentSchema.methods.toDetailJSON = function toDetailJSON() {
   return {
     ...this.toSummaryJSON(),
     ownerId: this.ownerId?.toString?.() ?? this.ownerId,
+    auctionMode: this.auctionMode ?? 'remote',
+    settings: this.settings ?? {},
     franchises: (this.franchises || []).map((f) => ({
       id: f._id.toString(),
       name: f.name,
       city: f.city,
       colorHex: f.colorHex,
+      wallet: {
+        initial: f.wallet?.initial ?? 0,
+        spent: f.wallet?.spent ?? 0,
+        remaining: (f.wallet?.initial ?? 0) - (f.wallet?.spent ?? 0),
+      },
+      squad: {
+        playerIds: f.squad?.playerIds ?? [],
+        maxSize: f.squad?.maxSize ?? 11,
+        size: f.squad?.playerIds?.length ?? 0,
+      },
     })),
   };
 };
@@ -203,3 +281,4 @@ const Tournament = mongoose.model('Tournament', tournamentSchema);
 module.exports = Tournament;
 module.exports.TOURNAMENT_STATUSES = TOURNAMENT_STATUSES;
 module.exports.TOURNAMENT_VISIBILITIES = TOURNAMENT_VISIBILITIES;
+module.exports.AUCTION_MODES = AUCTION_MODES;

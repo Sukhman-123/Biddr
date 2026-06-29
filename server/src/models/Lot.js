@@ -4,7 +4,7 @@ const LOT_STYLES = ['Batsman', 'Bowler', 'All-rounder', 'Wicket-keeper'];
 const LOT_STATUSES = ['queued', 'sold', 'unsold'];
 // Auction-room lifecycle for a lot. Mutated ONLY by host actions
 // (activate / hammer / pass). The server never auto-transitions.
-const LOT_AUCTION_STATUSES = ['idle', 'active', 'hammered', 'unsold'];
+const LOT_AUCTION_STATUSES = ['idle', 'active', 'paused', 'hammered', 'unsold'];
 
 const lotSchema = new mongoose.Schema(
   {

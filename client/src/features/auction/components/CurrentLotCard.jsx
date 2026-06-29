@@ -17,9 +17,13 @@ export default function CurrentLotCard({
   isHost,
   queuedLots,
   busy,
+  timerSeconds,
   onActivate,
   onHammer,
   onPass,
+  onPause,
+  onResume,
+  onUndo,
 }) {
   return (
     <div className="current-lot-card">
@@ -83,11 +87,15 @@ export default function CurrentLotCard({
 
             {isHost ? (
               <HostControls
-                mode="active"
+                mode={lot.auctionStatus === 'paused' ? 'paused' : 'active'}
                 busy={busy}
                 lot={lot}
+                timerSeconds={timerSeconds}
                 onHammer={onHammer}
                 onPass={onPass}
+                onPause={onPause}
+                onResume={onResume}
+                onUndo={onUndo}
               />
             ) : (
               <p className="current-lot-hint">

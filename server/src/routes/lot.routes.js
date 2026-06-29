@@ -4,6 +4,10 @@ const { updateLot, deleteLot } = require('../controllers/lot.controller');
 const {
   hammerLot,
   passLot,
+  placeBid,
+  pauseLot,
+  resumeLot,
+  undoLastAction,
 } = require('../controllers/auctionRoom.controller');
 
 const router = express.Router();
@@ -18,5 +22,9 @@ router.delete('/:lotId', deleteLot);
 // /Users/onehash/.claude/plans/spicy-greeting-hickey.md.
 router.post('/:lotId/hammer', hammerLot);
 router.post('/:lotId/pass', passLot);
+router.post('/:lotId/place-bid', placeBid);
+router.post('/:lotId/pause', pauseLot);
+router.post('/:lotId/resume', resumeLot);
+router.post('/:lotId/undo', undoLastAction);
 
 module.exports = router;
