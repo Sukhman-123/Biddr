@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Check, X, Play, ChevronDown, Pause, Zap, RotateCcw } from 'lucide-react'
+import { useToast } from '../../../components/ToastProvider'
 import './HostControls.css'
 
 // =============================================================
@@ -138,6 +139,7 @@ function ActiveControls({ lot, mode, busy, timerSeconds, onHammer, onPass, onPau
   const [confirmPass, setConfirmPass] = useState(false)
   const [confirmUndo, setConfirmUndo] = useState(false)
   const isPaused = mode === 'paused'
+  const toast = useToast()
 
   // Timer component for the active lot
   const [countdown, setCountdown] = useState(timerSeconds || 0)
@@ -155,7 +157,17 @@ function ActiveControls({ lot, mode, busy, timerSeconds, onHammer, onPass, onPau
       setCountdown((prev) => {
         if (prev <= 1) {
           clearInterval(interval)
-          // v2: auto-trigger hammer/un sold logic here
+          setTimerRunning(false)
+          // Auto-sell/unsold when timer expires.
+          // We can't call onHammer/onPass here directly because they
+          // require the user to confirm — instead, we show a toast
+          // and let the host decide, OR we can auto-hammer if there's
+          // a bid. For v1, we just alert and let the host act.
+          if (lot?.currentBid > 0) {
+            toast.warn('Timer expired! Auto-hammer would sell this lot.')
+          } else {
+            toast.warn('Timer expired! No bids — mark unsold.')
+          }
           return 0
         }
         return prev - 1
@@ -163,7 +175,7 @@ function ActiveControls({ lot, mode, busy, timerSeconds, onHammer, onPass, onPau
     }, 1000)
 
     return () => clearInterval(interval)
-  }, [timerRunning, countdown])
+  }, [timerRunning, countdown, lot?.currentBid])
 
   if (confirmHammer) {
     return (

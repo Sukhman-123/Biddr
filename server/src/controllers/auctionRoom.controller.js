@@ -140,7 +140,6 @@ const hammerLot = async (req, res, next) => {
     lot.auctionStatus = 'hammered';
     lot.soldToFranchiseId = winnerFranchiseId;
     lot.soldPrice = lot.currentBid > 0 ? lot.currentBid : lot.basePrice;
-    await lot.save();
 
     // Update the winning franchise's wallet.
     if (winnerFranchiseId) {
@@ -156,9 +155,12 @@ const hammerLot = async (req, res, next) => {
           franchise.squad.playerIds = []
         }
         franchise.squad.playerIds.push(lot._id)
-        await tournament.save()
       }
     }
+
+    // Save both documents
+    await lot.save()
+    await tournament.save()
 
     push(tournament._id.toString(), {
       type: 'LOT_HAMMERED',

@@ -117,6 +117,7 @@ const createTournament = async (req, res, next) => {
       region,
       hostName,
       franchises,
+      auctionMode,
     } = req.body || {};
 
     if (!name || typeof name !== 'string' || name.trim().length < 3) {
@@ -187,6 +188,7 @@ const createTournament = async (req, res, next) => {
       endDate: parsedEnd,
       status: 'upcoming',
       visibility: visibility === 'invite-only' ? 'invite-only' : 'public',
+      auctionMode: auctionMode === 'physical' ? 'physical' : 'remote',
       hostName:
         typeof hostName === 'string' && hostName.trim()
           ? hostName.trim()
