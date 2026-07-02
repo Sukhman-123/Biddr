@@ -247,6 +247,8 @@ const updateTournament = async (req, res, next) => {
       'region',
       'coverImage',
       'visibility',
+      'auctionMode',
+      'pursePerFranchise',
     ];
     for (const field of allowed) {
       if (req.body[field] !== undefined) {
@@ -274,6 +276,24 @@ const updateTournament = async (req, res, next) => {
     if (req.body.endDate !== undefined) {
       tournament.endDate = req.body.endDate ? new Date(req.body.endDate) : null;
     }
+
+    // Settings object: partial update — only set keys that are provided
+    if (req.body.settings && typeof req.body.settings === 'object') {
+      const s = req.body.settings;
+      if (typeof s.minBidIncrement === 'number') {
+        tournament.settings.minBidIncrement = s.minBidIncrement;
+      }
+      if (typeof s.autoExtendSeconds === 'number') {
+        tournament.settings.autoExtendSeconds = s.autoExtendSeconds;
+      }
+      if (typeof s.maxSquadSize === 'number') {
+        tournament.settings.maxSquadSize = s.maxSquadSize;
+      }
+      if (typeof s.allowReAuction === 'boolean') {
+        tournament.settings.allowReAuction = s.allowReAuction;
+      }
+    }
+
     if (
       tournament.startDate &&
       tournament.endDate &&
@@ -350,6 +370,48 @@ const startAuction = async (req, res, next) => {
     }
 
     tournament.status = 'live';
+    await tournament.save();
+
+    return res.status(200).json({ tournament: tournament.toDetailJSON() });
+  } catch (error) {
+    if (error?.name === 'CastError') {
+      return res.status(404).json({ message: 'Tournament not found' });
+    }
+    return next(error);
+  }
+};
+
+// =============================================================
+// endAuction — flip a live tournament to "completed".
+//
+// Host-only. Idempotent: if already completed, returns 200 with
+// the current state. Cannot be called on an upcoming tournament
+// (use startAuction first).
+// =============================================================
+const endAuction = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    const tournament = await Tournament.findById(id);
+    if (!tournament) {
+      return res.status(404).json({ message: 'Tournament not found' });
+    }
+    if (tournament.ownerId.toString() !== req.user._id.toString()) {
+      return res
+        .status(403)
+        .json({ message: 'Only the host can end the auction' });
+    }
+
+    // Idempotent: if it's already completed, just return it.
+    if (tournament.status === 'completed') {
+      return res.status(200).json({ tournament: tournament.toDetailJSON() });
+    }
+    if (tournament.status === 'upcoming') {
+      return res
+        .status(400)
+        .json({ message: 'Start the auction before ending it' });
+    }
+
+    tournament.status = 'completed';
     await tournament.save();
 
     return res.status(200).json({ tournament: tournament.toDetailJSON() });
@@ -467,6 +529,7 @@ module.exports = {
   createTournament,
   updateTournament,
   startAuction,
+  endAuction,
   listInvites,
   createInvite,
   revokeInvite,

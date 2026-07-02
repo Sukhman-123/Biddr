@@ -49,6 +49,15 @@ export async function startAuctionRequest(id) {
   }
 }
 
+export async function endAuctionRequest(id) {
+  try {
+    const { data } = await api.post(`/tournaments/${id}/end`)
+    return data?.tournament ?? null
+  } catch (error) {
+    throw wrapError(error, 'Could not end the auction')
+  }
+}
+
 export async function listInvitesRequest(id) {
   try {
     const { data } = await api.get(`/tournaments/${id}/invites`)
