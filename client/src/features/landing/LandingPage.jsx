@@ -3,14 +3,16 @@ import { motion, useReducedMotion } from 'framer-motion'
 import { useCallback, useEffect, useState } from 'react'
 import {
   ArrowRight,
+  Clock,
   Gavel,
   Mail,
-  MapPin,
+  MessageSquare,
   Phone,
   Radio,
   Send,
   ShieldCheck,
   Trophy,
+  User,
   Users,
   Wallet,
 } from 'lucide-react'
@@ -749,79 +751,105 @@ function LandingPage() {
                   <span className="landing-contact-list-icon" aria-hidden="true">
                     <Mail size={16} strokeWidth={2.2} />
                   </span>
-                  <a href="mailto:hello@biddr.live">hello@biddr.live</a>
+                  <a href="mailto:sukhmanpreethundal49@gmail.com">
+                    sukhmanpreethundal49@gmail.com
+                  </a>
                 </RevealLi>
                 <RevealLi variant="left">
                   <span className="landing-contact-list-icon" aria-hidden="true">
                     <Phone size={16} strokeWidth={2.2} />
                   </span>
-                  <a href="tel:+910000000000">+91 00000 00000</a>
+                  <a href="tel:+918972850560">+91 89728 50560</a>
                 </RevealLi>
                 <RevealLi variant="left">
                   <span className="landing-contact-list-icon" aria-hidden="true">
-                    <MapPin size={16} strokeWidth={2.2} />
+                    <Clock size={16} strokeWidth={2.2} />
                   </span>
-                  <span>Remote-first across India</span>
+                  <span>Usually replies within 24 hours</span>
                 </RevealLi>
               </ul>
             </RevealDiv>
 
             <form className="landing-contact-form" onSubmit={onContactSubmit} noValidate>
-              <div className="reveal-stagger">
+              <div className="landing-contact-form-head">
+                <span className="landing-contact-form-eyebrow">
+                  <Radio size={12} strokeWidth={2.6} />
+                  Auction desk enquiry
+                </span>
+                <h3>Send a message</h3>
+                <p>Fill this in and we&rsquo;ll get back to you personally.</p>
+              </div>
+
+              <div className="landing-field-grid reveal-stagger">
                 <RevealDiv variant="left" as="label" className="landing-field">
                   <span className="landing-field-label">Name</span>
-                  <input
-                    type="text"
-                    name="name"
-                    value={contact.name}
-                    onChange={onContactChange}
-                    placeholder="Your name"
-                    autoComplete="name"
-                    required
-                  />
+                  <span className="landing-field-control">
+                    <User className="landing-field-icon" size={16} strokeWidth={2.2} />
+                    <input
+                      type="text"
+                      name="name"
+                      value={contact.name}
+                      onChange={onContactChange}
+                      placeholder="Your name"
+                      autoComplete="name"
+                      required
+                    />
+                  </span>
                 </RevealDiv>
 
                 <RevealDiv variant="left" as="label" className="landing-field">
                   <span className="landing-field-label">Email</span>
-                  <input
-                    type="email"
-                    name="email"
-                    value={contact.email}
-                    onChange={onContactChange}
-                    placeholder="you@example.com"
-                    autoComplete="email"
-                    required
-                  />
+                  <span className="landing-field-control">
+                    <Mail className="landing-field-icon" size={16} strokeWidth={2.2} />
+                    <input
+                      type="email"
+                      name="email"
+                      value={contact.email}
+                      onChange={onContactChange}
+                      placeholder="you@example.com"
+                      autoComplete="email"
+                      required
+                    />
+                  </span>
                 </RevealDiv>
 
                 <RevealDiv variant="left" as="label" className="landing-field">
                   <span className="landing-field-label">Mobile number</span>
-                  <input
-                    type="tel"
-                    name="mobile"
-                    value={contact.mobile}
-                    onChange={onContactChange}
-                    placeholder="+91 98xxx xxxxx"
-                    autoComplete="tel"
-                    required
-                  />
+                  <span className="landing-field-control">
+                    <Phone className="landing-field-icon" size={16} strokeWidth={2.2} />
+                    <input
+                      type="tel"
+                      name="mobile"
+                      value={contact.mobile}
+                      onChange={onContactChange}
+                      placeholder="98xxx xxxxx"
+                      autoComplete="tel"
+                      required
+                    />
+                  </span>
                 </RevealDiv>
 
                 <RevealDiv variant="left" as="label" className="landing-field">
                   <span className="landing-field-label">Place / Address</span>
-                  <input
-                    type="text"
-                    name="place"
-                    value={contact.place}
-                    onChange={onContactChange}
-                    placeholder="City, region, or full address"
-                    autoComplete="street-address"
-                    required
-                  />
+                  <span className="landing-field-control">
+                    <Trophy className="landing-field-icon" size={16} strokeWidth={2.2} />
+                    <input
+                      type="text"
+                      name="place"
+                      value={contact.place}
+                      onChange={onContactChange}
+                      placeholder="City, region, or full address"
+                      autoComplete="street-address"
+                      required
+                    />
+                  </span>
                 </RevealDiv>
+              </div>
 
-                <RevealDiv variant="left" as="label" className="landing-field">
-                  <span className="landing-field-label">Message</span>
+              <RevealDiv variant="left" as="label" className="landing-field landing-field--full">
+                <span className="landing-field-label">Message</span>
+                <span className="landing-field-control landing-field-control--textarea">
+                  <MessageSquare className="landing-field-icon landing-field-icon--top" size={16} strokeWidth={2.2} />
                   <textarea
                     name="message"
                     value={contact.message}
@@ -831,19 +859,22 @@ function LandingPage() {
                     rows={4}
                     required
                   />
-                </RevealDiv>
+                </span>
+              </RevealDiv>
 
-                <RevealDiv variant="pop">
-                  <button
-                    type="submit"
-                    className="landing-btn landing-btn--primary landing-contact-submit"
-                    disabled={contactStatus === 'sending'}
-                  >
-                    {contactStatus === 'sending' ? 'Sending...' : 'Send message'}
-                    <Send size={16} strokeWidth={2.2} />
-                  </button>
-                </RevealDiv>
-              </div>
+              <RevealDiv variant="pop" className="landing-contact-form-foot">
+                <button
+                  type="submit"
+                  className="landing-btn landing-btn--primary landing-contact-submit"
+                  disabled={contactStatus === 'sending'}
+                >
+                  {contactStatus === 'sending' ? 'Sending...' : 'Send message'}
+                  <Send size={16} strokeWidth={2.2} />
+                </button>
+                <span className="landing-contact-form-note">
+                  We never share your details with a third party.
+                </span>
+              </RevealDiv>
 
               {contactStatus === 'sent' ? (
                 <RevealDiv
