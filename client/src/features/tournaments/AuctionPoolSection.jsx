@@ -1,14 +1,18 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { motion } from 'framer-motion'
+import { motion, AnimatePresence } from 'framer-motion'
 import clsx from 'clsx'
 import {
+  ChevronDown,
+  ChevronRight,
   Download,
   FileSpreadsheet,
   Pencil,
   Plus,
+  Search,
   Trash2,
   Upload,
   Users,
+  X,
 } from 'lucide-react'
 import {
   listLotsRequest,
@@ -27,6 +31,13 @@ import { formatPurse } from './tournament.utils'
 import AddLotModal from './AddLotModal'
 import './AuctionPoolSection.css'
 
+const STATUS_FILTERS = [
+  { id: 'all', label: 'All' },
+  { id: 'queued', label: 'Queued' },
+  { id: 'sold', label: 'Sold' },
+  { id: 'unsold', label: 'Unsold' },
+]
+
 function AuctionPoolSection({ tournamentId, currency }) {
   const [lots, setLots] = useState([])
   const [loading, setLoading] = useState(true)
@@ -35,6 +46,9 @@ function AuctionPoolSection({ tournamentId, currency }) {
   const [editingLot, setEditingLot] = useState(null)
   const [uploading, setUploading] = useState(false)
   const [uploadResult, setUploadResult] = useState(null)
+  const [query, setQuery] = useState('')
+  const [statusFilter, setStatusFilter] = useState('all')
+  const [collapsedSets, setCollapsedSets] = useState(() => new Set())
   const fileRef = useRef(null)
 
   const refresh = async () => {
@@ -60,7 +74,39 @@ function AuctionPoolSection({ tournamentId, currency }) {
   }, [tournamentId])
 
   const counts = useMemo(() => statusBreakdown(lots), [lots])
-  const groups = useMemo(() => groupLotsBySet(lots), [lots])
+
+  const filteredLots = useMemo(() => {
+    const q = query.trim().toLowerCase()
+    return lots.filter((lot) => {
+      const matchesQuery =
+        !q ||
+        lot.name?.toLowerCase().includes(q) ||
+        lot.country?.toLowerCase().includes(q) ||
+        lot.style?.toLowerCase().includes(q)
+      const matchesStatus =
+        statusFilter === 'all' || lot.status?.toLowerCase() === statusFilter
+      return matchesQuery && matchesStatus
+    })
+  }, [lots, query, statusFilter])
+
+  const groups = useMemo(() => groupLotsBySet(filteredLots), [filteredLots])
+
+  const toggleSet = (setName) => {
+    setCollapsedSets((prev) => {
+      const next = new Set(prev)
+      if (next.has(setName)) next.delete(setName)
+      else next.add(setName)
+      return next
+    })
+  }
+
+  const allSetNames = useMemo(() => groups.map((g) => g.set), [groups])
+  const allCollapsed =
+    allSetNames.length > 0 && allSetNames.every((s) => collapsedSets.has(s))
+
+  const toggleAll = () => {
+    setCollapsedSets(allCollapsed ? new Set() : new Set(allSetNames))
+  }
 
   const onAddedOrEdited = (lot) => {
     if (!lot) return
@@ -109,6 +155,9 @@ function AuctionPoolSection({ tournamentId, currency }) {
       window.alert(err?.message ?? 'Could not download the template')
     }
   }
+
+  const totalMatched = filteredLots.length
+  const isFiltering = query.trim() !== '' || statusFilter !== 'all'
 
   return (
     <section className="pool-section" aria-label="Auction pool">
@@ -199,6 +248,56 @@ function AuctionPoolSection({ tournamentId, currency }) {
         </div>
       ) : null}
 
+      {!loading && lots.length > 0 ? (
+        <div className="pool-toolbar">
+          <div className="pool-search">
+            <Search size={14} />
+            <input
+              type="text"
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              placeholder="Search by name, country, or style…"
+            />
+            {query ? (
+              <button
+                type="button"
+                className="pool-search-clear"
+                onClick={() => setQuery('')}
+                aria-label="Clear search"
+              >
+                <X size={13} />
+              </button>
+            ) : null}
+          </div>
+          <div className="pool-filters">
+            {STATUS_FILTERS.map((f) => (
+              <button
+                key={f.id}
+                type="button"
+                className={clsx('pool-filter-chip', statusFilter === f.id && 'is-active')}
+                onClick={() => setStatusFilter(f.id)}
+              >
+                {f.label}
+                {f.id !== 'all' ? (
+                  <span className="pool-filter-count">{counts[f.id] ?? 0}</span>
+                ) : null}
+              </button>
+            ))}
+          </div>
+          {allSetNames.length > 1 ? (
+            <button type="button" className="pool-collapse-all" onClick={toggleAll}>
+              {allCollapsed ? 'Expand all' : 'Collapse all'}
+            </button>
+          ) : null}
+        </div>
+      ) : null}
+
+      {isFiltering ? (
+        <p className="pool-match-count">
+          {totalMatched} match{totalMatched === 1 ? '' : 'es'}
+        </p>
+      ) : null}
+
       {!loading && lots.length === 0 ? (
         <div className="pool-empty">
           <Users size={28} />
@@ -206,81 +305,112 @@ function AuctionPoolSection({ tournamentId, currency }) {
         </div>
       ) : null}
 
-      {groups.map((group) => (
-        <div className="pool-group" key={group.set}>
-          <header className="pool-group-head">
-            <span className="pool-group-title">{group.set}</span>
-            <span className="pool-group-count">{group.lots.length}</span>
-          </header>
-          <ul className="pool-list">
-            {group.lots.map((lot) => {
-              const style = styleTone(lot.style)
-              const status = statusTone(lot.status)
-              return (
-                <motion.li
-                  key={lot.id}
-                  className="pool-row"
-                  initial={{ opacity: 0, y: 4 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.18 }}
-                >
-                  <div
-                    className="pool-avatar"
-                    style={
-                      lot.photoUrl
-                        ? { backgroundImage: `url(${lot.photoUrl})` }
-                        : undefined
-                    }
-                  >
-                    {lot.photoUrl ? null : initialsFor(lot.name)}
-                  </div>
-                  <div className="pool-info">
-                    <div className="pool-info-line">
-                      <span className="pool-name">{lot.name}</span>
-                      <span
-                        className="pool-chip pool-chip--style"
-                        style={{ background: style.bg, color: style.fg }}
-                      >
-                        {lot.style}
-                      </span>
-                      <span className="pool-chip pool-chip--country">
-                        {lot.country}
-                      </span>
-                    </div>
-                    <div className="pool-info-sub">
-                      Base {formatPurse(lot.basePrice, currency)}
-                      <span
-                        className="pool-status"
-                        style={{ background: status.bg, color: status.fg }}
-                      >
-                        {lot.status}
-                      </span>
-                    </div>
-                  </div>
-                  <div className="pool-row-actions">
-                    <button
-                      type="button"
-                      className="pool-row-btn"
-                      onClick={() => setEditingLot(lot)}
-                      aria-label={`Edit ${lot.name}`}
-                    >
-                      <Pencil size={14} />
-                    </button>
-                    <button
-                      type="button"
-                      className="pool-row-btn pool-row-btn--danger"
-                      onClick={() => onRemove(lot)}
-                      aria-label={`Remove ${lot.name}`}
-                    >
-                      <Trash2 size={14} />
-                    </button>
-                  </div>
-                </motion.li>
-              )
-            })}
-          </ul>
+      {!loading && lots.length > 0 && filteredLots.length === 0 ? (
+        <div className="pool-empty">
+          <Search size={28} />
+          <p>No players match your search or filter.</p>
         </div>
-      ))}
+      ) : null}
+
+      {groups.map((group) => {
+        const isCollapsed = collapsedSets.has(group.set)
+        return (
+          <div className="pool-group" key={group.set}>
+            <button
+              type="button"
+              className="pool-group-head"
+              onClick={() => toggleSet(group.set)}
+              aria-expanded={!isCollapsed}
+            >
+              {isCollapsed ? <ChevronRight size={14} /> : <ChevronDown size={14} />}
+              <span className="pool-group-title">{group.set}</span>
+              <span className="pool-group-count">{group.lots.length}</span>
+            </button>
+            <AnimatePresence initial={false}>
+              {!isCollapsed ? (
+                <motion.ul
+                  className="pool-grid"
+                  initial={{ height: 0, opacity: 0 }}
+                  animate={{ height: 'auto', opacity: 1 }}
+                  exit={{ height: 0, opacity: 0 }}
+                  transition={{ duration: 0.18 }}
+                  style={{ overflow: 'hidden' }}
+                >
+                  {group.lots.map((lot) => {
+                    const style = styleTone(lot.style)
+                    const status = statusTone(lot.status)
+                    return (
+                      <motion.li
+                        key={lot.id}
+                        className="pool-card"
+                        initial={{ opacity: 0, y: 4 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ duration: 0.15 }}
+                      >
+                        <div className="pool-card-top">
+                          <div
+                            className="pool-avatar"
+                            style={
+                              lot.photoUrl
+                                ? { backgroundImage: `url(${lot.photoUrl})` }
+                                : undefined
+                            }
+                          >
+                            {lot.photoUrl ? null : initialsFor(lot.name)}
+                          </div>
+                          <div className="pool-row-actions">
+                            <button
+                              type="button"
+                              className="pool-row-btn"
+                              onClick={() => setEditingLot(lot)}
+                              aria-label={`Edit ${lot.name}`}
+                            >
+                              <Pencil size={13} />
+                            </button>
+                            <button
+                              type="button"
+                              className="pool-row-btn pool-row-btn--danger"
+                              onClick={() => onRemove(lot)}
+                              aria-label={`Remove ${lot.name}`}
+                            >
+                              <Trash2 size={13} />
+                            </button>
+                          </div>
+                        </div>
+                        <div className="pool-info">
+                          <span className="pool-name" title={lot.name}>
+                            {lot.name}
+                          </span>
+                          <div className="pool-info-line">
+                            <span
+                              className="pool-chip pool-chip--style"
+                              style={{ background: style.bg, color: style.fg }}
+                            >
+                              {lot.style}
+                            </span>
+                            <span className="pool-chip pool-chip--country">
+                              {lot.country}
+                            </span>
+                          </div>
+                          <div className="pool-info-sub">
+                            <span>Base {formatPurse(lot.basePrice, currency)}</span>
+                            <span
+                              className="pool-status"
+                              style={{ background: status.bg, color: status.fg }}
+                            >
+                              {lot.status}
+                            </span>
+                          </div>
+                        </div>
+                      </motion.li>
+                    )
+                  })}
+                </motion.ul>
+              ) : null}
+            </AnimatePresence>
+          </div>
+        )
+      })}
 
       {adding ? (
         <AddLotModal
