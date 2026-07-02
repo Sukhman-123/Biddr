@@ -223,9 +223,7 @@ const placeBid = async (req, res, next) => {
     }
 
     // For remote mode, any authenticated user can bid
-    // (v2 will add franchise assignment per user)
     if (tournament.auctionMode === 'remote') {
-      // For now, allow any authenticated user who can see the tournament
       await assertCanSeeTournament(tournament._id.toString(), req.user);
     }
 
@@ -249,6 +247,13 @@ const placeBid = async (req, res, next) => {
     );
     if (!franchise) {
       throw new HttpError(400, 'Franchise not found in this tournament');
+    }
+
+    // Validate user is the franchise owner
+    // In physical mode, the auctioneer (host) can place bids for any franchise
+    // In remote mode, only the franchise owner can raise the paddle
+    if (tournament.auctionMode !== 'physical' && !franchise.isOwner(req.user._id)) {
+      throw new HttpError(403, 'Only the franchise owner can raise the paddle for this team');
     }
 
     // Check wallet and squad

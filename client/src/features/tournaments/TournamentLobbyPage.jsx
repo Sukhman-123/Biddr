@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import EditTournamentModal from './EditTournamentModal'
 import AuctionPoolSection from './AuctionPoolSection'
+import TournamentFranchises from '../franchise/TournamentFranchises'
 import {
   ArrowLeft,
   Calendar,
@@ -469,6 +470,28 @@ function TournamentLobbyPage() {
                 </li>
               ))}
             </ul>
+          )}
+
+          {/* Franchise Member Management - only for tournament host */}
+          {isHost && tournament.franchises.length > 0 && (
+            <div className="lobby-franchise-members">
+              <header className="lobby-col-header">
+                <h2>
+                  <Users size={16} />
+                  Franchise Owners
+                </h2>
+                <span>Assign who can bid</span>
+              </header>
+              <p className="lobby-franchise-members-desc">
+                Only franchise owners can raise the paddle during an auction.
+                Add team owners below.
+              </p>
+              <TournamentFranchises
+                tournamentId={tournament.id}
+                isHost={isHost}
+                currentUserId={user?.id}
+              />
+            </div>
           )}
         </div>
 

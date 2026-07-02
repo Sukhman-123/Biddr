@@ -78,6 +78,14 @@ const franchiseSlotSchema = new mongoose.Schema(
         default: 11,
       },
     },
+    members: {
+      type: [{
+        userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
+        role: { type: String, enum: ['owner', 'member'], default: 'member' },
+        addedAt: { type: Date, default: Date.now },
+      }],
+      default: [],
+    },
   },
   { _id: true },
 );
@@ -224,6 +232,20 @@ franchiseSlotSchema.virtual('squadSize').get(function getSquadSize() {
   return this.squad?.playerIds?.length ?? 0;
 });
 
+// Instance method: check if user is member of this franchise
+franchiseSlotSchema.methods.isMember = function (userId) {
+  return (this.members || []).some(
+    (m) => m.userId.toString() === userId.toString(),
+  );
+};
+
+// Instance method: check if user is owner of this franchise
+franchiseSlotSchema.methods.isOwner = function (userId) {
+  return (this.members || []).some(
+    (m) => m.role === 'owner' && m.userId.toString() === userId.toString(),
+  );
+};
+
 tournamentSchema.methods.toSummaryJSON = function toSummaryJSON() {
   return {
     id: this._id.toString(),
@@ -272,6 +294,12 @@ tournamentSchema.methods.toDetailJSON = function toDetailJSON() {
         maxSize: f.squad?.maxSize ?? 11,
         size: f.squad?.playerIds?.length ?? 0,
       },
+      members: (f.members || []).map((m) => ({
+        userId: m.userId?.toString?.() ?? m.userId,
+        role: m.role,
+        addedAt: m.addedAt,
+      })),
+      ownerId: (f.members || []).find((m) => m.role === 'owner')?.userId?.toString?.(),
     })),
   };
 };

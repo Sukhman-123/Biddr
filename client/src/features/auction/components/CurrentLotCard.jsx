@@ -1,8 +1,52 @@
-import { Gavel, Play, Check, X } from 'lucide-react'
+import { Gavel, Play, Check, X, User } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 import HostControls from './HostControls'
 import { formatPurse } from '../../tournaments/tournament.utils'
 import './CurrentLotCard.css'
+
+// PaddleBar — visible only to franchise owners during a live lot.
+// Lets them raise their paddle on their franchise without leaving the room.
+function PaddleBar({ lot, isHost, franchises, onRaisePaddle }) {
+  let user = null
+  try {
+    user = require('../../../features/auth/useAuth').useAuth().user
+  } catch (_) {
+    // No AuthProvider — silently skip
+  }
+  const myFranchise = franchises?.find((f) =>
+    (f.members || []).some((m) => m.userId === user?.id),
+  )
+
+  if (!myFranchise || isHost) return null
+
+  const isOwner = (myFranchise.members || []).some(
+    (m) => m.userId === user?.id && m.role === 'owner',
+  )
+
+  if (!isOwner) return null
+
+  const currentBidder = lot.currentBidderFranchiseId === myFranchise.id
+  const nextBid = (lot.currentBid || lot.basePrice) + (lot.bidIncrement || 0)
+
+  return (
+    <div className="paddle-bar">
+      <div className="paddle-bar-info">
+        <User size={14} />
+        <span>
+          {myFranchise.name} —{currentBidder ? ' leading at' : ' next bid at'}{' '}
+          {formatPurse(nextBid, 'INR', { compact: true })}
+        </span>
+      </div>
+      <button
+        className="paddle-bar-btn"
+        onClick={() => onRaisePaddle(myFranchise.id, nextBid)}
+        aria-label={`Raise paddle for ${myFranchise.name}`}
+      >
+        Raise Paddle
+      </button>
+    </div>
+  )
+}
 
 // CurrentLotCard — the headline card showing what's on the floor
 // right now. Three states:
@@ -18,12 +62,14 @@ export default function CurrentLotCard({
   queuedLots,
   busy,
   timerSeconds,
+  franchises,
   onActivate,
   onHammer,
   onPass,
   onPause,
   onResume,
   onUndo,
+  onRaisePaddle,
 }) {
   return (
     <div className="current-lot-card">
@@ -84,6 +130,16 @@ export default function CurrentLotCard({
                 </span>
               </div>
             </div>
+
+            {/* Franchise owners see a paddle bar right below the prices */}
+            {!isHost && (
+              <PaddleBar
+                lot={lot}
+                isHost={isHost}
+                franchises={franchises}
+                onRaisePaddle={onRaisePaddle}
+              />
+            )}
 
             {isHost ? (
               <HostControls

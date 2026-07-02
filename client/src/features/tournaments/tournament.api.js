@@ -13,6 +13,15 @@ const wrapError = (error, fallback) => {
   return wrapped
 }
 
+export async function getTournamentRequest(id) {
+  try {
+    const { data } = await api.get(`/tournaments/${id}`)
+    return data?.tournament ?? null
+  } catch (error) {
+    throw wrapError(error, 'Could not fetch tournament')
+  }
+}
+
 export async function createTournamentRequest(payload) {
   try {
     const { data } = await api.post('/tournaments', payload)

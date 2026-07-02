@@ -1,0 +1,103 @@
+.tournament-franchises {
+  padding: 24px;
+}
+
+.tournament-franchises-header {
+  margin-bottom: 20px;
+}
+
+.tournament-franchises-header h3 {
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--text-primary, #f0f0f5);
+  margin: 0 0 4px 0;
+}
+
+.tournament-franchises-header p {
+  font-size: 14px;
+  color: var(--text-muted, #8a8a9a);
+  margin: 0;
+}
+
+.tournament-franchises-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.tournament-franchise-card {
+  background: var(--bg-elevated, #1a1d27);
+  border: 1px solid var(--border-subtle, rgba(255, 255, 255, 0.06));
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.tournament-franchise-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  padding: 16px;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  text-align: left;
+  transition: background 0.15s ease;
+}
+
+.tournament-franchise-header:hover {
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.tournament-franchise-badge {
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  background: var(--franchise-color, #f5b94a);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  font-weight: 700;
+  color: white;
+  flex-shrink: 0;
+}
+
+.tournament-franchise-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.tournament-franchise-name {
+  display: block;
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--text-primary, #f0f0f5);
+}
+
+.tournament-franchise-meta {
+  display: block;
+  font-size: 12px;
+  color: var(--text-muted, #8a8a9a);
+  margin-top: 2px;
+}
+
+.tournament-franchise-expand {
+  font-size: 10px;
+  color: var(--text-muted, #8a8a9a);
+  transition: transform 0.2s ease;
+}
+
+.tournament-franchise-expand.is-expanded {
+  transform: rotate(180deg);
+}
+
+.tournament-franchise-content {
+  padding: 0 16px 16px;
+}
+
+.tournament-franchises-loading {
+  padding: 40px;
+  text-align: center;
+  color: var(--text-muted, #8a8a9a);
+}

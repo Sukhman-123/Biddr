@@ -15,6 +15,7 @@ import {
   passLotRequest,
   pauseLotRequest,
   resumeLotRequest,
+  placeBidRequest,
 } from './auctionRoom.api'
 import { formatPurse } from '../tournaments/tournament.utils'
 import TopBar from './components/TopBar'
@@ -351,6 +352,19 @@ export default function AuctionRoomPage() {
     }
   }, [isHost, activeLot, toast])
 
+  const onRaisePaddle = useCallback(async (franchiseId, amount) => {
+    if (!activeLot) return
+    setBusy(true)
+    try {
+      await placeBidRequest(activeLot.id, { franchiseId, amount })
+      toast.success('Paddle raised!')
+    } catch (err) {
+      toast.error(err.message)
+    } finally {
+      setBusy(false)
+    }
+  }, [activeLot, toast])
+
   // ============================================================
   // Render.
   // ============================================================
@@ -396,12 +410,14 @@ export default function AuctionRoomPage() {
             queuedLots={queuedLots}
             busy={busy}
             timerSeconds={timerSeconds}
+            franchises={tournament?.franchises || []}
             onActivate={onActivate}
             onHammer={onHammer}
             onPass={onPass}
             onPause={onPause}
             onResume={onResume}
             onUndo={onUndo}
+            onRaisePaddle={onRaisePaddle}
           />
           <PaddlesRail
             franchises={tournament?.franchises || []}

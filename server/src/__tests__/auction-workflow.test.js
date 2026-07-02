@@ -27,15 +27,15 @@ describe('Auction Workflow', () => {
 
     const hostEmail = 'host-' + Date.now() + '@test.com'
     const viewerEmail = 'viewer-' + Date.now() + '@test.com'
-    await registerUser(app, { fullName: 'Test Host', email: hostEmail, password: 'password123' })
+    const hostRes = await registerUser(app, { fullName: 'Test Host', email: hostEmail, password: 'password123' })
     const hostLogin = await loginUser(app, { email: hostEmail, password: 'password123' })
     hostToken = hostLogin.body.token
-    hostUser = { email: hostEmail, fullName: 'Test Host' }
+    hostUser = { id: hostRes.body.user.id, email: hostEmail, fullName: 'Test Host' }
 
-    await registerUser(app, { fullName: 'Test Viewer', email: viewerEmail, password: 'password123' })
+    const viewerRes = await registerUser(app, { fullName: 'Test Viewer', email: viewerEmail, password: 'password123' })
     const viewerLogin = await loginUser(app, { email: viewerEmail, password: 'password123' })
     viewerToken = viewerLogin.body.token
-    viewerUser = { email: viewerEmail, fullName: 'Test Viewer' }
+    viewerUser = { id: viewerRes.body.user.id, email: viewerEmail, fullName: 'Test Viewer' }
   })
 
   describe('Tournament & Franchise Wallet Initialization', () => {
@@ -235,6 +235,12 @@ describe('Auction Workflow', () => {
         })
       tournament = tRes.body.tournament
 
+      // Assign host user as franchise owner (required for paddle raise)
+      await request(app)
+        .post(`/api/franchises/${tournament.id}/${tournament.franchises[0].id}/members`)
+        .set('Authorization', `Bearer ${hostToken}`)
+        .send({ userId: hostUser.id, role: 'owner' })
+
       const lRes = await request(app)
         .post(`/api/tournaments/${tournament.id}/lots`)
         .set('Authorization', `Bearer ${hostToken}`)
@@ -304,6 +310,12 @@ describe('Auction Workflow', () => {
         })
       tournament = tRes.body.tournament
 
+      // Assign host user as franchise owner (required for paddle raise)
+      await request(app)
+        .post(`/api/franchises/${tournament.id}/${tournament.franchises[0].id}/members`)
+        .set('Authorization', `Bearer ${hostToken}`)
+        .send({ userId: hostUser.id, role: 'owner' })
+
       const lRes = await request(app)
         .post(`/api/tournaments/${tournament.id}/lots`)
         .set('Authorization', `Bearer ${hostToken}`)
@@ -360,6 +372,12 @@ describe('Auction Workflow', () => {
           franchises: [{ name: 'Team A', colorHex: '#000' }],
         })
       tournament = tRes.body.tournament
+
+      // Assign host user as franchise owner (required for paddle raise)
+      await request(app)
+        .post(`/api/franchises/${tournament.id}/${tournament.franchises[0].id}/members`)
+        .set('Authorization', `Bearer ${hostToken}`)
+        .send({ userId: hostUser.id, role: 'owner' })
 
       const lRes = await request(app)
         .post(`/api/tournaments/${tournament.id}/lots`)

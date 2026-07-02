@@ -85,6 +85,7 @@ app.use('/api/auth', authRoutes);
 app.use('/api/tournaments', tournamentRoutes);
 app.use('/api/lots', lotRoutes);
 app.use('/api/users', userRoutes);
+app.use('/api/franchises', require('./routes/franchise.routes'));
 
 app.use((req, res) => {
   res.status(404).json({ message: 'Route not found' });

@@ -595,3 +595,16 @@
     flex-direction: column;
   }
 }
+
+/* Franchise Members Section */
+.lobby-franchise-members {
+  margin-top: 20px;
+  padding-top: 20px;
+  border-top: 1px solid var(--border);
+}
+
+.lobby-franchise-members-desc {
+  font-size: 13px;
+  color: var(--muted);
+  margin: 8px 0 16px;
+}
