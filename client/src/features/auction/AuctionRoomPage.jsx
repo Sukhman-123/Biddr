@@ -218,6 +218,22 @@ export default function AuctionRoomPage() {
       toast.info('Auction resumed')
     }
 
+    const onLotUndone = ({ action, at }) => {
+      setFeed((current) =>
+        [
+          {
+            id: `undone-${at}`,
+            type: 'undone',
+            actor: action.by?.fullName || 'Auctioneer',
+            action: action.type,
+            at,
+          },
+          ...current,
+        ].slice(0, 30),
+      )
+      toast.info('Last action undone')
+    }
+
     if (socket.connected) onConnect()
     socket.on('connect', onConnect)
     socket.on('lot:activated', onLotActivated)
@@ -226,6 +242,7 @@ export default function AuctionRoomPage() {
     socket.on('bid:placed', onBidPlaced)
     socket.on('auction:paused', onAuctionPaused)
     socket.on('auction:resumed', onAuctionResumed)
+    socket.on('lot:undone', onLotUndone)
 
     return () => {
       socket.off('connect', onConnect)
@@ -235,6 +252,7 @@ export default function AuctionRoomPage() {
       socket.off('bid:placed', onBidPlaced)
       socket.off('auction:paused', onAuctionPaused)
       socket.off('auction:resumed', onAuctionResumed)
+      socket.off('lot:undone', onLotUndone)
       if (joinedRef.current) {
         socket.emit('room:leave', { tournamentId })
         joinedRef.current = false
