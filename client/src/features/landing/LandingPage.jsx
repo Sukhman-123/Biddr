@@ -7,9 +7,9 @@ import {
   Mail,
   MapPin,
   Phone,
+  Radio,
   Send,
   ShieldCheck,
-  Sparkles,
   Trophy,
   Users,
   Wallet,
@@ -36,8 +36,8 @@ const FEATURE_CARDS = [
   },
   {
     icon: Wallet,
-    title: 'Budget guardrails',
-    body: 'Support purse planning and auction rules with a layout that keeps the important controls front and center.',
+    title: 'Purse guardrails',
+    body: 'Support budget planning and auction rules with a layout that keeps the important controls front and center.',
   },
 ]
 
@@ -64,8 +64,8 @@ const FLOW_STEPS = [
   },
 ]
 
-// Numbers that show the platform's reach — these are placeholders for now,
-// but the markup is ready to be wired to real metrics from the API.
+// Numbers that show the platform's reach — placeholders, ready to be wired
+// to real metrics from the API.
 const STATS = [
   { value: '1,300+', label: 'Organisers' },
   { value: '5,000+', label: 'Players' },
@@ -75,11 +75,19 @@ const STATS = [
 
 const LIVE_STATES = ['Live floor', 'Invite-only', 'Auctioneer ready', 'Room sync']
 
-const SIGNAL_CARDS = [
-  'Create hall',
-  'Invite teams',
-  'Control room',
-  'Keep sync',
+const SIGNAL_CARDS = ['Create hall', 'Invite teams', 'Control room', 'Keep sync']
+
+// Scoreboard marquee — a looping strip of room events. Purely decorative
+// placeholder copy; no real auction data is shown on the landing page.
+const TICKER_ITEMS = [
+  'LOT 07 — SOLD',
+  'LOT 12 — GOING, GOING…',
+  'LOT 19 — SOLD',
+  'PURSE UPDATED',
+  'ROOM SYNCED',
+  'LOT 24 — ON THE CLOCK',
+  'NEW FRANCHISE JOINED',
+  'LOT 31 — SOLD',
 ]
 
 const VARIANT_CLASS = {
@@ -148,6 +156,29 @@ function SectionHead({ kicker, title, sub }) {
   )
 }
 
+// The stitch line is the page's recurring signature motif — a cricket-ball
+// seam rendered as a dashed divider between major sections. Used sparingly.
+function StitchDivider({ className = '' }) {
+  const [ref, visible] = useReveal({ threshold: 0.4 })
+  return (
+    <div
+      ref={ref}
+      className={`landing-stitch reveal reveal--fade${
+        visible ? ' is-visible' : ''
+      } ${className}`}
+      aria-hidden="true"
+    >
+      <svg viewBox="0 0 1200 24" preserveAspectRatio="none">
+        <path d="M0 12 Q 60 2, 120 12 T 240 12 T 360 12 T 480 12 T 600 12 T 720 12 T 840 12 T 960 12 T 1080 12 T 1200 12" />
+        <path
+          className="landing-stitch-mark"
+          d="M0 12 Q 60 2, 120 12 T 240 12 T 360 12 T 480 12 T 600 12 T 720 12 T 840 12 T 960 12 T 1080 12 T 1200 12"
+        />
+      </svg>
+    </div>
+  )
+}
+
 function LandingPage() {
   const reduceMotion = useReducedMotion()
   const cardHover = reduceMotion ? undefined : { y: -6, scale: 1.015 }
@@ -155,8 +186,8 @@ function LandingPage() {
   // Scroll-linked polish:
   //  - landing-scroll-progress (a 2px bar at the very top of the viewport)
   //    fills from 0% → 100% as the user scrolls through the page.
-  //  - .is-scrolled on the backdrop shifts the aurora blobs slightly so
-  //    the page feels alive (parallax-lite).
+  //  - .is-scrolled on the backdrop nudges the floodlight beams and dust
+  //    field so the page feels alive (parallax-lite).
   const [scrolled, setScrolled] = useState(false)
 
   useEffect(() => {
@@ -187,7 +218,7 @@ function LandingPage() {
     }
   }, [])
 
-  // Cursor-tracked aurora reflection on feature cards.
+  // Cursor-tracked floodlight glow on feature cards.
   // Updates CSS variables --mx/--my on the element under the pointer.
   const onCardMove = useCallback((event) => {
     const el = event.currentTarget
@@ -201,24 +232,29 @@ function LandingPage() {
   // Anchor links inside the landing page should land cleanly on the section
   // — not under the floating header. We compute a header offset and scroll
   // using it. Falls back to native anchor jump if the target isn't found.
-  const onAnchorClick = useCallback((event) => {
-    const link = event.currentTarget
-    const hash = link.getAttribute('href') || ''
-    if (!hash.startsWith('#')) return
-    const id = hash.slice(1)
-    const target = document.getElementById(id)
-    if (!target) return
-    event.preventDefault()
-    const headerEl = document.querySelector('.landing-header')
-    const offset = headerEl ? headerEl.getBoundingClientRect().height + 12 : 80
-    const top =
-      target.getBoundingClientRect().top + window.pageYOffset - offset
-    window.scrollTo({ top, behavior: reduceMotion ? 'auto' : 'smooth' })
-    // Keep the URL in sync so the browser back-button works.
-    if (window.history && window.history.replaceState) {
-      window.history.replaceState(null, '', hash)
-    }
-  }, [reduceMotion])
+  const onAnchorClick = useCallback(
+    (event) => {
+      const link = event.currentTarget
+      const hash = link.getAttribute('href') || ''
+      if (!hash.startsWith('#')) return
+      const id = hash.slice(1)
+      const target = document.getElementById(id)
+      if (!target) return
+      event.preventDefault()
+      const headerEl = document.querySelector('.landing-header')
+      const offset = headerEl
+        ? headerEl.getBoundingClientRect().height + 12
+        : 80
+      const top =
+        target.getBoundingClientRect().top + window.pageYOffset - offset
+      window.scrollTo({ top, behavior: reduceMotion ? 'auto' : 'smooth' })
+      // Keep the URL in sync so the browser back-button works.
+      if (window.history && window.history.replaceState) {
+        window.history.replaceState(null, '', hash)
+      }
+    },
+    [reduceMotion],
+  )
 
   // Local contact form state — submits to the backend if /api/contact exists,
   // otherwise just acknowledges receipt so the UX still works in dev.
@@ -315,10 +351,6 @@ function LandingPage() {
     },
   }
 
-  // (The .reveal CSS classes + useReveal hook handle all scroll animations.
-  // Framer-motion is still used inside the hero for the initial word-by-word
-  // intro and the card hover transforms.)
-
   const stagger = {
     hidden: {},
     show: {
@@ -337,19 +369,18 @@ function LandingPage() {
         className={`landing-backdrop${scrolled ? ' is-scrolled' : ''}`}
         aria-hidden="true"
       >
-        <div className="landing-grid" />
-        <div className="landing-aurora landing-aurora--gold" />
-        <div className="landing-aurora landing-aurora--green" />
-        <div className="landing-aurora landing-aurora--blue" />
-        <div className="landing-aurora-blobs">
-          <div className="landing-aurora-blob landing-aurora-blob--a" />
-          <div className="landing-aurora-blob landing-aurora-blob--b" />
-          <div className="landing-aurora-blob landing-aurora-blob--c" />
-          <div className="landing-aurora-blob landing-aurora-blob--d" />
+        <div className="landing-turf-grid" />
+        <div className="landing-floodlights">
+          <span className="landing-floodlight landing-floodlight--a" />
+          <span className="landing-floodlight landing-floodlight--b" />
+          <span className="landing-floodlight landing-floodlight--c" />
         </div>
-        <div className="landing-spot landing-spot--left" />
-        <div className="landing-spot landing-spot--right" />
-        <div className="landing-pitch" />
+        <div className="landing-dustfield">
+          {Array.from({ length: 16 }).map((_, i) => (
+            <span key={i} className={`landing-mote landing-mote--${i}`} />
+          ))}
+        </div>
+        <div className="landing-pitch-line" />
         <div className="landing-vignette" />
       </div>
 
@@ -375,11 +406,7 @@ function LandingPage() {
           <span className="landing-menu-toggle-bar" />
         </button>
 
-        <nav
-          id="landing-primary-nav"
-          className="landing-nav"
-          aria-label="Primary"
-        >
+        <nav id="landing-primary-nav" className="landing-nav" aria-label="Primary">
           <div className="landing-nav-group" aria-label="Product">
             <a
               href="#features"
@@ -423,18 +450,10 @@ function LandingPage() {
             </a>
           </div>
           <div className="landing-nav-group" aria-label="Account">
-            <Link
-              to="/login"
-              className="landing-nav-link"
-              onClick={onMobileNavClick}
-            >
+            <Link to="/login" className="landing-nav-link" onClick={onMobileNavClick}>
               Sign in
             </Link>
-            <Link
-              to="/register"
-              className="landing-nav-cta"
-              onClick={onMobileNavClick}
-            >
+            <Link to="/register" className="landing-nav-cta" onClick={onMobileNavClick}>
               Get started
             </Link>
           </div>
@@ -450,32 +469,34 @@ function LandingPage() {
         >
           <motion.div className="landing-hero-copy" variants={fadeUp}>
             <span className="landing-eyebrow">
-              <Sparkles size={14} strokeWidth={2.4} />
-              Cricket auction management, made polished
+              <Radio size={14} strokeWidth={2.4} />
+              Live — auction floor active
             </span>
 
             <h1 className="landing-title">
-              {['Biddr', 'cricket', 'auction', 'rooms.'].map((word, i) => (
-                <motion.span
-                  key={i}
-                  style={{ display: 'inline-block', marginRight: '0.25em' }}
-                  initial={{ opacity: 0, y: 24, filter: 'blur(8px)' }}
-                  animate={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
-                  transition={{
-                    duration: 0.7,
-                    ease: [0.22, 1, 0.36, 1],
-                    delay: reduceMotion ? 0 : 0.1 + i * 0.08,
-                  }}
-                >
-                  {word}
-                </motion.span>
-              ))}
+              {['Own', 'the', 'auction.', 'Run', 'the', 'room.'].map(
+                (word, i) => (
+                  <motion.span
+                    key={i}
+                    style={{ display: 'inline-block', marginRight: '0.28em' }}
+                    initial={{ opacity: 0, y: 24, filter: 'blur(8px)' }}
+                    animate={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
+                    transition={{
+                      duration: 0.7,
+                      ease: [0.22, 1, 0.36, 1],
+                      delay: reduceMotion ? 0 : 0.1 + i * 0.07,
+                    }}
+                  >
+                    {word}
+                  </motion.span>
+                ),
+              )}
             </h1>
 
             <p className="landing-subtitle">
-              Biddr brings tournament setup, invite management, live room flow,
-              and franchise coordination into one premium workspace designed for
-              cricket auctions.
+              Biddr turns tournament setup, invites, and live bidding into one
+              scoreboard-clear workspace — built for the people calling the
+              auction, not just watching it.
             </p>
 
             <div className="landing-actions">
@@ -495,11 +516,11 @@ function LandingPage() {
               </li>
               <li>
                 <ShieldCheck size={14} />
-                Invite-first access control
+                Invite-only access, from lot one
               </li>
               <li>
                 <Gavel size={14} />
-                Live room state management
+                Live room state, no refresh needed
               </li>
             </ul>
 
@@ -519,6 +540,16 @@ function LandingPage() {
                 </motion.span>
               ))}
             </motion.div>
+
+            <div className="landing-marquee" aria-hidden="true">
+              <div className="landing-marquee-track">
+                {[...TICKER_ITEMS, ...TICKER_ITEMS].map((item, i) => (
+                  <span className="landing-marquee-item" key={`${item}-${i}`}>
+                    {item}
+                  </span>
+                ))}
+              </div>
+            </div>
           </motion.div>
 
           <motion.div
@@ -531,9 +562,9 @@ function LandingPage() {
               <div className="landing-console-top">
                 <span className="landing-console-badge">
                   <span className="landing-console-dot" />
-                  Auction room
+                  On the clock
                 </span>
-                <span className="landing-console-meta">Room sync active</span>
+                <span className="landing-console-meta">Room synced live</span>
               </div>
 
               <div className="landing-console-body">
@@ -545,7 +576,7 @@ function LandingPage() {
 
                   <div className="landing-console-frame">
                     <div className="landing-console-track" />
-                    <AuctionPulseScene reduceMotion={reduceMotion} />
+                    <FloodlitScoreboardScene reduceMotion={reduceMotion} />
                     <div className="landing-console-card">
                       <span className="landing-console-card-kicker">
                         Player lot
@@ -594,13 +625,12 @@ function LandingPage() {
           </motion.div>
         </motion.section>
 
-        <section
-          id="features"
-          className="landing-section"
-        >
+        <StitchDivider />
+
+        <section id="features" className="landing-section">
           <SectionHead
-            kicker="Why it feels different"
-            title="Designed for the people actually running the room."
+            kicker="Matchday-grade tooling"
+            title="Everything the auctioneer's desk needs. Nothing the room doesn't."
           />
 
           <ul className="landing-feature-grid reveal-stagger">
@@ -621,13 +651,10 @@ function LandingPage() {
           </ul>
         </section>
 
-        <section
-          id="flow"
-          className="landing-section landing-section--flow"
-        >
+        <section id="flow" className="landing-section landing-section--flow">
           <SectionHead
-            kicker="How the product moves"
-            title="A room flow that stays clear from first setup to final hammer."
+            kicker="From toss to hammer"
+            title="A room flow that stays clear from first setup to final call."
           />
 
           <div className="landing-flow reveal-stagger">
@@ -648,11 +675,13 @@ function LandingPage() {
           </div>
         </section>
 
+        <StitchDivider />
+
         <section id="promise" className="landing-section landing-promise">
           <RevealDiv variant="up" className="landing-promise-copy">
-            <p className="landing-kicker">Built for restraint</p>
+            <p className="landing-kicker">Off the ledger</p>
             <h2 className="landing-section-title">
-              Show the experience, not the private auction details.
+              Show the electricity, not the private numbers.
             </h2>
             <p className="landing-promise-text">
               The landing page keeps the product story premium and energetic
@@ -685,22 +714,15 @@ function LandingPage() {
           </div>
         </section>
 
-        <section
-          id="stats"
-          className="landing-section landing-stats"
-        >
+        <section id="stats" className="landing-stats">
           <SectionHead
-            kicker="In numbers"
-            title="Trusted by organisers running rooms of every shape."
+            kicker="On the scoreboard"
+            title="Trusted by organisers running rooms of every size."
           />
 
           <ul className="landing-stats-grid reveal-stagger">
             {STATS.map((stat) => (
-              <RevealLi
-                key={stat.label}
-                variant="pop"
-                className="landing-stat-card"
-              >
+              <RevealLi key={stat.label} variant="pop" className="landing-stat-card">
                 <span className="landing-stat-value">{stat.value}</span>
                 <span className="landing-stat-label">{stat.label}</span>
               </RevealLi>
@@ -708,7 +730,7 @@ function LandingPage() {
           </ul>
         </section>
 
-        <section id="contact" className="landing-section landing-contact">
+        <section id="contact" className="landing-contact">
           <div className="landing-contact-wrap">
             <RevealDiv variant="up" className="landing-contact-info">
               <RevealDiv variant="up" as="p" className="landing-kicker">
@@ -723,7 +745,7 @@ function LandingPage() {
               </RevealDiv>
 
               <ul className="landing-contact-list reveal-stagger">
-                <RevealLi variant="left" className="">
+                <RevealLi variant="left">
                   <span className="landing-contact-list-icon" aria-hidden="true">
                     <Mail size={16} strokeWidth={2.2} />
                   </span>
@@ -744,11 +766,7 @@ function LandingPage() {
               </ul>
             </RevealDiv>
 
-            <form
-              className="landing-contact-form"
-              onSubmit={onContactSubmit}
-              noValidate
-            >
+            <form className="landing-contact-form" onSubmit={onContactSubmit} noValidate>
               <div className="reveal-stagger">
                 <RevealDiv variant="left" as="label" className="landing-field">
                   <span className="landing-field-label">Name</span>
@@ -815,7 +833,7 @@ function LandingPage() {
                   />
                 </RevealDiv>
 
-                <RevealDiv variant="pop" className="">
+                <RevealDiv variant="pop">
                   <button
                     type="submit"
                     className="landing-btn landing-btn--primary landing-contact-submit"
@@ -828,12 +846,20 @@ function LandingPage() {
               </div>
 
               {contactStatus === 'sent' ? (
-                <RevealDiv variant="fade" className="landing-contact-status landing-contact-status--ok" threshold={0.01}>
+                <RevealDiv
+                  variant="fade"
+                  className="landing-contact-status landing-contact-status--ok"
+                  threshold={0.01}
+                >
                   Thanks &mdash; we will get back to you shortly.
                 </RevealDiv>
               ) : null}
               {contactStatus === 'error' ? (
-                <RevealDiv variant="fade" className="landing-contact-status landing-contact-status--err" threshold={0.01}>
+                <RevealDiv
+                  variant="fade"
+                  className="landing-contact-status landing-contact-status--err"
+                  threshold={0.01}
+                >
                   Please fill every field with a valid value.
                 </RevealDiv>
               ) : null}
@@ -843,7 +869,7 @@ function LandingPage() {
 
         <RevealDiv as="section" variant="up" className="landing-cta">
           <div>
-            <h2 className="landing-cta-title">Ready to launch your auction room?</h2>
+            <h2 className="landing-cta-title">Ready to call your first lot?</h2>
             <p className="landing-cta-text">
               Create your account and start shaping a cleaner, calmer cricket
               auction experience.
@@ -870,7 +896,10 @@ function LandingPage() {
   )
 }
 
-function AuctionPulseScene({ reduceMotion }) {
+// Hero signature scene: floodlight glow arcing over a scoreboard readout,
+// a stitched seam path standing in for the ball's line, and the gavel
+// silhouette resolving the "auction" half of the metaphor.
+function FloodlitScoreboardScene({ reduceMotion }) {
   const pulse = reduceMotion
     ? undefined
     : {
@@ -887,13 +916,13 @@ function AuctionPulseScene({ reduceMotion }) {
 
   return (
     <motion.svg
-      className="landing-lottie-scene"
+      className="landing-scoreboard-scene"
       viewBox="0 0 320 210"
       aria-hidden="true"
       initial={false}
     >
       <motion.path
-        className="landing-lottie-path landing-lottie-path--one"
+        className="landing-scene-path landing-scene-path--one"
         d="M32 156 C86 68 136 162 184 82 S267 84 292 42"
         fill="none"
         strokeLinecap="round"
@@ -901,7 +930,7 @@ function AuctionPulseScene({ reduceMotion }) {
         transition={{ duration: 4.2, repeat: Infinity, ease: 'easeInOut' }}
       />
       <motion.path
-        className="landing-lottie-path landing-lottie-path--two"
+        className="landing-scene-path landing-scene-path--two"
         d="M44 116 C94 118 104 46 155 58 S213 154 278 112"
         fill="none"
         strokeLinecap="round"
@@ -917,7 +946,7 @@ function AuctionPulseScene({ reduceMotion }) {
       {[54, 136, 216, 278].map((cx, index) => (
         <motion.circle
           key={cx}
-          className="landing-lottie-node"
+          className="landing-scene-node"
           cx={cx}
           cy={[142, 72, 102, 52][index]}
           r="6"
@@ -932,14 +961,14 @@ function AuctionPulseScene({ reduceMotion }) {
       ))}
 
       <motion.g
-        className="landing-lottie-gavel"
+        className="landing-scene-gavel"
         animate={reduceMotion ? undefined : { rotate: [-7, 7, -7], y: [0, -4, 0] }}
         transition={{ duration: 3.1, repeat: Infinity, ease: 'easeInOut' }}
         style={{ transformOrigin: '210px 138px' }}
       >
-        <rect x="182" y="88" width="62" height="18" rx="5" />
-        <rect x="205" y="104" width="12" height="62" rx="5" />
-        <rect x="160" y="156" width="76" height="12" rx="6" />
+        <rect x="182" y="88" width="62" height="18" rx="4" />
+        <rect x="205" y="104" width="12" height="62" rx="4" />
+        <rect x="160" y="156" width="76" height="12" rx="5" />
       </motion.g>
     </motion.svg>
   )
