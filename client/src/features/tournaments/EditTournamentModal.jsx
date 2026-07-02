@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { createPortal } from 'react-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import { X } from 'lucide-react'
 import { updateTournamentRequest } from './tournament.api'
@@ -57,6 +58,17 @@ function EditTournamentModal({ tournament, onClose, onSaved }) {
     return () => window.removeEventListener('keydown', onKey)
   }, [onClose, saving])
 
+  // Lock body scroll while the modal is open, and ensure the portal
+  // target renders outside any transformed/filtered ancestor so
+  // `position: fixed` reliably anchors to the real viewport.
+  useEffect(() => {
+    const original = document.body.style.overflow
+    document.body.style.overflow = 'hidden'
+    return () => {
+      document.body.style.overflow = original
+    }
+  }, [])
+
   const applyPreset = (preset) => {
     setPresetId(preset.id)
     setGradientFrom(preset.from)
@@ -92,7 +104,7 @@ function EditTournamentModal({ tournament, onClose, onSaved }) {
     }
   }
 
-  return (
+  return createPortal(
     <AnimatePresence>
       <motion.div
         className="edit-modal-backdrop"
@@ -284,7 +296,8 @@ function EditTournamentModal({ tournament, onClose, onSaved }) {
           </form>
         </motion.div>
       </motion.div>
-    </AnimatePresence>
+    </AnimatePresence>,
+    document.body
   )
 }
 
