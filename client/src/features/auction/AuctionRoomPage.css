@@ -79,3 +79,108 @@
     position: static;
   }
 }
+
+/* =============================================================
+   Spectator Room — read-only view.
+   Shows the same auction room layout minus all host controls.
+   ============================================================= */
+
+.auction-room-header {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 4px;
+  padding: 12px 0;
+}
+
+.auction-room-back {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--muted);
+  text-decoration: none;
+  transition: color 0.15s ease;
+}
+
+.auction-room-back:hover {
+  color: var(--gold);
+}
+
+.auction-room-back span {
+  margin-left: 2px;
+}
+
+.auction-room-status {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-left: auto;
+}
+
+.status-online {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 10px;
+  border-radius: 999px;
+  background: rgba(43, 217, 122, 0.12);
+  border: 1px solid rgba(43, 217, 122, 0.25);
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--green);
+  letter-spacing: 0.04em;
+}
+
+.status-offline {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 10px;
+  border-radius: 999px;
+  background: rgba(255, 107, 107, 0.12);
+  border: 1px solid rgba(255, 107, 107, 0.25);
+  font-size: 11px;
+  font-weight: 700;
+  color: #ff6b6b;
+  letter-spacing: 0.04em;
+}
+
+.spectator-badge {
+  display: inline-flex;
+  padding: 3px 10px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--muted);
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.auction-room-title {
+  flex: 1;
+  text-align: center;
+  margin: 0;
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--ink-strong);
+}
+
+@media (max-width: 980px) {
+  .auction-room-header {
+    flex-direction: column;
+    gap: 8px;
+    text-align: center;
+  }
+
+  .auction-room-status {
+    margin-left: 0;
+  }
+
+  .auction-room-title {
+    flex: 0 0 auto;
+  }
+}

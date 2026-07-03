@@ -10,6 +10,7 @@ import UserProfilePage from './features/profile/UserProfilePage'
 import LandingPage from './features/landing/LandingPage'
 import AppShell from './components/AppShell'
 import AuctionRoomPage from './features/auction/AuctionRoomPage'
+import SpectatorRoomPage from './features/auction/SpectatorRoomPage'
 import { ToastProvider } from './components/ToastProvider'
 
 function Shell({ children }) {
@@ -42,6 +43,7 @@ function App() {
             <Route path="/tournaments/new" element={<AuthGate><Shell><CreateTournamentPage /></Shell></AuthGate>} />
             <Route path="/tournaments/:id" element={<AuthGate><Shell><TournamentLobbyPage /></Shell></AuthGate>} />
             <Route path="/tournaments/:id/room" element={<AuthGate><Shell><AuctionRoomPage /></Shell></AuthGate>} />
+            <Route path="/tournaments/:id/watch" element={<AuthGate><Shell><SpectatorRoomPage /></Shell></AuthGate>} />
             <Route path="/tournaments/:id/rooms/:lotId" element={<AuthGate><Shell><AuctionRoomPage /></Shell></AuthGate>} />
             <Route path="/profile" element={<AuthGate><Shell><UserProfilePage /></Shell></AuthGate>} />
             <Route path="/squad" element={<AuthGate><Shell><ComingSoon label="Squad" /></Shell></AuthGate>} />
