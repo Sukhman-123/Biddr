@@ -1,0 +1,270 @@
+/* =============================================================
+   PlayerQueuePanel — queued player cards for the auction room.
+   Lighter than the full pool: no upload, no edit, no bulk actions.
+   Clicking a player calls onSelectLot (used by HostControls' idle
+   picker or by a future inline activation flow).
+   ============================================================= */
+
+.player-queue {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+/* --- Header row --- */
+
+.queue-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.queue-header-text {
+  flex: 1;
+  min-width: 160px;
+}
+
+.queue-title {
+  margin: 0;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--ink-strong);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.queue-count {
+  font-weight: 600;
+  color: var(--muted);
+}
+
+.queue-controls {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+/* --- Search input --- */
+
+.queue-search {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 10px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: rgba(8, 11, 18, 0.5);
+  color: var(--muted);
+  flex: 0 1 180px;
+  min-width: 140px;
+}
+
+.queue-search svg {
+  flex-shrink: 0;
+  opacity: 0.6;
+}
+
+.queue-search-input {
+  flex: 1;
+  border: none;
+  background: transparent;
+  color: var(--ink-strong);
+  font-size: 12px;
+  font-family: inherit;
+  outline: none;
+}
+
+.queue-search-input::placeholder {
+  color: var(--muted);
+}
+
+/* --- Filter select --- */
+
+.queue-filter {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 7px 10px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: transparent;
+  color: var(--muted);
+}
+
+.queue-filter svg {
+  opacity: 0.6;
+}
+
+.queue-filter-select {
+  border: none;
+  background: transparent;
+  color: var(--ink-strong);
+  font-size: 12px;
+  font-family: inherit;
+  outline: none;
+  cursor: pointer;
+}
+
+.queue-filter-select option {
+  background: var(--surface, #0f1422);
+  color: var(--ink-strong);
+}
+
+/* --- Queue list --- */
+
+.queue-list {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.queue-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  background: rgba(15, 20, 34, 0.45);
+  cursor: pointer;
+  transition: border-color 0.15s ease, background 0.15s ease;
+}
+
+.queue-item:hover {
+  border-color: rgba(255, 255, 255, 0.18);
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.queue-item-left {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex: 1;
+  min-width: 0;
+}
+
+.queue-item-info {
+  min-width: 0;
+}
+
+.queue-item-name {
+  margin: 0 0 2px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ink-strong);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.queue-item-details {
+  margin: 0;
+  font-size: 11px;
+  color: var(--muted);
+}
+
+.queue-item-badges {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+  flex-shrink: 0;
+}
+
+.queue-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--muted);
+  white-space: nowrap;
+}
+
+/* --- Activate button --- */
+
+.queue-item-right {
+  flex-shrink: 0;
+}
+
+.queue-activate-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 6px 14px;
+  border-radius: 999px;
+  border: 1px solid rgba(245, 185, 74, 0.3);
+  background: rgba(245, 185, 74, 0.1);
+  color: #fde6a8;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s ease, border-color 0.15s ease;
+  white-space: nowrap;
+}
+
+.queue-activate-btn:hover:not(:disabled) {
+  background: rgba(245, 185, 74, 0.18);
+  border-color: rgba(245, 185, 74, 0.5);
+}
+
+.queue-activate-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* --- Empty state --- */
+
+.queue-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 24px;
+  text-align: center;
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.queue-empty p {
+  margin: 0;
+}
+
+@media (max-width: 640px) {
+  .queue-head {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .queue-controls {
+    width: 100%;
+  }
+
+  .queue-search {
+    flex: 1;
+  }
+
+  .queue-item {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+  }
+
+  .queue-item-right {
+    width: 100%;
+  }
+
+  .queue-activate-btn {
+    width: 100%;
+    justify-content: center;
+  }
+}

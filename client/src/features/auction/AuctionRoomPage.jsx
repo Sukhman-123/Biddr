@@ -26,6 +26,7 @@ import HostControls from './components/HostControls'
 import PaddlesRail from './components/PaddlesRail'
 import BidFeed from './components/BidFeed'
 import TeamBudgetSidebar from './components/TeamBudgetSidebar'
+import PlayerQueuePanel from './components/PlayerQueuePanel'
 import './AuctionRoomPage.css'
 
 // =============================================================
@@ -495,6 +496,13 @@ export default function AuctionRoomPage() {
               )
             }}
           />
+          {isHost && (
+            <PlayerQueuePanel
+              lots={lotsQuery.data || []}
+              onSelectLot={onActivate}
+              busy={busy}
+            />
+          )}
         </div>
         <aside className="auction-room-right" aria-label="Auction event feed">
           <TeamBudgetSidebar
