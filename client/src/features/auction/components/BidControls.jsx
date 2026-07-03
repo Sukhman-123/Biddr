@@ -1,5 +1,4 @@
 import { useState } from 'react'
-import { motion } from 'framer-motion'
 import { ArrowUp, Plus } from 'lucide-react'
 import { useToast } from '../../../components/ToastProvider'
 import { formatPurse } from '../../tournaments/tournament.utils'

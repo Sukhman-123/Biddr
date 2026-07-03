@@ -25,6 +25,7 @@ import CurrentLotCard from './components/CurrentLotCard'
 import HostControls from './components/HostControls'
 import PaddlesRail from './components/PaddlesRail'
 import BidFeed from './components/BidFeed'
+import TeamBudgetSidebar from './components/TeamBudgetSidebar'
 import './AuctionRoomPage.css'
 
 // =============================================================
@@ -496,6 +497,11 @@ export default function AuctionRoomPage() {
           />
         </div>
         <aside className="auction-room-right" aria-label="Auction event feed">
+          <TeamBudgetSidebar
+            franchises={tournament?.franchises || []}
+            activeLot={activeLot}
+            currency={tournament?.currency || 'INR'}
+          />
           <BidFeed items={feed} currency={tournament?.currency || 'INR'} />
         </aside>
       </motion.section>

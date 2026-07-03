@@ -1,0 +1,168 @@
+/* =============================================================
+   TeamBudgetSidebar — live purse + squad view for every
+   franchise in the room. Sorted by remaining purse descending.
+   ============================================================= */
+
+.budget-sidebar {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 14px;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  background: rgba(8, 11, 18, 0.5);
+}
+
+.budget-sidebar-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 2px;
+}
+
+.budget-sidebar-title {
+  margin: 0;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--ink-strong);
+}
+
+.budget-sidebar-count {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 22px;
+  height: 22px;
+  padding: 0 6px;
+  border-radius: 999px;
+  background: rgba(245, 185, 74, 0.14);
+  color: #fde6a8;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.budget-sidebar-list {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.budget-sidebar-row {
+  display: grid;
+  grid-template-columns: 18px 1fr 56px 80px;
+  gap: 8px;
+  align-items: center;
+  padding: 8px 10px;
+  border-radius: 10px;
+  transition: background 0.15s ease;
+}
+
+.budget-sidebar-row:hover {
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.budget-sidebar-row--leading {
+  background: rgba(245, 185, 74, 0.06);
+  border: 1px solid rgba(245, 185, 74, 0.16);
+}
+
+.budget-sidebar-rank {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--muted);
+  text-align: center;
+}
+
+.budget-sidebar-info {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+}
+
+.budget-sidebar-name {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--ink-strong);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.budget-sidebar-lead-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  padding: 1px 6px;
+  border-radius: 999px;
+  background: rgba(245, 185, 74, 0.16);
+  color: #fde6a8;
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  flex-shrink: 0;
+}
+
+/* Squad size cell */
+.budget-sidebar-squad {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 11px;
+  color: var(--muted);
+  justify-content: center;
+}
+
+/* Remaining purse cell */
+.budget-sidebar-purse {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-soft);
+  justify-content: flex-end;
+}
+
+.budget-sidebar-purse--exhausted {
+  color: #ff6b6b;
+}
+
+/* Progress bar */
+.budget-sidebar-bar-track {
+  height: 4px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.06);
+  overflow: hidden;
+  grid-column: 1 / -1;
+  margin-top: 2px;
+}
+
+.budget-sidebar-bar-fill {
+  height: 100%;
+  border-radius: 999px;
+  transition: width 0.4s ease;
+}
+
+@media (max-width: 900px) {
+  .budget-sidebar-row {
+    grid-template-columns: 18px 1fr auto;
+    gap: 6px;
+  }
+
+  .budget-sidebar-squad {
+    grid-column: 3;
+    grid-row: 1;
+  }
+
+  .budget-sidebar-purse {
+    grid-column: 2;
+    grid-row: 2;
+    justify-content: flex-start;
+  }
+
+  .budget-sidebar-bar-track {
+    grid-column: 2 / -1;
+    grid-row: 3;
+  }
+}
