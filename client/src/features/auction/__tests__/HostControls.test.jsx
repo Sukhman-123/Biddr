@@ -67,54 +67,54 @@ describe('HostControls — active mode (lot on the floor)', () => {
     auctionStatus: 'active',
   }
 
-  it('renders Hammer and Pass buttons', () => {
-    render(<HostControls mode="active" lot={lot} busy={false} onHammer={vi.fn()} onPass={vi.fn()} />)
-    expect(screen.getByRole('button', { name: /^hammer$/i })).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: /^pass$/i })).toBeInTheDocument()
+  it('renders Sold and Unsold buttons', () => {
+    render(<HostControls mode="active" lot={lot} busy={false} onHammer={vi.fn()} onPass={vi.fn()} franchises={[]} />)
+    expect(screen.getByRole('button', { name: /^sold$/i })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /^unsold$/i })).toBeInTheDocument()
   })
 
   it('requires confirmation before calling onHammer', () => {
     const onHammer = vi.fn()
-    render(<HostControls mode="active" lot={lot} busy={false} onHammer={onHammer} onPass={vi.fn()} />)
+    render(<HostControls mode="active" lot={lot} busy={false} onHammer={onHammer} onPass={vi.fn()} franchises={[]} />)
 
     // First click opens the confirm step; does NOT hammer yet.
-    fireEvent.click(screen.getByRole('button', { name: /^hammer$/i }))
+    fireEvent.click(screen.getByRole('button', { name: /^sold$/i }))
     expect(onHammer).not.toHaveBeenCalled()
-    expect(screen.getByRole('button', { name: /confirm hammer/i })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /confirm/i })).toBeInTheDocument()
 
     // Confirm calls onHammer.
-    fireEvent.click(screen.getByRole('button', { name: /confirm hammer/i }))
+    fireEvent.click(screen.getByRole('button', { name: /confirm/i }))
     expect(onHammer).toHaveBeenCalledOnce()
   })
 
   it('requires confirmation before calling onPass', () => {
     const onPass = vi.fn()
-    render(<HostControls mode="active" lot={lot} busy={false} onHammer={vi.fn()} onPass={onPass} />)
+    render(<HostControls mode="active" lot={lot} busy={false} onHammer={vi.fn()} onPass={onPass} franchises={[]} />)
 
-    fireEvent.click(screen.getByRole('button', { name: /^pass$/i }))
+    fireEvent.click(screen.getByRole('button', { name: /^unsold$/i }))
     expect(onPass).not.toHaveBeenCalled()
-    expect(screen.getByRole('button', { name: /confirm pass/i })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /confirm/i })).toBeInTheDocument()
 
-    fireEvent.click(screen.getByRole('button', { name: /confirm pass/i }))
+    fireEvent.click(screen.getByRole('button', { name: /confirm/i }))
     expect(onPass).toHaveBeenCalledOnce()
   })
 
   it('cancel button on the confirm step does not mutate state', () => {
     const onHammer = vi.fn()
-    render(<HostControls mode="active" lot={lot} busy={false} onHammer={onHammer} onPass={vi.fn()} />)
+    render(<HostControls mode="active" lot={lot} busy={false} onHammer={onHammer} onPass={vi.fn()} franchises={[]} />)
 
-    fireEvent.click(screen.getByRole('button', { name: /^hammer$/i }))
+    fireEvent.click(screen.getByRole('button', { name: /^sold$/i }))
     fireEvent.click(screen.getByRole('button', { name: /cancel/i }))
 
-    // Back to the regular state — Hammer and Pass visible again, no
+    // Back to the regular state — Sold and Unsold visible again, no
     // call to onHammer.
     expect(onHammer).not.toHaveBeenCalled()
-    expect(screen.getByRole('button', { name: /^hammer$/i })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /^sold$/i })).toBeInTheDocument()
   })
 
-  it('disables Hammer and Pass while busy', () => {
-    render(<HostControls mode="active" lot={lot} busy={true} onHammer={vi.fn()} onPass={vi.fn()} />)
-    expect(screen.getByRole('button', { name: /^hammer$/i })).toBeDisabled()
-    expect(screen.getByRole('button', { name: /^pass$/i })).toBeDisabled()
+  it('disables Sold and Unsold while busy', () => {
+    render(<HostControls mode="active" lot={lot} busy={true} onHammer={vi.fn()} onPass={vi.fn()} franchises={[]} />)
+    expect(screen.getByRole('button', { name: /^sold$/i })).toBeDisabled()
+    expect(screen.getByRole('button', { name: /^unsold$/i })).toBeDisabled()
   })
 })

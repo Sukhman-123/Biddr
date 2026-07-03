@@ -509,6 +509,49 @@ const undoLastAction = async (req, res, next) => {
   }
 };
 
+// POST /api/lots/:lotId/deactivate
+// Host-only. Sends the lot back to idle/queued without marking
+// it sold or unsold. Used by the "Skip / Re-queue" button.
+const deactivateLot = async (req, res, next) => {
+  try {
+    const { lotId } = req.params;
+    const lot = await Lot.findById(lotId);
+    if (!lot) throw new HttpError(404, 'Lot not found');
+    const tournament = await Tournament.findById(lot.tournamentId);
+    if (!tournament) throw new HttpError(404, 'Tournament not found');
+    if (!isHost(tournament, req.user)) throw new HttpError(403, 'Only the auctioneer can skip lots');
+
+    if (lot.auctionStatus === 'idle') {
+      throw new HttpError(400, 'Lot is already idle');
+    }
+
+    lot.auctionStatus = 'idle';
+    lot.currentBid = 0;
+    lot.currentBidderFranchiseId = null;
+    lot.currentBidByUserId = null;
+    lot.currentBidAt = null;
+    lot.status = 'queued';
+    await lot.save();
+
+    push(tournament._id.toString(), {
+      type: 'LOT_DEACTIVATED',
+      lotId: lot._id.toString(),
+      previousLot: lot.toObject(),
+    });
+
+    broadcast(req, tournament._id.toString(), 'lot:deactivated', {
+      lot: lot.toJSON(),
+      by: { id: req.user._id.toString(), fullName: req.user.fullName },
+      at: new Date().toISOString(),
+    });
+
+    return res.status(200).json({ lot: lot.toJSON() });
+  } catch (error) {
+    if (error instanceof HttpError) return res.status(error.status).json({ message: error.message });
+    return next(error);
+  }
+};
+
 module.exports = {
   activateLot,
   hammerLot,
@@ -517,5 +560,6 @@ module.exports = {
   pauseLot,
   resumeLot,
   undoLastAction,
+  deactivateLot,
   getRoomSnapshot,
 };

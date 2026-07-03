@@ -1,0 +1,312 @@
+/* BidControls — manual bid placement panel for the auctioneer */
+
+.bid-controls {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 14px;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  background: rgba(8, 11, 18, 0.6);
+}
+
+.bid-controls-header {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  margin-bottom: 4px;
+}
+
+.bid-controls-title {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--ink-strong);
+}
+
+.bid-controls-sub {
+  margin: 0;
+  font-size: 11px;
+  color: var(--muted);
+}
+
+.bid-controls-section {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.bid-controls-label {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+/* Franchise Grid */
+.bid-controls-franchises {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  gap: 8px;
+}
+
+.bid-controls-franchise {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  padding: 10px;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  background: transparent;
+  cursor: pointer;
+  transition: border-color 0.15s ease, background 0.15s ease;
+  text-align: left;
+}
+
+.bid-controls-franchise:hover {
+  border-color: rgba(255, 255, 255, 0.2);
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.bid-controls-franchise.is-selected {
+  border-color: var(--gold);
+  background: rgba(245, 185, 74, 0.08);
+}
+
+.bid-controls-franchise.is-current {
+  border-color: var(--green);
+  background: rgba(43, 217, 122, 0.06);
+}
+
+.bid-controls-franchise:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.bid-controls-franchise-header {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.bid-controls-franchise-name {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--ink-strong);
+}
+
+.bid-controls-franchise-badge {
+  display: inline-flex;
+  padding: 1px 6px;
+  border-radius: 999px;
+  background: rgba(43, 217, 122, 0.15);
+  border: 1px solid rgba(43, 217, 122, 0.3);
+  font-size: 9px;
+  font-weight: 700;
+  color: var(--green);
+  letter-spacing: 0.05em;
+}
+
+.bid-controls-franchise-details {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.bid-controls-franchise-purse {
+  font-size: 10px;
+  font-weight: 500;
+  color: var(--muted);
+}
+
+.bid-controls-franchise-squad {
+  font-size: 10px;
+  font-weight: 500;
+  color: var(--muted);
+}
+
+/* Amount Presets */
+.bid-controls-amount {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.bid-controls-presets {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.bid-controls-preset {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 7px 12px;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: transparent;
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: border-color 0.15s ease, background 0.15s ease, color 0.15s ease;
+}
+
+.bid-controls-preset:hover:not(:disabled) {
+  border-color: var(--gold);
+  color: var(--gold);
+  background: rgba(245, 185, 74, 0.08);
+}
+
+.bid-controls-preset:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+/* Custom Amount Input */
+.bid-controls-input-group {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+}
+
+.bid-controls-input {
+  flex: 1;
+  padding: 9px 12px;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  background: rgba(8, 11, 18, 0.6);
+  color: var(--ink-strong);
+  font-size: 13px;
+  font-family: inherit;
+  outline: none;
+  transition: border-color 0.15s ease;
+}
+
+.bid-controls-input:focus {
+  border-color: var(--gold);
+}
+
+.bid-controls-input::placeholder {
+  color: var(--muted);
+}
+
+.bid-controls-custom-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 9px 14px;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  background: transparent;
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: border-color 0.15s ease, background 0.15s ease, color 0.15s ease;
+}
+
+.bid-controls-custom-btn:hover:not(:disabled) {
+  border-color: var(--gold);
+  color: var(--gold);
+  background: rgba(245, 185, 74, 0.08);
+}
+
+.bid-controls-custom-btn.is-active {
+  border-color: var(--gold);
+  color: var(--gold);
+  background: rgba(245, 185, 74, 0.12);
+}
+
+.bid-controls-custom-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+/* Bid Actions */
+.bid-controls-actions {
+  display: flex;
+  gap: 8px;
+  padding: 4px 0;
+}
+
+.bid-controls-confirm {
+  background: var(--green);
+  border-color: var(--green);
+  color: #0a1f0a;
+}
+
+.bid-controls-confirm:hover:not(:disabled) {
+  filter: brightness(1.08);
+}
+
+.bid-controls-cancel {
+  background: transparent;
+  border: 1px solid var(--border);
+  color: var(--muted);
+}
+
+.bid-controls-cancel:hover:not(:disabled) {
+  border-color: rgba(255, 255, 255, 0.2);
+  color: var(--ink-strong);
+}
+
+/* Status */
+.bid-controls-status {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  background: rgba(8, 11, 18, 0.4);
+  border: 1px solid var(--border);
+}
+
+.bid-controls-status-text {
+  margin: 0;
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.bid-controls-quick-bid {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 7px 14px;
+  border-radius: 999px;
+  background: var(--gold);
+  border: 1px solid var(--gold);
+  color: #1a1206;
+  font-size: 11px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: filter 0.15s ease;
+  white-space: nowrap;
+}
+
+.bid-controls-quick-bid:hover:not(:disabled) {
+  filter: brightness(1.06);
+}
+
+.bid-controls-quick-bid:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+@media (max-width: 640px) {
+  .bid-controls-franchises {
+    grid-template-columns: 1fr;
+  }
+
+  .bid-controls-presets {
+    justify-content: center;
+  }
+
+  .bid-controls-status {
+    flex-direction: column;
+    gap: 8px;
+  }
+}

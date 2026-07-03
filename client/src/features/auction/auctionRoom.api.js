@@ -115,3 +115,12 @@ export async function undoLastActionRequest(lotId) {
     throw wrapError(error, 'Could not undo the last action')
   }
 }
+
+export async function deactivateLotRequest(lotId) {
+  try {
+    const { data } = await api.post(`/lots/${lotId}/deactivate`)
+    return data?.lot ?? null
+  } catch (error) {
+    throw wrapError(error, 'Could not skip the lot')
+  }
+}

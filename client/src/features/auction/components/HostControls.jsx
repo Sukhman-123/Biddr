@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Check, X, Play, ChevronDown, Pause, Zap, RotateCcw } from 'lucide-react'
+import { Check, X, Play, ChevronDown, Pause, Zap, RotateCcw, Gavel, Ban } from 'lucide-react'
 import { useToast } from '../../../components/ToastProvider'
+import BidControls from './BidControls'
 import './HostControls.css'
 
 // =============================================================
@@ -22,28 +23,46 @@ export default function HostControls({
   queuedLots,
   busy,
   timerSeconds,
+  franchises,
   onActivate,
   onHammer,
   onPass,
+  onDeactivate,
   onPause,
   onResume,
   onUndo,
+  onPlaceBid,
 }) {
   if (mode === 'idle') {
     return <IdlePicker queuedLots={queuedLots} busy={busy} onActivate={onActivate} />
   }
   return (
-    <ActiveControls
-      lot={lot}
-      mode={mode}
-      busy={busy}
-      timerSeconds={timerSeconds}
-      onHammer={onHammer}
-      onPass={onPass}
-      onPause={onPause}
-      onResume={onResume}
-      onUndo={onUndo}
-    />
+    <div className="host-controls-stack">
+      {/* Manual bid controls for the host */}
+      {mode !== 'paused' && (
+        <BidControls
+          lot={lot}
+          franchises={franchises || []}
+          onPlaceBid={onPlaceBid}
+          busy={busy}
+          isHost
+        />
+      )}
+      <ActiveControls
+        lot={lot}
+        mode={mode}
+        busy={busy}
+        timerSeconds={timerSeconds}
+        franchises={franchises}
+        onHammer={onHammer}
+        onPass={onPass}
+        onDeactivate={onDeactivate}
+        onPause={onPause}
+        onResume={onResume}
+        onUndo={onUndo}
+        onPlaceBid={onPlaceBid}
+      />
+    </div>
   )
 }
 
@@ -134,10 +153,11 @@ function IdlePicker({ queuedLots, busy, onActivate }) {
   )
 }
 
-function ActiveControls({ lot, mode, busy, timerSeconds, onHammer, onPass, onPause, onResume, onUndo }) {
+function ActiveControls({ lot, mode, busy, timerSeconds, franchises, onHammer, onPass, onPause, onResume, onUndo, onPlaceBid }) {
   const [confirmHammer, setConfirmHammer] = useState(false)
   const [confirmPass, setConfirmPass] = useState(false)
   const [confirmUndo, setConfirmUndo] = useState(false)
+  const [confirmSkip, setConfirmSkip] = useState(false)
   const isPaused = mode === 'paused'
   const toast = useToast()
 
@@ -158,11 +178,6 @@ function ActiveControls({ lot, mode, busy, timerSeconds, onHammer, onPass, onPau
         if (prev <= 1) {
           clearInterval(interval)
           setTimerRunning(false)
-          // Auto-sell/unsold when timer expires.
-          // We can't call onHammer/onPass here directly because they
-          // require the user to confirm — instead, we show a toast
-          // and let the host decide, OR we can auto-hammer if there's
-          // a bid. For v1, we just alert and let the host act.
           if (lot?.currentBid > 0) {
             toast.warn('Timer expired! Auto-hammer would sell this lot.')
           } else {
@@ -285,10 +300,47 @@ function ActiveControls({ lot, mode, busy, timerSeconds, onHammer, onPass, onPau
       </div>
     )
   }
+  if (confirmSkip) {
+    return (
+      <div className="host-controls host-controls-confirm">
+        <p className="host-controls-confirm-text">
+          Skip <strong>{lot.name}</strong>? It will go back to the queue without marking sold or unsold.
+        </p>
+        <div className="host-controls-row">
+          <button
+            type="button"
+            className="cta-btn host-controls-pass"
+            onClick={() => {
+              onDeactivate()
+              setConfirmSkip(false)
+            }}
+            disabled={busy}
+          >
+            <span className="cta-btn-content">
+              <Check size={16} />
+              Confirm skip
+            </span>
+          </button>
+          <button
+            type="button"
+            className="cta-btn host-controls-secondary"
+            onClick={() => setConfirmSkip(false)}
+            disabled={busy}
+          >
+            <span className="cta-btn-content">
+              <X size={16} />
+              Cancel
+            </span>
+          </button>
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div className="host-controls host-controls-active">
-      <div className="host-controls-row">
+      {/* Primary actions: Sold / Unsold / Skip */}
+      <div className="host-controls-row host-controls-primary-row">
         <button
           type="button"
           className="cta-btn host-controls-hammer"
@@ -296,8 +348,8 @@ function ActiveControls({ lot, mode, busy, timerSeconds, onHammer, onPass, onPau
           disabled={busy}
         >
           <span className="cta-btn-content">
-            <Check size={16} />
-            Hammer
+            <Gavel size={16} />
+            Sold
           </span>
         </button>
         <button
@@ -307,10 +359,24 @@ function ActiveControls({ lot, mode, busy, timerSeconds, onHammer, onPass, onPau
           disabled={busy}
         >
           <span className="cta-btn-content">
-            <X size={16} />
-            Pass
+            <Ban size={16} />
+            Unsold
           </span>
         </button>
+        <button
+          type="button"
+          className="cta-btn host-controls-secondary"
+          onClick={() => setConfirmSkip(true)}
+          disabled={busy}
+        >
+          <span className="cta-btn-content">
+            Skip / Re-queue
+          </span>
+        </button>
+      </div>
+
+      {/* Secondary controls: Pause / Resume + Undo */}
+      <div className="host-controls-row host-controls-secondary-row">
         {isPaused ? (
           <button
             type="button"
@@ -344,17 +410,12 @@ function ActiveControls({ lot, mode, busy, timerSeconds, onHammer, onPass, onPau
         >
           <span className="cta-btn-content">
             <RotateCcw size={16} />
-            Undo
+            Undo last action
           </span>
         </button>
-      </div>
-      <div className="host-controls-meta">
         <div className={`host-timer ${timerRunning ? 'is-running' : 'is-paused'} ${countdown <= 10 ? 'is-warn' : ''}`}>
           ⏱ {countdown}s
         </div>
-        <p className="host-controls-hint">
-          {isPaused ? 'Auction is paused. Timer frozen.' : countdown > 0 ? 'Timer active.' : 'Timer expired.'}
-        </p>
       </div>
     </div>
   )

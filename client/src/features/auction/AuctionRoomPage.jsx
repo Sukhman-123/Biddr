@@ -16,6 +16,8 @@ import {
   pauseLotRequest,
   resumeLotRequest,
   placeBidRequest,
+  undoLastActionRequest,
+  deactivateLotRequest,
 } from './auctionRoom.api'
 import { formatPurse } from '../tournaments/tournament.utils'
 import TopBar from './components/TopBar'
@@ -234,6 +236,21 @@ export default function AuctionRoomPage() {
       toast.info('Last action undone')
     }
 
+    const onLotDeactivated = ({ lot, at }) => {
+      setFeed((current) =>
+        [
+          {
+            id: `deactivated-${at}`,
+            type: 'deactivated',
+            actor: 'Auctioneer',
+            at,
+          },
+          ...current,
+        ].slice(0, 30),
+      )
+      toast.info('Lot returned to queue')
+    }
+
     if (socket.connected) onConnect()
     socket.on('connect', onConnect)
     socket.on('lot:activated', onLotActivated)
@@ -243,6 +260,7 @@ export default function AuctionRoomPage() {
     socket.on('auction:paused', onAuctionPaused)
     socket.on('auction:resumed', onAuctionResumed)
     socket.on('lot:undone', onLotUndone)
+    socket.on('lot:deactivated', onLotDeactivated)
 
     return () => {
       socket.off('connect', onConnect)
@@ -253,6 +271,7 @@ export default function AuctionRoomPage() {
       socket.off('auction:paused', onAuctionPaused)
       socket.off('auction:resumed', onAuctionResumed)
       socket.off('lot:undone', onLotUndone)
+      socket.off('lot:deactivated', onLotDeactivated)
       if (joinedRef.current) {
         socket.emit('room:leave', { tournamentId })
         joinedRef.current = false
@@ -370,6 +389,32 @@ export default function AuctionRoomPage() {
     }
   }, [isHost, activeLot, toast])
 
+  const onDeactivate = useCallback(async () => {
+    if (!isHost || !activeLot) return
+    setBusy(true)
+    try {
+      await deactivateLotRequest(activeLot.id)
+      toast.success('Lot returned to queue')
+    } catch (err) {
+      toast.error(err.message)
+    } finally {
+      setBusy(false)
+    }
+  }, [isHost, activeLot, toast])
+
+  const onPlaceBid = useCallback(async (franchiseId, amount) => {
+    if (!isHost || !activeLot) return
+    setBusy(true)
+    try {
+      await placeBidRequest(activeLot.id, { franchiseId, amount })
+      toast.success('Bid placed')
+    } catch (err) {
+      toast.error(err.message)
+    } finally {
+      setBusy(false)
+    }
+  }, [isHost, activeLot, toast])
+
   const onRaisePaddle = useCallback(async (franchiseId, amount) => {
     if (!activeLot) return
     setBusy(true)
@@ -432,10 +477,12 @@ export default function AuctionRoomPage() {
             onActivate={onActivate}
             onHammer={onHammer}
             onPass={onPass}
+            onDeactivate={onDeactivate}
             onPause={onPause}
             onResume={onResume}
             onUndo={onUndo}
             onRaisePaddle={onRaisePaddle}
+            onPlaceBid={onPlaceBid}
           />
           <PaddlesRail
             franchises={tournament?.franchises || []}

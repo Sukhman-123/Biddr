@@ -12,6 +12,12 @@
   gap: 12px;
 }
 
+.host-controls-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
 .host-controls-row {
   display: flex;
   align-items: center;

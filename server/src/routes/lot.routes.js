@@ -8,6 +8,7 @@ const {
   pauseLot,
   resumeLot,
   undoLastAction,
+  deactivateLot,
 } = require('../controllers/auctionRoom.controller');
 
 const router = express.Router();
@@ -26,5 +27,6 @@ router.post('/:lotId/place-bid', placeBid);
 router.post('/:lotId/pause', pauseLot);
 router.post('/:lotId/resume', resumeLot);
 router.post('/:lotId/undo', undoLastAction);
+router.post('/:lotId/deactivate', deactivateLot);
 
 module.exports = router;

@@ -66,10 +66,12 @@ export default function CurrentLotCard({
   onActivate,
   onHammer,
   onPass,
+  onDeactivate,
   onPause,
   onResume,
   onUndo,
   onRaisePaddle,
+  onPlaceBid,
 }) {
   return (
     <div className="current-lot-card">
@@ -147,11 +149,14 @@ export default function CurrentLotCard({
                 busy={busy}
                 lot={lot}
                 timerSeconds={timerSeconds}
+                franchises={franchises}
                 onHammer={onHammer}
                 onPass={onPass}
                 onPause={onPause}
                 onResume={onResume}
                 onUndo={onUndo}
+                onPlaceBid={onPlaceBid}
+                onDeactivate={onDeactivate}
               />
             ) : (
               <p className="current-lot-hint">

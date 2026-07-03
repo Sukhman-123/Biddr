@@ -24,20 +24,23 @@ const activeLot = {
 }
 
 describe('CurrentLotCard — host vs viewer', () => {
-  it('host sees Activate / Hammer / Pass controls when a lot is active', () => {
+  it('host sees Sold / Unsold controls when a lot is active', () => {
     render(
       <CurrentLotCard
         lot={activeLot}
         isHost={true}
         queuedLots={[]}
         busy={false}
+        franchises={[]}
         onActivate={vi.fn()}
         onHammer={vi.fn()}
         onPass={vi.fn()}
+        onDeactivate={vi.fn()}
+        onPlaceBid={vi.fn()}
       />,
     )
-    expect(screen.getByRole('button', { name: /^hammer$/i })).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: /^pass$/i })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /^sold$/i })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /^unsold$/i })).toBeInTheDocument()
   })
 
   it('viewer does NOT see host controls when a lot is active', () => {
@@ -47,14 +50,17 @@ describe('CurrentLotCard — host vs viewer', () => {
         isHost={false}
         queuedLots={[]}
         busy={false}
+        franchises={[]}
         onActivate={vi.fn()}
         onHammer={vi.fn()}
         onPass={vi.fn()}
+        onDeactivate={vi.fn()}
+        onPlaceBid={vi.fn()}
       />,
     )
-    // The read-only hint is shown; the Hammer/Pass buttons are not.
-    expect(screen.queryByRole('button', { name: /^hammer$/i })).toBeNull()
-    expect(screen.queryByRole('button', { name: /^pass$/i })).toBeNull()
+    // The read-only hint is shown; Sold/Unsold buttons are not.
+    expect(screen.queryByRole('button', { name: /^sold$/i })).toBeNull()
+    expect(screen.queryByRole('button', { name: /^unsold$/i })).toBeNull()
     expect(screen.getByText(/bidding is live/i)).toBeInTheDocument()
   })
 
@@ -65,9 +71,12 @@ describe('CurrentLotCard — host vs viewer', () => {
         isHost={false}
         queuedLots={[]}
         busy={false}
+        franchises={[]}
         onActivate={vi.fn()}
         onHammer={vi.fn()}
         onPass={vi.fn()}
+        onDeactivate={vi.fn()}
+        onPlaceBid={vi.fn()}
       />,
     )
     expect(screen.getByText(/waiting for the next lot/i)).toBeInTheDocument()
@@ -83,9 +92,12 @@ describe('CurrentLotCard — host vs viewer', () => {
           { id: 'l1', name: 'Virat', style: 'Batsman', country: 'India', basePrice: 2000000, bidIncrement: 500000 },
         ]}
         busy={false}
+        franchises={[]}
         onActivate={vi.fn()}
         onHammer={vi.fn()}
         onPass={vi.fn()}
+        onDeactivate={vi.fn()}
+        onPlaceBid={vi.fn()}
       />,
     )
     expect(screen.getByRole('button', { name: /activate a lot/i })).toBeInTheDocument()
