@@ -476,6 +476,7 @@ export default function AuctionRoomPage() {
             busy={busy}
             timerSeconds={timerSeconds}
             franchises={tournament?.franchises || []}
+            auctionMode={tournament?.auctionMode || 'remote'}
             onActivate={onActivate}
             onHammer={onHammer}
             onPass={onPass}
@@ -486,13 +487,14 @@ export default function AuctionRoomPage() {
             onRaisePaddle={onRaisePaddle}
             onPlaceBid={onPlaceBid}
           />
+          {/* PaddlesRail — decorative showing participating franchises */}
           <PaddlesRail
             franchises={tournament?.franchises || []}
             active={Boolean(activeLot)}
             onPaddleClick={(franchise) => {
-              // v1: no bid placement yet. Show a friendly hint.
+              // In v1, paddles are decorative only. Click shows hint.
               toast.info(
-                `Paddle raise for ${franchise.name} arrives in the next update. The auctioneer still calls the hammer.`,
+                `${franchise.name} is actively bidding. The auctioneer will call the hammer.`,
               )
             }}
           />

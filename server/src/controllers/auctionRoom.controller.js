@@ -533,12 +533,9 @@ const deactivateLot = async (req, res, next) => {
     lot.status = 'queued';
     await lot.save();
 
-    push(tournament._id.toString(), {
-      type: 'LOT_DEACTIVATED',
-      lotId: lot._id.toString(),
-      previousLot: lot.toObject(),
-    });
-
+    // Skip/deactivate is non-revertible — don't push onto the undo stack.
+    // The undo stack is reserved for actions that can be cleanly reversed
+    // (BID_PLACED, LOT_HAMMERED, LOT_PASSED).
     broadcast(req, tournament._id.toString(), 'lot:deactivated', {
       lot: lot.toJSON(),
       by: { id: req.user._id.toString(), fullName: req.user.fullName },

@@ -73,7 +73,7 @@ export default function PlayerQueuePanel({ lots, onSelectLot, busy }) {
               initial={{ opacity: 0, y: 8 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.2, delay: index * 0.02 }}
-              onClick={() => onSelectLot && onSelectLot(lot)}
+              onClick={() => onSelectLot && onSelectLot(lot.id)}
             >
               <div className="queue-item-left">
                 <div className="queue-item-info">
@@ -102,7 +102,7 @@ export default function PlayerQueuePanel({ lots, onSelectLot, busy }) {
                   disabled={busy}
                   onClick={(e) => {
                     e.stopPropagation()
-                    onSelectLot && onSelectLot(lot)
+                    onSelectLot && onSelectLot(lot.id)
                   }}
                 >
                   <Play size={16} />

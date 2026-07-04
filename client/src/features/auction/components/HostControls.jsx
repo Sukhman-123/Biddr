@@ -24,6 +24,7 @@ export default function HostControls({
   busy,
   timerSeconds,
   franchises,
+  auctionMode,
   onActivate,
   onHammer,
   onPass,
@@ -38,8 +39,8 @@ export default function HostControls({
   }
   return (
     <div className="host-controls-stack">
-      {/* Manual bid controls for the host */}
-      {mode !== 'paused' && (
+      {/* Manual bid controls for the host — physical mode only */}
+      {auctionMode === 'physical' && mode !== 'paused' && (
         <BidControls
           lot={lot}
           franchises={franchises || []}

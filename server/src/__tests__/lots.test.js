@@ -326,6 +326,86 @@ describe('PATCH /api/lots/:lotId', () => {
   })
 })
 
+  describe('POST /api/lots/:lotId/deactivate (skip/requeue)', () => {
+    it('returns an active lot back to idle/queued', async () => {
+      const token = await getOwnerToken()
+      const create = await createTournament(token)
+      const id = create.body.tournament.id
+      const lot = await request(app)
+        .post(`/api/tournaments/${id}/lots`)
+        .set('Authorization', `Bearer ${token}`)
+        .send({
+          name: 'Test',
+          style: 'Batsman',
+          country: 'India',
+          basePrice: 1,
+          bidIncrement: 1,
+        })
+      // Activate first
+      await request(app)
+        .post(`/api/tournaments/${id}/lots/${lot.body.lot.id}/activate`)
+        .set('Authorization', `Bearer ${token}`)
+      // Deactivate
+      const deactivate = await request(app)
+        .post(`/api/lots/${lot.body.lot.id}/deactivate`)
+        .set('Authorization', `Bearer ${token}`)
+      expect(deactivate.status).toBe(200)
+      expect(deactivate.body.lot.auctionStatus).toBe('idle')
+      expect(deactivate.body.lot.status).toBe('queued')
+    })
+
+    it('rejects non-host', async () => {
+      const token = await getOwnerToken()
+      const otherToken = await getOtherToken()
+      const create = await createTournament(token)
+      const id = create.body.tournament.id
+      const lot = await request(app)
+        .post(`/api/tournaments/${id}/lots`)
+        .set('Authorization', `Bearer ${token}`)
+        .send({
+          name: 'Test',
+          style: 'Batsman',
+          country: 'India',
+          basePrice: 1,
+          bidIncrement: 1,
+        })
+      const deactivate = await request(app)
+        .post(`/api/lots/${lot.body.lot.id}/deactivate`)
+        .set('Authorization', `Bearer ${otherToken}`)
+      expect(deactivate.status).toBe(403)
+    })
+
+    it('rejects already idle lot', async () => {
+      const token = await getOwnerToken()
+      const create = await createTournament(token)
+      const id = create.body.tournament.id
+      const lot = await request(app)
+        .post(`/api/tournaments/${id}/lots`)
+        .set('Authorization', `Bearer ${token}`)
+        .send({
+          name: 'Test',
+          style: 'Batsman',
+          country: 'India',
+          basePrice: 1,
+          bidIncrement: 1,
+        })
+      const deactivate = await request(app)
+        .post(`/api/lots/${lot.body.lot.id}/deactivate`)
+        .set('Authorization', `Bearer ${token}`)
+      expect(deactivate.status).toBe(400)
+      expect(deactivate.body.message).toBe('Lot is already idle')
+    })
+
+    it('404s on unknown lot', async () => {
+      const token = await getOwnerToken()
+      const fakeId = '64b0c0a0a0a0a0a0a0a0a0a0'
+      const deactivate = await request(app)
+        .post(`/api/lots/${fakeId}/deactivate`)
+        .set('Authorization', `Bearer ${token}`)
+      expect(deactivate.status).toBe(404)
+    })
+  })
+
 describe('DELETE /api/lots/:lotId', () => {
   it('removes the lot', async () => {
     const token = await getOwnerToken()

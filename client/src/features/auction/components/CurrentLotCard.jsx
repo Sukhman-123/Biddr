@@ -63,6 +63,7 @@ export default function CurrentLotCard({
   busy,
   timerSeconds,
   franchises,
+  auctionMode,
   onActivate,
   onHammer,
   onPass,
@@ -150,6 +151,7 @@ export default function CurrentLotCard({
                 lot={lot}
                 timerSeconds={timerSeconds}
                 franchises={franchises}
+                auctionMode={auctionMode}
                 onHammer={onHammer}
                 onPass={onPass}
                 onPause={onPause}

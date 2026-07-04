@@ -40,10 +40,15 @@ export default function SpectatorRoomPage() {
 
   // Socket connection and event handling
   useEffect(() => {
-    if (!socket || !connected) return
+    if (!socket) return
 
     const handleConnect = () => {
       console.log('[Spectator] Connected to room')
+      socket.emit('room:join', { tournamentId })
+    }
+
+    if (connected) {
+      handleConnect()
     }
 
     const handleDisconnect = () => {
@@ -175,6 +180,7 @@ export default function SpectatorRoomPage() {
     socket.on('lot:deactivated', handleLotDeactivated)
 
     return () => {
+      socket.emit('room:leave', { tournamentId })
       socket.off('connect', handleConnect)
       socket.off('disconnect', handleDisconnect)
       socket.off('lot:activated', handleLotActivated)
@@ -186,7 +192,7 @@ export default function SpectatorRoomPage() {
       socket.off('lot:undone', handleLotUndone)
       socket.off('lot:deactivated', handleLotDeactivated)
     }
-  }, [socket, connected])
+  }, [socket, connected, tournamentId])
 
   const tournament = snapshotQuery.data?.tournament
 
