@@ -1,10 +1,10 @@
+import { motion } from 'framer-motion'
 import './PaddlesRail.css'
 
-// PaddlesRail — one paddle per franchise. Clicking fires a callback.
-// In v1 the click is informational only (toast in the parent), but
-// the visual is fully built and uses the franchise's colorHex so
-// the "premium" feel is there from day one.
-export default function PaddlesRail({ franchises, active, onPaddleClick }) {
+// PaddlesRail — visual bidding interface for franchise owners.
+// Active lot shows leading bidder. Click paddle to place minimum+ bid (v1).
+// Auction mode controls click behavior: physical = host-only, remote = franchise owner bids.
+export default function PaddlesRail({ franchises, activeLot, auctionMode, onPaddleClick }) {
   if (!franchises || franchises.length === 0) {
     return (
       <div className="paddles-rail paddles-rail-empty">
@@ -14,27 +14,62 @@ export default function PaddlesRail({ franchises, active, onPaddleClick }) {
       </div>
     )
   }
+
+  const currentBidder = activeLot?.currentBidderFranchiseId
+  const leadingFranchise = franchises.find(f => f.id === currentBidder)
+  const baseIncrement = activeLot?.bidIncrement ?? 1000000
+
   return (
     <div className="paddles-rail" aria-label="Franchise paddles">
       <div className="paddles-rail-head">
         <span className="paddles-rail-title">Franchise paddles</span>
         <span className="paddles-rail-sub">
-          {active ? 'Click a paddle to show interest' : 'Inactive until a lot is on the floor'}
+          {!activeLot
+            ? 'Inactive until a lot is on the floor'
+            : auctionMode === 'physical'
+              ? 'Auctioneer only: paddle raises are decorative'
+              : `Leading bid: ${baseIncrement / 1000000}L. Click to bid +${baseIncrement}`
+          }
         </span>
       </div>
+      {activeLot && leadingFranchise && (
+        <div className="paddles-rail-leading">
+          <motion.div
+            key={leadingFranchise.id}
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+          >
+            <div
+              className="paddle-indicator"
+              style={{ '--paddle-color': leadingFranchise.colorHex || '#f5b94a' }}
+            >
+              <span>Leading:</span>
+              <span>{leadingFranchise.name}</span>
+            </div>
+            <div className="paddle-bid-amount">
+              {activeLot.currentBid.toLocaleString('en-IN')}
+            </div>
+          </motion.div>
+        </div>
+      )}
       <div className="paddles-rail-list" role="list">
         {franchises.map((f) => {
           const color = f.colorHex || '#f5b94a'
+          const isLeading = f.id === currentBidder
+          const canBid = !isLeading && auctionMode === 'remote'
+
           return (
-            <button
+            <motion.button
               key={f.id}
               type="button"
-              className={`paddle ${active ? 'is-active' : 'is-inactive'}`}
-              onClick={() => active && onPaddleClick?.(f)}
-              disabled={!active}
+              className={`paddle ${active ? 'is-active' : 'is-inactive'} ${isLeading ? 'is-leading' : ''}`}
+              onClick={() => active && onPaddleClick?.(f, activeLot.currentBid + baseIncrement)}
+              disabled={!active || !canBid}
               style={{ '--paddle-color': color }}
               role="listitem"
-              aria-label={`Raise paddle for ${f.name}`}
+              aria-label={`${isLeading ? `Leading bid for ${f.name}` : `Bid +${baseIncrement.toLocaleString('en-IN')} for ${f.name}`}`}
+              whileHover={!canBid ? {} : { scale: 1.02 }}
+              whileTap={!canBid ? {} : { scale: 0.98 }}
             >
               <span className="paddle-shape" aria-hidden="true">
                 <span className="paddle-handle" />
@@ -43,8 +78,18 @@ export default function PaddlesRail({ franchises, active, onPaddleClick }) {
               <span className="paddle-meta">
                 <span className="paddle-name">{f.name}</span>
                 {f.city ? <span className="paddle-city">{f.city}</span> : null}
+                {isLeading && (
+                  <span className="paddle-leading-badge">
+                    Leading
+                  </span>
+                )}
+                {canBid && (
+                  <span className="paddle-bid-hint">
+                    +{baseIncrement / 1000000}L
+                  </span>
+                )}
               </span>
-            </button>
+            </motion.button>
           )
         })}
       </div>

@@ -121,6 +121,22 @@ const lotSchema = new mongoose.Schema(
       default: null,
       min: [0, 'soldPrice cannot be negative'],
     },
+    // Bid history for this lot. Appended on each bid:placed event.
+    // Used by the room snapshot so reconnecting clients see the full
+    // bid ladder without needing a separate Bid collection.
+    bidHistory: {
+      type: [
+        {
+          amount: { type: Number, required: true },
+          franchiseId: { type: String, required: true },
+          franchiseName: { type: String, required: true },
+          userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
+          userFullName: { type: String },
+          at: { type: Date, required: true },
+        },
+      ],
+      default: () => [],
+    },
   },
   { timestamps: true },
 );

@@ -487,15 +487,22 @@ export default function AuctionRoomPage() {
             onRaisePaddle={onRaisePaddle}
             onPlaceBid={onPlaceBid}
           />
-          {/* PaddlesRail — decorative showing participating franchises */}
+          {/* PaddlesRail — franchise bidding interface */}
           <PaddlesRail
             franchises={tournament?.franchises || []}
-            active={Boolean(activeLot)}
-            onPaddleClick={(franchise) => {
-              // In v1, paddles are decorative only. Click shows hint.
-              toast.info(
-                `${franchise.name} is actively bidding. The auctioneer will call the hammer.`,
-              )
+            activeLot={activeLot}
+            auctionMode={tournament?.auctionMode || 'remote'}
+            onPaddleClick={(franchise, amount) => {
+              // v1: raise paddle triggers a real bid in remote mode,
+              // or shows a hint in physical mode (host-only control).
+              if (isHost || (tournament?.auctionMode === 'physical')) {
+                toast.info(
+                  `${franchise.name} is actively bidding. The auctioneer will call the hammer.`,
+                )
+              } else {
+                // In remote mode: franchise owner raises paddle
+                onRaisePaddle(franchise.id, amount)
+              }
             }}
           />
           {isHost && (

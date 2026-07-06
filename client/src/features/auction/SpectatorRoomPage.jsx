@@ -8,6 +8,7 @@ import { useAuth } from '../auth/useAuth'
 import { formatPurse } from '../tournaments/tournament.utils'
 import { fetchRoomSnapshotRequest } from './auctionRoom.api'
 import CurrentLotCard from './components/CurrentLotCard'
+import PaddlesRail from './components/PaddlesRail'
 import TeamBudgetSidebar from './components/TeamBudgetSidebar'
 import BidFeed from './components/BidFeed'
 import './AuctionRoomPage.css'
@@ -241,6 +242,7 @@ export default function SpectatorRoomPage() {
             busy={false}
             timerSeconds={0}
             franchises={tournament?.franchises || []}
+            auctionMode={tournament?.auctionMode || 'remote'}
             onActivate={() => {}}
             onHammer={() => {}}
             onPass={() => {}}
@@ -250,6 +252,13 @@ export default function SpectatorRoomPage() {
             onUndo={() => {}}
             onRaisePaddle={() => {}}
             onPlaceBid={() => {}}
+          />
+          {/* PaddlesRail for spectators to see who's bidding */}
+          <PaddlesRail
+            franchises={tournament?.franchises || []}
+            activeLot={activeLot}
+            auctionMode={tournament?.auctionMode || 'remote'}
+            onPaddleClick={() => {}}
           />
         </div>
         <aside className="auction-room-right" aria-label="Auction event feed">

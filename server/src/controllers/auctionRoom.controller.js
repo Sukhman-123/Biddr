@@ -1,3 +1,11 @@
+// Strip non-persisted / auto-managed fields from a lot snapshot so it
+// can be safely re-applied with Object.assign + save without tripping
+// Mongoose's optimistic-concurrency (__v) check.
+const cleanLotSnapshot = (obj) => {
+  const { _id, __v, createdAt, updatedAt, ...rest } = obj
+  return rest
+}
+
 const Lot = require('../models/Lot');
 const Tournament = require('../models/Tournament');
 const { assertCanSeeTournament, HttpError } = require('../middleware/canSeeTournament');
@@ -128,7 +136,7 @@ const hammerLot = async (req, res, next) => {
       winnerFranchiseId = lot.currentBidderFranchiseId;
     }
 
-    const previousLot = { ...lot.toObject() }
+    const previousLot = cleanLotSnapshot(lot.toObject())
     // Snapshot franchise wallets before the sale so we can restore them on undo.
     const previousWallets = tournament.franchises.map((f) => ({
       id: f._id.toString(),
@@ -262,12 +270,33 @@ const placeBid = async (req, res, next) => {
       throw new HttpError(400, check.reason);
     }
 
+    // Optimistic-concurrency guard: reject if the lot has since been
+    // outbid by another franchise (stale client state). This covers the
+    // race where two owners bid simultaneously — the second request to
+    // reach the server loses and gets a clear 409 to retry from.
+    if (lot.currentBid > 0 && amount <= lot.currentBid) {
+      throw new HttpError(
+        409,
+        `This lot has already received a higher bid of ${lot.currentBid.toLocaleString('en-IN')}. Please bid higher.`,
+      );
+    }
+
     // Place the bid
-    const previousBid = { ...lot.toObject() }
+    const previousBid = cleanLotSnapshot(lot.toObject())
     lot.currentBid = amount;
     lot.currentBidderFranchiseId = franchiseId;
     lot.currentBidByUserId = req.user._id;
     lot.currentBidAt = new Date();
+    // Persist bid history so reconnecting clients see the ladder
+    if (!Array.isArray(lot.bidHistory)) lot.bidHistory = []
+    lot.bidHistory.push({
+      amount,
+      franchiseId,
+      franchiseName: franchise.name,
+      userId: req.user._id,
+      userFullName: req.user.fullName,
+      at: lot.currentBidAt,
+    })
     await lot.save();
 
     push(tournament._id.toString(), {
@@ -409,9 +438,17 @@ const passLot = async (req, res, next) => {
       throw new HttpError(400, 'Lot is already passed');
     }
 
+    const previousLot = cleanLotSnapshot(lot.toObject())
+
     lot.status = 'unsold';
     lot.auctionStatus = 'unsold';
     await lot.save();
+
+    push(tournament._id.toString(), {
+      type: 'LOT_PASSED',
+      lotId: lot._id.toString(),
+      previousLot,
+    });
 
     broadcast(req, tournament._id.toString(), 'lot:passed', {
       lot: lot.toJSON(),
@@ -449,7 +486,7 @@ const getRoomSnapshot = async (req, res, next) => {
     return res.status(200).json({
       tournament: tournament.toDetailJSON(),
       activeLot: activeLot ? activeLot.toJSON() : null,
-      recentBids: [],
+      recentBids: activeLot?.bidHistory ?? [],
     });
   } catch (error) {
     if (error instanceof HttpError) {
@@ -477,6 +514,11 @@ const undoLastAction = async (req, res, next) => {
     switch (action.type) {
       case 'BID_PLACED':
         Object.assign(lot, action.previousBid);
+        await lot.save();
+        revertedLot = lot;
+        break;
+      case 'LOT_PASSED':
+        Object.assign(lot, action.previousLot);
         await lot.save();
         revertedLot = lot;
         break;
