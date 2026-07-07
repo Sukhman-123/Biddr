@@ -111,6 +111,34 @@ describe('GET /api/tournaments/:id/room', () => {
     expect(res.body.activeLot.auctionStatus).toBe('active')
   })
 
+  it('returns a paused lot in the snapshot so the room can be resumed after refresh', async () => {
+    const token = await getToken('host@example.com', 'Host')
+    const create = await createTournament(token)
+    const id = create.body.tournament.id
+    const lotRes = await createLot(token, id)
+    const lotId = lotRes.body.lot.id
+
+    await request(app)
+      .patch(`/api/lots/${lotId}`)
+      .set('Authorization', `Bearer ${token}`)
+      .send({ bidIncrement: 500000 })
+    await request(app)
+      .post(`/api/tournaments/${id}/lots/${lotId}/activate`)
+      .set('Authorization', `Bearer ${token}`)
+    await request(app)
+      .post(`/api/lots/${lotId}/pause`)
+      .set('Authorization', `Bearer ${token}`)
+
+    const res = await request(app)
+      .get(`/api/tournaments/${id}/room`)
+      .set('Authorization', `Bearer ${token}`)
+
+    expect(res.status).toBe(200)
+    expect(res.body.activeLot).toBeTruthy()
+    expect(res.body.activeLot.id).toBe(lotId)
+    expect(res.body.activeLot.auctionStatus).toBe('paused')
+  })
+
   it('lets a public-tournament viewer fetch the snapshot', async () => {
     const hostToken = await getToken('host@example.com', 'Host')
     const otherToken = await getToken('other@example.com', 'Other')

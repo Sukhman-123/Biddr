@@ -475,12 +475,12 @@ const getRoomSnapshot = async (req, res, next) => {
     const { id: tournamentId } = req.params;
     const tournament = await assertCanSeeTournament(tournamentId, req.user);
 
-    // The "active lot" is the one in `auctionStatus='active'`. In v1
-    // the host activates at most one lot at a time; the index on
-    // (tournamentId, auctionStatus) makes this a fast lookup.
+    // The "current room lot" is whichever lot is still on the floor.
+    // That includes both actively bidding lots and paused lots, so a
+    // host refresh or reconnect can still resume a paused auction.
     const activeLot = await Lot.findOne({
       tournamentId: tournament._id,
-      auctionStatus: 'active',
+      auctionStatus: { $in: ['active', 'paused'] },
     });
 
     return res.status(200).json({

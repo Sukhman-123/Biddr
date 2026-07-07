@@ -18,6 +18,7 @@ export default function PaddlesRail({ franchises, activeLot, auctionMode, onPadd
   const currentBidder = activeLot?.currentBidderFranchiseId
   const leadingFranchise = franchises.find(f => f.id === currentBidder)
   const baseIncrement = activeLot?.bidIncrement ?? 1000000
+  const isActive = Boolean(activeLot)
 
   return (
     <div className="paddles-rail" aria-label="Franchise paddles">
@@ -62,9 +63,9 @@ export default function PaddlesRail({ franchises, activeLot, auctionMode, onPadd
             <motion.button
               key={f.id}
               type="button"
-              className={`paddle ${active ? 'is-active' : 'is-inactive'} ${isLeading ? 'is-leading' : ''}`}
-              onClick={() => active && onPaddleClick?.(f, activeLot.currentBid + baseIncrement)}
-              disabled={!active || !canBid}
+              className={`paddle ${isActive ? 'is-active' : 'is-inactive'} ${isLeading ? 'is-leading' : ''}`}
+              onClick={() => isActive && onPaddleClick?.(f, activeLot.currentBid + baseIncrement)}
+              disabled={!isActive || !canBid}
               style={{ '--paddle-color': color }}
               role="listitem"
               aria-label={`${isLeading ? `Leading bid for ${f.name}` : `Bid +${baseIncrement.toLocaleString('en-IN')} for ${f.name}`}`}
