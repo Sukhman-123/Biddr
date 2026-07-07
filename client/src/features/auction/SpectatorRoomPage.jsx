@@ -71,7 +71,7 @@ export default function SpectatorRoomPage() {
     }
 
     const handleLotHammered = ({ lot, franchise, amount, by, at }) => {
-      setActiveLot(lot)
+      setActiveLot(null)
       setFeed((current) => [
         {
           id: `hammered-${at}`,
@@ -86,7 +86,7 @@ export default function SpectatorRoomPage() {
     }
 
     const handleLotPassed = ({ lot, by, at }) => {
-      setActiveLot(lot)
+      setActiveLot(null)
       setFeed((current) => [
         {
           id: `passed-${at}`,
@@ -155,7 +155,7 @@ export default function SpectatorRoomPage() {
     }
 
     const handleLotDeactivated = ({ lot, at }) => {
-      setActiveLot(lot)
+      setActiveLot(null)
       setFeed((current) => [
         {
           id: `deactivated-${at}`,

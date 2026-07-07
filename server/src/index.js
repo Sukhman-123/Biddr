@@ -56,31 +56,6 @@ app.get('/api/health', (req, res) => {
   });
 });
 
-// Debug endpoint — reports which environment variables are loaded,
-// with the value redacted for secrets. Safe to expose because nothing
-// sensitive is returned; only the *presence* (and length) of each key.
-// This makes "did the dashboard env vars actually get to the process?"
-// a one-curl question during incidents.
-app.get('/api/_debug/env', (req, res) => {
-  const probe = (key) => {
-    const v = process.env[key]
-    if (v === undefined) return { present: false }
-    return { present: true, length: v.length }
-  }
-  res.json({
-    node: process.version,
-    env: process.env.NODE_ENV || '(unset)',
-    keys: {
-      MONGO_URI: probe('MONGO_URI'),
-      JWT_SECRET: probe('JWT_SECRET'),
-      GOOGLE_CLIENT_ID: probe('GOOGLE_CLIENT_ID'),
-      CLIENT_URL: probe('CLIENT_URL'),
-      PORT: probe('PORT'),
-    },
-    allowedOrigins: ALLOWED_ORIGINS,
-  });
-});
-
 app.use('/api/auth', authRoutes);
 app.use('/api/tournaments', tournamentRoutes);
 app.use('/api/lots', lotRoutes);
