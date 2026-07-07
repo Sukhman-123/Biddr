@@ -22,6 +22,7 @@ import {
 import { endAuctionRequest } from '../tournaments/tournament.api'
 import { formatPurse } from '../tournaments/tournament.utils'
 import TopBar from './components/TopBar'
+import AuctioneerPanel from './components/AuctioneerPanel'
 import CurrentLotCard from './components/CurrentLotCard'
 import HostControls from './components/HostControls'
 import PaddlesRail from './components/PaddlesRail'
@@ -523,12 +524,23 @@ export default function AuctionRoomPage() {
       />
 
       {isHost ? (
-        <AuctioneerDesk
+        <AuctioneerPanel
           tournament={tournament}
           activeLot={activeLot}
-          queuedCount={queuedLots.length}
+          queuedLots={queuedLots}
           undoAvailable={undoAvailable}
           connected={connected}
+          busy={busy || endBusy}
+          recentEvents={feed}
+          onActivateNext={onActivate}
+          onPause={onPause}
+          onResume={onResume}
+          onUndo={onUndo}
+          onDeactivate={onDeactivate}
+          onOpenEndAuction={() => {
+            setEndError(null)
+            setEndOpen(true)
+          }}
         />
       ) : null}
 
@@ -614,72 +626,5 @@ function RoomSkeleton() {
       <div className="skel" style={{ height: 220, borderRadius: 18 }} />
       <div className="skel" style={{ height: 120, borderRadius: 18 }} />
     </div>
-  )
-}
-
-function AuctioneerDesk({
-  tournament,
-  activeLot,
-  queuedCount,
-  undoAvailable,
-  connected,
-}) {
-  const auctionMode = tournament?.auctionMode || 'remote'
-  const isPhysical = auctionMode === 'physical'
-  const lotState = activeLot
-    ? activeLot.auctionStatus === 'paused'
-      ? 'Paused'
-      : 'Live on floor'
-    : 'No live lot'
-
-  const guidance = activeLot
-    ? isPhysical
-      ? 'Call each floor bid, then record the leading franchise from this desk before you hammer or pass.'
-      : 'Franchise owners can bid directly, while you stay in control of pause, undo, skip, and hammer.'
-    : isPhysical
-      ? 'Bring the next player to the floor when the room is ready and run the bidding from this control desk.'
-      : 'Open the next lot when you are ready. Franchise owners will handle paddle raises from their own devices.'
-
-  return (
-    <section className="auctioneer-desk" aria-label="Auctioneer desk">
-      <div className="auctioneer-desk-head">
-        <div>
-          <span className="auctioneer-desk-eyebrow">Auctioneer Desk</span>
-          <h2 className="auctioneer-desk-title">
-            {isPhysical ? 'Physical room control' : 'Remote room control'}
-          </h2>
-        </div>
-        <div className="auctioneer-desk-pills">
-          <span className={`auctioneer-desk-pill ${isPhysical ? 'is-physical' : 'is-remote'}`}>
-            {isPhysical ? 'Physical auction' : 'Remote auction'}
-          </span>
-          <span className={`auctioneer-desk-pill ${connected ? 'is-online' : 'is-offline'}`}>
-            {connected ? 'Room synced' : 'Reconnecting'}
-          </span>
-        </div>
-      </div>
-
-      <div className="auctioneer-desk-grid">
-        <div className="auctioneer-desk-card">
-          <span className="auctioneer-desk-label">Bid entry</span>
-          <strong>{isPhysical ? 'Auctioneer controlled' : 'Franchise self-bidding'}</strong>
-          <p>
-            {isPhysical
-              ? 'Only you should record bids, winners, pauses, and skips during the live floor auction.'
-              : 'Teams can raise bids live, but final auction flow stays with the auctioneer.'}
-          </p>
-        </div>
-        <div className="auctioneer-desk-card">
-          <span className="auctioneer-desk-label">Current lot</span>
-          <strong>{activeLot?.name || 'Waiting for next lot'}</strong>
-          <p>{lotState}</p>
-        </div>
-        <div className="auctioneer-desk-card">
-          <span className="auctioneer-desk-label">Queue & recovery</span>
-          <strong>{queuedCount} queued · {undoAvailable ? 'Undo ready' : 'Undo clear'}</strong>
-          <p>{guidance}</p>
-        </div>
-      </div>
-    </section>
   )
 }
