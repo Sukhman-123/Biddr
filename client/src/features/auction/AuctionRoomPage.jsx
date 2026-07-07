@@ -547,6 +547,7 @@ export default function AuctionRoomPage() {
             timerSeconds={timerSeconds}
             franchises={tournament?.franchises || []}
             auctionMode={tournament?.auctionMode || 'remote'}
+            currency={tournament?.currency || 'INR'}
             canUndo={undoAvailable}
             onActivate={onActivate}
             onHammer={onHammer}

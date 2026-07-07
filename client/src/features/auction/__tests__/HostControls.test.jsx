@@ -139,6 +139,9 @@ describe('HostControls — active mode (lot on the floor)', () => {
       />,
     )
     expect(screen.getByText(/place bid/i)).toBeInTheDocument()
+    expect(screen.getByText(/auctioneer entry only/i)).toBeInTheDocument()
+    expect(screen.getAllByRole('button', { name: /next bid/i }).length).toBeGreaterThan(0)
+    expect(screen.getByRole('button', { name: /record next bid/i })).toBeInTheDocument()
   })
 
   it('does not show manual bid controls in remote mode', () => {

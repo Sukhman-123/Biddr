@@ -30,6 +30,35 @@
   color: var(--muted);
 }
 
+.bid-controls-brief {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.bid-controls-brief-card {
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.03);
+  padding: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.bid-controls-brief-label {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.bid-controls-brief-card strong {
+  color: var(--ink-strong);
+  font-size: 13px;
+}
+
 .bid-controls-section {
   display: flex;
   flex-direction: column;
@@ -158,6 +187,10 @@
   border-color: var(--gold);
   color: var(--gold);
   background: rgba(245, 185, 74, 0.08);
+}
+
+.bid-controls-preset-amount {
+  color: var(--ink-strong);
 }
 
 .bid-controls-preset:disabled {
@@ -297,6 +330,10 @@
 }
 
 @media (max-width: 640px) {
+  .bid-controls-brief {
+    grid-template-columns: 1fr;
+  }
+
   .bid-controls-franchises {
     grid-template-columns: 1fr;
   }

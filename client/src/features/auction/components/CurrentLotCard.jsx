@@ -64,6 +64,7 @@ export default function CurrentLotCard({
   timerSeconds,
   franchises,
   auctionMode,
+  currency = 'INR',
   canUndo,
   onActivate,
   onHammer,
@@ -153,6 +154,7 @@ export default function CurrentLotCard({
                 timerSeconds={timerSeconds}
                 franchises={franchises}
                 auctionMode={auctionMode}
+                currency={currency}
                 onHammer={onHammer}
                 onPass={onPass}
                 onPause={onPause}

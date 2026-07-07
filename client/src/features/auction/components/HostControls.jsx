@@ -25,6 +25,7 @@ export default function HostControls({
   timerSeconds,
   franchises,
   auctionMode,
+  currency,
   canUndo,
   onActivate,
   onHammer,
@@ -56,6 +57,7 @@ export default function HostControls({
           onPlaceBid={onPlaceBid}
           busy={busy}
           isHost
+          currency={currency}
         />
       )}
       <ActiveControls

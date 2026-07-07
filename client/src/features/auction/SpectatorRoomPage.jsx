@@ -246,6 +246,7 @@ export default function SpectatorRoomPage() {
             timerSeconds={0}
             franchises={tournament?.franchises || []}
             auctionMode={tournament?.auctionMode || 'remote'}
+            currency={tournament?.currency || 'INR'}
             onActivate={() => {}}
             onHammer={() => {}}
             onPass={() => {}}
