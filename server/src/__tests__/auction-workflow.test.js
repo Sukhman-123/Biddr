@@ -87,6 +87,35 @@ describe('Auction Workflow', () => {
       expect(res.status).toBe(201)
       expect(res.body.tournament.auctionMode).toBe('physical')
     })
+
+    it('updates auctionMode from remote to physical', async () => {
+      const createRes = await request(app)
+        .post('/api/tournaments')
+        .set('Authorization', `Bearer ${hostToken}`)
+        .send({
+          name: 'Switchable Auction',
+          shortCode: 'SWT' + Date.now(),
+          pursePerFranchise: 10000000,
+        })
+
+      expect(createRes.status).toBe(201)
+      expect(createRes.body.tournament.auctionMode).toBe('remote')
+
+      const updateRes = await request(app)
+        .patch(`/api/tournaments/${createRes.body.tournament.id}`)
+        .set('Authorization', `Bearer ${hostToken}`)
+        .send({ auctionMode: 'physical' })
+
+      expect(updateRes.status).toBe(200)
+      expect(updateRes.body.tournament.auctionMode).toBe('physical')
+
+      const fetchRes = await request(app)
+        .get(`/api/tournaments/${createRes.body.tournament.id}`)
+        .set('Authorization', `Bearer ${hostToken}`)
+
+      expect(fetchRes.status).toBe(200)
+      expect(fetchRes.body.tournament.auctionMode).toBe('physical')
+    })
   })
 
   describe('Lot Lifecycle', () => {

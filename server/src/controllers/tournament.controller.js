@@ -248,14 +248,22 @@ const updateTournament = async (req, res, next) => {
       'description',
       'region',
       'coverImage',
-      'visibility',
-      'auctionMode',
       'pursePerFranchise',
     ];
     for (const field of allowed) {
       if (req.body[field] !== undefined) {
         tournament[field] = req.body[field];
       }
+    }
+
+    if (req.body.visibility !== undefined) {
+      tournament.visibility =
+        req.body.visibility === 'invite-only' ? 'invite-only' : 'public';
+    }
+
+    if (req.body.auctionMode !== undefined) {
+      tournament.auctionMode =
+        req.body.auctionMode === 'physical' ? 'physical' : 'remote';
     }
 
     if (req.body.cover && typeof req.body.cover === 'object') {
