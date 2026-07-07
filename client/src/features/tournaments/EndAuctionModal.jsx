@@ -1,4 +1,5 @@
 import { useEffect } from 'react'
+import { createPortal } from 'react-dom'
 import { motion, AnimatePresence, useReducedMotion } from 'framer-motion'
 import { Flag, X } from 'lucide-react'
 import './StartAuctionModal.css'
@@ -22,7 +23,16 @@ export default function EndAuctionModal({
     return () => window.removeEventListener('keydown', onKey)
   }, [open, busy, onCancel])
 
-  return (
+  useEffect(() => {
+    if (!open) return undefined
+    const original = document.body.style.overflow
+    document.body.style.overflow = 'hidden'
+    return () => {
+      document.body.style.overflow = original
+    }
+  }, [open])
+
+  return createPortal(
     <AnimatePresence>
       {open ? (
         <motion.div
@@ -99,6 +109,7 @@ export default function EndAuctionModal({
           </motion.div>
         </motion.div>
       ) : null}
-    </AnimatePresence>
+    </AnimatePresence>,
+    document.body,
   )
 }
