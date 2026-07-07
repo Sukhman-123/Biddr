@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Check, X, Play, ChevronDown, Pause, Zap, RotateCcw, Gavel, Ban } from 'lucide-react'
 import { useToast } from '../../../components/ToastProvider'
+import { formatPurse } from '../../tournaments/tournament.utils'
 import BidControls from './BidControls'
 import './HostControls.css'
 
@@ -41,6 +42,7 @@ export default function HostControls({
       <IdlePicker
         queuedLots={queuedLots}
         busy={busy}
+        currency={currency}
         canUndo={canUndo}
         onActivate={onActivate}
         onUndo={onUndo}
@@ -79,7 +81,7 @@ export default function HostControls({
   )
 }
 
-function IdlePicker({ queuedLots, busy, canUndo, onActivate, onUndo }) {
+function IdlePicker({ queuedLots, busy, currency, canUndo, onActivate, onUndo }) {
   const [open, setOpen] = useState(false)
   const [pick, setPick] = useState(queuedLots?.[0]?.id || '')
 
@@ -152,8 +154,8 @@ function IdlePicker({ queuedLots, busy, canUndo, onActivate, onUndo }) {
                 >
                   <span className="host-picker-name">{l.name}</span>
                   <span className="host-picker-sub">
-                    {l.style} · {l.country} · base {l.basePrice?.toLocaleString('en-IN') || '—'}
-                    {l.bidIncrement ? ` · +${l.bidIncrement.toLocaleString('en-IN')}` : ' · +—'}
+                    {l.style} · {l.country} · base {l.basePrice != null ? formatPurse(l.basePrice, currency, { compact: true }) : '—'}
+                    {l.bidIncrement != null ? ` · +${formatPurse(l.bidIncrement, currency, { compact: true })}` : ' · +—'}
                   </span>
                   {pick === l.id ? <Check size={16} className="host-picker-tick" /> : null}
                 </li>

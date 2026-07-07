@@ -164,7 +164,9 @@ export default function AuctionRoomPage() {
           ...current,
         ].slice(0, 30),
       )
-      toast.success(`${lot.name} sold${lot.soldPrice ? ' for ' + formatPurse(lot.soldPrice, lot.soldPrice && 'INR') : ''}`)
+      toast.success(
+        `${lot.name} sold${lot.soldPrice ? ` for ${formatPurse(lot.soldPrice, snapshotQuery.data?.tournament?.currency || 'INR')}` : ''}`,
+      )
       queryClient.invalidateQueries({ queryKey: ['auction-room-lots', tournamentId] })
     }
     const onLotPassed = ({ lot, by, at }) => {
@@ -595,6 +597,7 @@ export default function AuctionRoomPage() {
             franchises={tournament?.franchises || []}
             activeLot={activeLot}
             auctionMode={tournament?.auctionMode || 'remote'}
+            currency={tournament?.currency || 'INR'}
             onPaddleClick={(franchise, amount) => {
               // v1: raise paddle triggers a real bid in remote mode,
               // or shows a hint in physical mode (host-only control).
@@ -613,6 +616,7 @@ export default function AuctionRoomPage() {
               lots={lotsQuery.data || []}
               onSelectLot={onActivate}
               busy={busy}
+              currency={tournament?.currency || 'INR'}
             />
           )}
         </div>

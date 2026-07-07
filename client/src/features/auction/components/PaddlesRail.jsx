@@ -1,10 +1,17 @@
+import { formatPurse } from '../../tournaments/tournament.utils'
 import { motion } from 'framer-motion'
 import './PaddlesRail.css'
 
 // PaddlesRail — visual bidding interface for franchise owners.
 // Active lot shows leading bidder. Click paddle to place minimum+ bid (v1).
 // Auction mode controls click behavior: physical = host-only, remote = franchise owner bids.
-export default function PaddlesRail({ franchises, activeLot, auctionMode, onPaddleClick }) {
+export default function PaddlesRail({
+  franchises,
+  activeLot,
+  auctionMode,
+  onPaddleClick,
+  currency = 'INR',
+}) {
   if (!franchises || franchises.length === 0) {
     return (
       <div className="paddles-rail paddles-rail-empty">
@@ -29,7 +36,7 @@ export default function PaddlesRail({ franchises, activeLot, auctionMode, onPadd
             ? 'Inactive until a lot is on the floor'
             : auctionMode === 'physical'
               ? 'Auctioneer records bids from the floor. Paddles stay visual for table awareness only.'
-              : `Leading bid: ${baseIncrement / 1000000}L. Click to bid +${baseIncrement}`
+              : `Leading bid increment: ${formatPurse(baseIncrement, currency, { compact: true })}. Click to bid the next amount.`
           }
         </span>
       </div>
@@ -48,7 +55,7 @@ export default function PaddlesRail({ franchises, activeLot, auctionMode, onPadd
               <span>{leadingFranchise.name}</span>
             </div>
             <div className="paddle-bid-amount">
-              {activeLot.currentBid.toLocaleString('en-IN')}
+              {formatPurse(activeLot.currentBid, currency)}
             </div>
           </motion.div>
         </div>
@@ -68,7 +75,7 @@ export default function PaddlesRail({ franchises, activeLot, auctionMode, onPadd
               disabled={!isActive || !canBid}
               style={{ '--paddle-color': color }}
               role="listitem"
-              aria-label={`${isLeading ? `Leading bid for ${f.name}` : `Bid +${baseIncrement.toLocaleString('en-IN')} for ${f.name}`}`}
+              aria-label={isLeading ? `Leading bid for ${f.name}` : `Bid next amount for ${f.name}`}
               whileHover={!canBid ? {} : { scale: 1.02 }}
               whileTap={!canBid ? {} : { scale: 0.98 }}
             >
@@ -84,9 +91,9 @@ export default function PaddlesRail({ franchises, activeLot, auctionMode, onPadd
                     Leading
                   </span>
                 )}
-                {canBid && (
+                {canBid && activeLot && (
                   <span className="paddle-bid-hint">
-                    +{baseIncrement / 1000000}L
+                    Next {formatPurse(activeLot.currentBid + baseIncrement, currency, { compact: true })}
                   </span>
                 )}
               </span>

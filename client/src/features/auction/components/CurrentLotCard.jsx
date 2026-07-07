@@ -6,7 +6,7 @@ import './CurrentLotCard.css'
 
 // PaddleBar — visible only to franchise owners during a live lot.
 // Lets them raise their paddle on their franchise without leaving the room.
-function PaddleBar({ lot, isHost, franchises, onRaisePaddle }) {
+function PaddleBar({ lot, isHost, franchises, onRaisePaddle, currency }) {
   let user = null
   try {
     user = require('../../../features/auth/useAuth').useAuth().user
@@ -34,7 +34,7 @@ function PaddleBar({ lot, isHost, franchises, onRaisePaddle }) {
         <User size={14} />
         <span>
           {myFranchise.name} —{currentBidder ? ' leading at' : ' next bid at'}{' '}
-          {formatPurse(nextBid, 'INR', { compact: true })}
+          {formatPurse(nextBid, currency, { compact: true })}
         </span>
       </div>
       <button
@@ -111,7 +111,7 @@ export default function CurrentLotCard({
               <div className="current-lot-price-cell">
                 <span className="current-lot-price-label">Base price</span>
                 <span className="current-lot-price-value">
-                  {formatPurse(lot.basePrice, 'INR', { compact: true })}
+                  {formatPurse(lot.basePrice, currency, { compact: true })}
                 </span>
               </div>
               <div className="current-lot-price-cell is-current">
@@ -123,14 +123,14 @@ export default function CurrentLotCard({
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.2 }}
                 >
-                  {formatPurse(lot.currentBid, 'INR', { compact: true })}
+                  {formatPurse(lot.currentBid, currency, { compact: true })}
                 </motion.span>
               </div>
               <div className="current-lot-price-cell">
                 <span className="current-lot-price-label">Increment</span>
                 <span className="current-lot-price-value">
                   {lot.bidIncrement
-                    ? formatPurse(lot.bidIncrement, 'INR', { compact: true })
+                    ? formatPurse(lot.bidIncrement, currency, { compact: true })
                     : '—'}
                 </span>
               </div>
@@ -143,6 +143,7 @@ export default function CurrentLotCard({
                 isHost={isHost}
                 franchises={franchises}
                 onRaisePaddle={onRaisePaddle}
+                currency={currency}
               />
             )}
 
@@ -199,6 +200,7 @@ export default function CurrentLotCard({
                 mode="idle"
                 busy={busy}
                 queuedLots={queuedLots}
+                currency={currency}
                 canUndo={canUndo}
                 onActivate={onActivate}
                 onUndo={onUndo}

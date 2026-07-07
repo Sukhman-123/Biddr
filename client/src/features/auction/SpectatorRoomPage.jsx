@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useParams, Link } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import { motion, useReducedMotion } from 'framer-motion'
@@ -30,6 +30,7 @@ export default function SpectatorRoomPage() {
   // Local state for the spectator view
   const [activeLot, setActiveLot] = useState(null)
   const [feed, setFeed] = useState([])
+  const [timerSeconds, setTimerSeconds] = useState(0)
 
   // Seed local state from the snapshot whenever it loads.
   useEffect(() => {
@@ -38,6 +39,24 @@ export default function SpectatorRoomPage() {
       setFeed(snapshotQuery.data.recentBids || [])
     }
   }, [snapshotQuery.data])
+
+  useEffect(() => {
+    if (!activeLot?.currentBidAt) {
+      setTimerSeconds(0)
+      return
+    }
+
+    const started = new Date(activeLot.currentBidAt).getTime()
+    const tick = () => {
+      const elapsed = Math.floor((Date.now() - started) / 1000)
+      const remaining = Math.max(0, 60 - elapsed)
+      setTimerSeconds(remaining)
+    }
+
+    tick()
+    const id = setInterval(tick, 1000)
+    return () => clearInterval(id)
+  }, [activeLot?.currentBidAt])
 
   // Socket connection and event handling
   useEffect(() => {
@@ -243,7 +262,7 @@ export default function SpectatorRoomPage() {
             isHost={false}
             queuedLots={[]}
             busy={false}
-            timerSeconds={0}
+            timerSeconds={timerSeconds}
             franchises={tournament?.franchises || []}
             auctionMode={tournament?.auctionMode || 'remote'}
             currency={tournament?.currency || 'INR'}
@@ -262,6 +281,7 @@ export default function SpectatorRoomPage() {
             franchises={tournament?.franchises || []}
             activeLot={activeLot}
             auctionMode={tournament?.auctionMode || 'remote'}
+            currency={tournament?.currency || 'INR'}
             onPaddleClick={() => {}}
           />
         </div>

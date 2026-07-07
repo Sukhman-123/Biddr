@@ -1,6 +1,7 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest'
 import { render, screen, act } from '@testing-library/react'
 import { MemoryRouter, Route, Routes } from 'react-router-dom'
+import { useQuery } from '@tanstack/react-query'
 
 const handlers = new Map()
 const socket = {
@@ -32,6 +33,7 @@ vi.mock('@tanstack/react-query', () => ({
         basePrice: 2000000,
         currentBid: 2500000,
         bidIncrement: 500000,
+        currentBidAt: '2026-07-07T06:29:15.000Z',
         auctionStatus: 'active',
         set: 'Marquee',
       },
@@ -81,9 +83,10 @@ vi.mock('../components/BidFeed', () => ({
 }))
 
 vi.mock('../components/CurrentLotCard', () => ({
-  default: ({ lot }) => (
+  default: ({ lot, timerSeconds }) => (
     <div data-testid="current-lot-card">
       {lot ? lot.name : 'Waiting for the next lot'}
+      <span data-testid="current-lot-timer">{timerSeconds}</span>
     </div>
   ),
 }))
@@ -92,10 +95,40 @@ import SpectatorRoomPage from '../SpectatorRoomPage'
 
 describe('SpectatorRoomPage', () => {
   beforeEach(() => {
+    vi.spyOn(Date, 'now').mockReturnValue(new Date('2026-07-07T06:29:30.000Z').getTime())
     handlers.clear()
     socket.emit.mockClear()
     socket.on.mockClear()
     socket.off.mockClear()
+    useQuery.mockImplementation(() => ({
+      data: {
+        tournament: {
+          id: 't1',
+          name: 'League',
+          currency: 'INR',
+          auctionMode: 'remote',
+          franchises: [],
+        },
+        activeLot: {
+          id: 'l1',
+          name: 'Virat Kohli',
+          style: 'Batsman',
+          country: 'India',
+          basePrice: 2000000,
+          currentBid: 2500000,
+          bidIncrement: 500000,
+          currentBidAt: '2026-07-07T06:29:15.000Z',
+          auctionStatus: 'active',
+          set: 'Marquee',
+        },
+        recentBids: [],
+      },
+      isLoading: false,
+    }))
+  })
+
+  afterEach(() => {
+    vi.restoreAllMocks()
   })
 
   it('clears the current lot after a terminal room event', async () => {
@@ -163,6 +196,20 @@ describe('SpectatorRoomPage', () => {
     })
 
     expect(screen.getByText('Virat Kohli')).toBeInTheDocument()
+
+    unmount()
+  })
+
+  it('derives spectator timer from the live lot clock', () => {
+    const { unmount } = render(
+      <MemoryRouter initialEntries={['/tournaments/t1/watch']}>
+        <Routes>
+          <Route path="/tournaments/:id/watch" element={<SpectatorRoomPage />} />
+        </Routes>
+      </MemoryRouter>,
+    )
+
+    expect(screen.getByTestId('current-lot-timer')).toHaveTextContent('45')
 
     unmount()
   })

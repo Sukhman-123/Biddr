@@ -49,8 +49,27 @@ describe('PaddlesRail', () => {
       />,
     )
 
-    await user.click(screen.getByRole('listitem', { name: /bid \+5,00,000 for chennai/i }))
+    await user.click(screen.getByRole('listitem', { name: /bid next amount for chennai/i }))
 
     expect(onPaddleClick).toHaveBeenCalledWith(franchises[1], 3000000)
+  })
+
+  it('uses the provided currency for bid copy', () => {
+    render(
+      <PaddlesRail
+        franchises={franchises}
+        activeLot={{
+          currentBid: 2500000,
+          bidIncrement: 500000,
+          currentBidderFranchiseId: 'f1',
+        }}
+        auctionMode="remote"
+        currency="USD"
+        onPaddleClick={vi.fn()}
+      />,
+    )
+
+    expect(screen.getByText(/\$2,500,000/)).toBeInTheDocument()
+    expect(screen.getByText(/\$3\.0m/i)).toBeInTheDocument()
   })
 })

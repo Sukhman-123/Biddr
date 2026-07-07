@@ -4,7 +4,7 @@ import { Search, Clock, Play, Filter } from 'lucide-react'
 import { formatPurse } from '../../tournaments/tournament.utils'
 import './PlayerQueuePanel.css'
 
-export default function PlayerQueuePanel({ lots, onSelectLot, busy }) {
+export default function PlayerQueuePanel({ lots, onSelectLot, busy, currency = 'INR' }) {
   const [query, setQuery] = useState('')
   const [statusFilter, setStatusFilter] = useState('queued')
 
@@ -85,11 +85,11 @@ export default function PlayerQueuePanel({ lots, onSelectLot, busy }) {
                 <div className="queue-item-badges">
                   <span className="queue-badge">
                     <Clock size={12} />
-                    Base {formatPurse(lot.basePrice, 'INR', { compact: true })}
+                    Base {formatPurse(lot.basePrice, currency, { compact: true })}
                   </span>
-                  {lot.bidIncrement && (
+                  {lot.bidIncrement != null && (
                     <span className="queue-badge">
-                      Min +{formatPurse(lot.bidIncrement, 'INR', { compact: true })}
+                      Min +{formatPurse(lot.bidIncrement, currency, { compact: true })}
                     </span>
                   )}
                 </div>
