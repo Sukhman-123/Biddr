@@ -75,7 +75,7 @@ describe('HostControls — active mode (lot on the floor)', () => {
 
   it('requires confirmation before calling onHammer', () => {
     const onHammer = vi.fn()
-    render(<HostControls mode="active" lot={lot} busy={false} onHammer={onHammer} onPass={vi.fn()} franchises={[]} />)
+    render(<HostControls mode="active" lot={lot} busy={false} auctionMode="remote" onHammer={onHammer} onPass={vi.fn()} franchises={[]} />)
 
     // First click opens the confirm step; does NOT hammer yet.
     fireEvent.click(screen.getByRole('button', { name: /^sold$/i }))
@@ -85,6 +85,33 @@ describe('HostControls — active mode (lot on the floor)', () => {
     // Confirm calls onHammer.
     fireEvent.click(screen.getByRole('button', { name: /confirm/i }))
     expect(onHammer).toHaveBeenCalledOnce()
+  })
+
+  it('lets the auctioneer override the winning franchise before hammering in physical mode', () => {
+    const onHammer = vi.fn()
+    render(
+      <HostControls
+        mode="active"
+        lot={{ ...lot, currentBidderFranchiseId: 'f1' }}
+        busy={false}
+        auctionMode="physical"
+        onHammer={onHammer}
+        onPass={vi.fn()}
+        franchises={[
+          { id: 'f1', name: 'Team A' },
+          { id: 'f2', name: 'Team B' },
+        ]}
+      />,
+    )
+
+    fireEvent.click(screen.getByRole('button', { name: /^sold$/i }))
+    expect(screen.getByLabelText(/winning franchise/i)).toBeInTheDocument()
+    fireEvent.change(screen.getByLabelText(/winning franchise/i), {
+      target: { value: 'f2' },
+    })
+    fireEvent.click(screen.getByRole('button', { name: /confirm sold result/i }))
+
+    expect(onHammer).toHaveBeenCalledWith('f2')
   })
 
   it('requires confirmation before calling onPass', () => {

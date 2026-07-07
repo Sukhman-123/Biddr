@@ -66,6 +66,7 @@ export default function HostControls({
         busy={busy}
         timerSeconds={timerSeconds}
         franchises={franchises}
+        auctionMode={auctionMode}
         onHammer={onHammer}
         onPass={onPass}
         onDeactivate={onDeactivate}
@@ -178,13 +179,34 @@ function IdlePicker({ queuedLots, busy, canUndo, onActivate, onUndo }) {
   )
 }
 
-function ActiveControls({ lot, mode, busy, timerSeconds, franchises, onHammer, onPass, onPause, onResume, onUndo, onPlaceBid }) {
+function ActiveControls({
+  lot,
+  mode,
+  busy,
+  timerSeconds,
+  franchises,
+  auctionMode,
+  onHammer,
+  onPass,
+  onPause,
+  onResume,
+  onUndo,
+  onPlaceBid,
+}) {
   const [confirmHammer, setConfirmHammer] = useState(false)
   const [confirmPass, setConfirmPass] = useState(false)
   const [confirmUndo, setConfirmUndo] = useState(false)
   const [confirmSkip, setConfirmSkip] = useState(false)
+  const [selectedHammerWinner, setSelectedHammerWinner] = useState(
+    lot?.currentBidderFranchiseId || '',
+  )
   const isPaused = mode === 'paused'
+  const isPhysical = auctionMode === 'physical'
   const toast = useToast()
+
+  useEffect(() => {
+    setSelectedHammerWinner(lot?.currentBidderFranchiseId || '')
+  }, [lot?.id, lot?.currentBidderFranchiseId])
 
   // Timer component for the active lot
   const [countdown, setCountdown] = useState(timerSeconds || 0)
@@ -223,19 +245,43 @@ function ActiveControls({ lot, mode, busy, timerSeconds, franchises, onHammer, o
         <p className="host-controls-confirm-text">
           Hammer <strong>{lot.name}</strong> at the current bid? The lot will be marked sold and the room will go back to the empty state.
         </p>
+        {isPhysical ? (
+          <div className="host-controls-winner">
+            <label className="host-controls-winner-label" htmlFor="hammer-winner">
+              Winning franchise
+            </label>
+            <select
+              id="hammer-winner"
+              className="host-controls-winner-select"
+              value={selectedHammerWinner}
+              onChange={(event) => setSelectedHammerWinner(event.target.value)}
+              disabled={busy}
+            >
+              <option value="">No winner selected</option>
+              {(franchises || []).map((franchise) => (
+                <option key={franchise.id} value={franchise.id}>
+                  {franchise.name}
+                </option>
+              ))}
+            </select>
+            <p className="host-controls-winner-help">
+              Physical auctions stay under your control. Pick the final table winner before you hammer the lot.
+            </p>
+          </div>
+        ) : null}
         <div className="host-controls-row">
           <button
             type="button"
             className="cta-btn host-controls-hammer"
             onClick={() => {
-              onHammer()
+              onHammer(selectedHammerWinner || undefined)
               setConfirmHammer(false)
             }}
             disabled={busy}
           >
             <span className="cta-btn-content">
               <Check size={16} />
-              Confirm hammer
+              {isPhysical ? 'Confirm sold result' : 'Confirm hammer'}
             </span>
           </button>
           <button
