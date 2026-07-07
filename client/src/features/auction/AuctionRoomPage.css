@@ -66,12 +66,128 @@
   border: 1px solid var(--border, rgba(255, 255, 255, 0.08));
 }
 
+.auctioneer-desk {
+  border-radius: 18px;
+  border: 1px solid rgba(245, 185, 74, 0.18);
+  background:
+    radial-gradient(circle at top right, rgba(245, 185, 74, 0.12), transparent 28%),
+    linear-gradient(180deg, rgba(20, 24, 36, 0.96), rgba(10, 13, 22, 0.98));
+  padding: 20px 22px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.auctioneer-desk-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.auctioneer-desk-eyebrow {
+  display: inline-block;
+  font-size: 11px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--gold, #f5b94a);
+  font-weight: 700;
+}
+
+.auctioneer-desk-title {
+  margin: 6px 0 0;
+  font-size: 24px;
+  color: var(--ink-strong, #f4f4f6);
+}
+
+.auctioneer-desk-pills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  justify-content: flex-end;
+}
+
+.auctioneer-desk-pill {
+  display: inline-flex;
+  align-items: center;
+  padding: 6px 10px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.auctioneer-desk-pill.is-physical {
+  color: #ffd18a;
+  background: rgba(245, 185, 74, 0.12);
+  border-color: rgba(245, 185, 74, 0.28);
+}
+
+.auctioneer-desk-pill.is-remote {
+  color: #9fd4ff;
+  background: rgba(90, 200, 255, 0.12);
+  border-color: rgba(90, 200, 255, 0.28);
+}
+
+.auctioneer-desk-pill.is-online {
+  color: #90f0b5;
+  background: rgba(43, 217, 122, 0.1);
+  border-color: rgba(43, 217, 122, 0.24);
+}
+
+.auctioneer-desk-pill.is-offline {
+  color: #ffc27a;
+  background: rgba(255, 179, 71, 0.1);
+  border-color: rgba(255, 179, 71, 0.24);
+}
+
+.auctioneer-desk-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.auctioneer-desk-card {
+  border-radius: 14px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.03);
+  padding: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.auctioneer-desk-card strong {
+  color: var(--ink-strong, #f4f4f6);
+  font-size: 15px;
+}
+
+.auctioneer-desk-card p {
+  margin: 0;
+  color: var(--muted, #9fa5b3);
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.auctioneer-desk-label {
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted, #9fa5b3);
+}
+
 @keyframes skelShimmer {
   0%   { background-position: 200% 0; }
   100% { background-position: -200% 0; }
 }
 
 @media (max-width: 980px) {
+  .auctioneer-desk-grid {
+    grid-template-columns: 1fr;
+  }
+
   .auction-room-grid {
     grid-template-columns: 1fr;
   }
@@ -182,5 +298,13 @@
 
   .auction-room-title {
     flex: 0 0 auto;
+  }
+
+  .auctioneer-desk-head {
+    flex-direction: column;
+  }
+
+  .auctioneer-desk-pills {
+    justify-content: flex-start;
   }
 }

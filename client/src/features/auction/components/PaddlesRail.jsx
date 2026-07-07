@@ -28,7 +28,7 @@ export default function PaddlesRail({ franchises, activeLot, auctionMode, onPadd
           {!activeLot
             ? 'Inactive until a lot is on the floor'
             : auctionMode === 'physical'
-              ? 'Auctioneer only: paddle raises are decorative'
+              ? 'Auctioneer records bids from the floor. Paddles stay visual for table awareness only.'
               : `Leading bid: ${baseIncrement / 1000000}L. Click to bid +${baseIncrement}`
           }
         </span>

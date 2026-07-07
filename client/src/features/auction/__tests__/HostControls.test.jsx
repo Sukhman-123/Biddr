@@ -117,4 +117,50 @@ describe('HostControls — active mode (lot on the floor)', () => {
     expect(screen.getByRole('button', { name: /^sold$/i })).toBeDisabled()
     expect(screen.getByRole('button', { name: /^unsold$/i })).toBeDisabled()
   })
+
+  it('shows manual bid controls in physical mode', () => {
+    render(
+      <HostControls
+        mode="active"
+        lot={lot}
+        busy={false}
+        auctionMode="physical"
+        onHammer={vi.fn()}
+        onPass={vi.fn()}
+        onPlaceBid={vi.fn()}
+        franchises={[
+          {
+            id: 'f1',
+            name: 'Team A',
+            wallet: { initial: 10000000, spent: 0 },
+            squad: { playerIds: [], maxSize: 11 },
+          },
+        ]}
+      />,
+    )
+    expect(screen.getByText(/place bid/i)).toBeInTheDocument()
+  })
+
+  it('does not show manual bid controls in remote mode', () => {
+    render(
+      <HostControls
+        mode="active"
+        lot={lot}
+        busy={false}
+        auctionMode="remote"
+        onHammer={vi.fn()}
+        onPass={vi.fn()}
+        onPlaceBid={vi.fn()}
+        franchises={[
+          {
+            id: 'f1',
+            name: 'Team A',
+            wallet: { initial: 10000000, spent: 0 },
+            squad: { playerIds: [], maxSize: 11 },
+          },
+        ]}
+      />,
+    )
+    expect(screen.queryByText(/place bid/i)).toBeNull()
+  })
 })

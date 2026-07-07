@@ -183,8 +183,12 @@ export default function CurrentLotCard({
             <p className="current-lot-empty-sub">
               {isHost
                 ? queuedLots.length > 0
-                  ? 'Pick a queued lot to bring to the floor.'
-                  : 'No queued lots remain. Add more from the lobby.'
+                  ? auctionMode === 'physical'
+                    ? 'Pick a queued lot to bring to the floor, then run bids from the auctioneer desk.'
+                    : 'Pick a queued lot to bring to the floor and let franchises start bidding live.'
+                  : auctionMode === 'physical'
+                    ? 'No queued lots remain. Add more from the lobby before continuing the room.'
+                    : 'No queued lots remain. Add more from the lobby.'
                 : 'The auctioneer will bring the next lot to the floor shortly.'}
             </p>
 

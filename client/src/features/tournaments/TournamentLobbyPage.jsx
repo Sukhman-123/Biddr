@@ -12,6 +12,7 @@ import {
   Eye,
   Flag,
   Gavel,
+  Laptop2,
   Lock,
   Mail,
   MapPin,
@@ -292,6 +293,14 @@ function TournamentLobbyPage() {
                 purse
               </span>
             </li>
+            <li>
+              {tournament.auctionMode === 'physical' ? <Gavel size={14} /> : <Laptop2 size={14} />}
+              <span>
+                {tournament.auctionMode === 'physical'
+                  ? 'Physical auction'
+                  : 'Remote auction'}
+              </span>
+            </li>
           </ul>
         </div>
 
@@ -315,11 +324,25 @@ function TournamentLobbyPage() {
           </h2>
           <p className="lobby-status-sub">
             {tournament.status === 'live'
-              ? 'Host can bring lots to the floor from the auction room.'
+              ? tournament.auctionMode === 'physical'
+                ? 'Auctioneer controls every bid and floor decision from the live room.'
+                : 'Host can bring lots to the floor while franchises bid from their own devices.'
               : tournament.status === 'upcoming'
-              ? 'The auctioneer will spin up rooms once the auction starts.'
+              ? tournament.auctionMode === 'physical'
+                ? 'The auctioneer will run this as a floor auction once the room opens.'
+                : 'The auctioneer will spin up rooms once the auction starts.'
               : 'Squads are locked. Browse the recap.'}
           </p>
+          <div className="lobby-mode-strip" aria-label="Auction mode summary">
+            <span className={`lobby-mode-pill ${tournament.auctionMode === 'physical' ? 'is-physical' : 'is-remote'}`}>
+              {tournament.auctionMode === 'physical' ? 'Physical room' : 'Remote room'}
+            </span>
+            <span className="lobby-mode-copy">
+              {tournament.auctionMode === 'physical'
+                ? 'Bids are entered only by the auctioneer.'
+                : 'Franchise owners can bid from their own devices.'}
+            </span>
+          </div>
           {(() => {
             // Wire the lobby CTA based on status + role:
             //   live + active lot → "Enter the room" link
@@ -510,8 +533,12 @@ function TournamentLobbyPage() {
             </span>
             <p className="lobby-role-help">
               {isAuctioneer
-                ? 'You can spin up rooms, manage player queues, and run this auction end-to-end.'
-                : 'Browse freely. Live rooms will open here when the host starts them.'}
+                ? tournament.auctionMode === 'physical'
+                  ? 'You have full control of the floor: activate lots, record bids, pause, undo, skip, and hammer results.'
+                  : 'You can spin up rooms, manage player queues, and oversee live bidder activity end-to-end.'
+                : tournament.auctionMode === 'physical'
+                  ? 'Browse freely. The auctioneer will record all physical-room bids and decisions live.'
+                  : 'Browse freely. Live rooms will open here when the host starts them.'}
             </p>
             {!isAuctioneer ? (
               <div className="lobby-role-hint">

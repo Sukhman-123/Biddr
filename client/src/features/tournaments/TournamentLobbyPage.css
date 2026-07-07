@@ -146,6 +146,42 @@
   line-height: 1.5;
 }
 
+.lobby-mode-strip {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.lobby-mode-pill {
+  display: inline-flex;
+  align-items: center;
+  padding: 5px 10px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.lobby-mode-pill.is-physical {
+  color: #ffd18a;
+  background: rgba(245, 185, 74, 0.12);
+  border-color: rgba(245, 185, 74, 0.28);
+}
+
+.lobby-mode-pill.is-remote {
+  color: #9fd4ff;
+  background: rgba(90, 200, 255, 0.12);
+  border-color: rgba(90, 200, 255, 0.28);
+}
+
+.lobby-mode-copy {
+  font-size: 12px;
+  color: var(--muted);
+}
+
 .lobby-grid {
   display: grid;
   grid-template-columns: minmax(0, 1.6fr) minmax(280px, 1fr);
