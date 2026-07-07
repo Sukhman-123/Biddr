@@ -30,6 +30,8 @@ describe('auctionRoom.api', () => {
         tournament: { id: 't1', name: 'League' },
         activeLot: null,
         recentBids: [],
+        undoAvailable: true,
+        lastUndoLotId: 'l9',
       }
       api.get.mockResolvedValueOnce({ data: snapshot })
       const result = await fetchRoomSnapshotRequest('t1')
@@ -44,6 +46,8 @@ describe('auctionRoom.api', () => {
         tournament: null,
         activeLot: null,
         recentBids: [],
+        undoAvailable: false,
+        lastUndoLotId: null,
       })
     })
 

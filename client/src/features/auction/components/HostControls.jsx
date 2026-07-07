@@ -25,6 +25,7 @@ export default function HostControls({
   timerSeconds,
   franchises,
   auctionMode,
+  canUndo,
   onActivate,
   onHammer,
   onPass,
@@ -35,7 +36,15 @@ export default function HostControls({
   onPlaceBid,
 }) {
   if (mode === 'idle') {
-    return <IdlePicker queuedLots={queuedLots} busy={busy} onActivate={onActivate} />
+    return (
+      <IdlePicker
+        queuedLots={queuedLots}
+        busy={busy}
+        canUndo={canUndo}
+        onActivate={onActivate}
+        onUndo={onUndo}
+      />
+    )
   }
   return (
     <div className="host-controls-stack">
@@ -67,7 +76,7 @@ export default function HostControls({
   )
 }
 
-function IdlePicker({ queuedLots, busy, onActivate }) {
+function IdlePicker({ queuedLots, busy, canUndo, onActivate, onUndo }) {
   const [open, setOpen] = useState(false)
   const [pick, setPick] = useState(queuedLots?.[0]?.id || '')
 
@@ -76,7 +85,7 @@ function IdlePicker({ queuedLots, busy, onActivate }) {
     setPick(queuedLots?.[0]?.id || '')
   }
 
-  if (!queuedLots || queuedLots.length === 0) {
+  if ((!queuedLots || queuedLots.length === 0) && !canUndo) {
     return null
   }
 
@@ -102,6 +111,19 @@ function IdlePicker({ queuedLots, busy, onActivate }) {
             <ChevronDown size={14} className={`host-controls-caret ${open ? 'is-open' : ''}`} />
           </span>
         </button>
+        {canUndo ? (
+          <button
+            type="button"
+            className="cta-btn host-controls-secondary"
+            onClick={onUndo}
+            disabled={busy}
+          >
+            <span className="cta-btn-content">
+              <RotateCcw size={16} />
+              Undo last action
+            </span>
+          </button>
+        ) : null}
         <span className="host-controls-hint">
           {queuedLots.length} queued · you choose the order
         </span>

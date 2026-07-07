@@ -3,7 +3,15 @@ import './TopBar.css'
 
 // Top bar for the auction room. Shows the tournament name, a live
 // connection indicator, and a Leave button.
-export default function TopBar({ tournament, connected, onLeave }) {
+export default function TopBar({
+  tournament,
+  connected,
+  onLeave,
+  showEndAuction = false,
+  endDisabled = false,
+  endDisabledReason,
+  onEndAuction,
+}) {
   return (
     <header className="room-topbar">
       <button
@@ -24,6 +32,18 @@ export default function TopBar({ tournament, connected, onLeave }) {
           {tournament?.shortCode ? `#${tournament.shortCode}` : 'Live auction floor'}
         </span>
       </div>
+
+      {showEndAuction ? (
+        <button
+          type="button"
+          className="room-topbar-end"
+          onClick={onEndAuction}
+          disabled={endDisabled}
+          title={endDisabledReason}
+        >
+          End auction
+        </button>
+      ) : null}
 
       <div
         className={`room-topbar-conn ${connected ? 'is-on' : 'is-off'}`}

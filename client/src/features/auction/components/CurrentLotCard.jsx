@@ -64,6 +64,7 @@ export default function CurrentLotCard({
   timerSeconds,
   franchises,
   auctionMode,
+  canUndo,
   onActivate,
   onHammer,
   onPass,
@@ -187,12 +188,14 @@ export default function CurrentLotCard({
                 : 'The auctioneer will bring the next lot to the floor shortly.'}
             </p>
 
-            {isHost && queuedLots.length > 0 ? (
+            {isHost && (queuedLots.length > 0 || canUndo) ? (
               <HostControls
                 mode="idle"
                 busy={busy}
                 queuedLots={queuedLots}
+                canUndo={canUndo}
                 onActivate={onActivate}
+                onUndo={onUndo}
               />
             ) : null}
           </motion.div>

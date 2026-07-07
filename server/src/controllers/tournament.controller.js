@@ -1,6 +1,8 @@
 const Tournament = require('../models/Tournament');
 const Invitation = require('../models/Invitation');
 const User = require('../models/User');
+const Lot = require('../models/Lot');
+const { clear: clearUndoStack } = require('../services/undoService');
 
 const VALID_STATUSES = ['upcoming', 'live', 'completed'];
 
@@ -411,8 +413,19 @@ const endAuction = async (req, res, next) => {
         .json({ message: 'Start the auction before ending it' });
     }
 
+    const lotStillOnFloor = await Lot.findOne({
+      tournamentId: tournament._id,
+      auctionStatus: { $in: ['active', 'paused'] },
+    }).select('_id');
+    if (lotStillOnFloor) {
+      return res.status(400).json({
+        message: 'Resolve the current lot before ending the auction',
+      });
+    }
+
     tournament.status = 'completed';
     await tournament.save();
+    clearUndoStack(tournament._id.toString());
 
     return res.status(200).json({ tournament: tournament.toDetailJSON() });
   } catch (error) {

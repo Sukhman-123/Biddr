@@ -31,6 +31,31 @@
   color: var(--text, #e6e6ec);
 }
 
+.room-topbar-end {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 8px 14px;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 138, 138, 0.28);
+  background: rgba(255, 138, 138, 0.08);
+  color: #ffb4b4;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.15s ease, color 0.15s ease, opacity 0.15s ease;
+}
+
+.room-topbar-end:hover:not(:disabled) {
+  background: rgba(255, 138, 138, 0.14);
+  color: #ffd0d0;
+}
+
+.room-topbar-end:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
 .room-topbar-meta {
   flex: 1 1 auto;
   min-width: 0;

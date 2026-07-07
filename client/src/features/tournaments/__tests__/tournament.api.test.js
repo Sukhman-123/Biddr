@@ -10,7 +10,7 @@ vi.mock('../../../lib/api', () => ({
 }))
 
 import api from '../../../lib/api'
-import { startAuctionRequest } from '../tournament.api'
+import { endAuctionRequest, startAuctionRequest } from '../tournament.api'
 
 beforeEach(() => {
   vi.clearAllMocks()
@@ -39,6 +39,26 @@ describe('startAuctionRequest', () => {
     api.post.mockRejectedValueOnce(new Error('Network'))
     await expect(startAuctionRequest('t1')).rejects.toThrow(
       'Could not start the auction',
+    )
+  })
+})
+
+describe('endAuctionRequest', () => {
+  it('POSTs to /tournaments/:id/end and returns the updated tournament', async () => {
+    api.post.mockResolvedValueOnce({
+      data: { tournament: { id: 't1', status: 'completed' } },
+    })
+    const result = await endAuctionRequest('t1')
+    expect(api.post).toHaveBeenCalledWith('/tournaments/t1/end')
+    expect(result).toEqual({ id: 't1', status: 'completed' })
+  })
+
+  it('throws a wrapped error with the server message', async () => {
+    const err = new Error('Network')
+    err.response = { data: { message: 'Resolve the current lot before ending the auction' } }
+    api.post.mockRejectedValueOnce(err)
+    await expect(endAuctionRequest('t1')).rejects.toThrow(
+      /resolve the current lot/i,
     )
   })
 })

@@ -141,7 +141,10 @@ export default function SpectatorRoomPage() {
       ].slice(0, 30))
     }
 
-    const handleLotUndone = ({ action, at }) => {
+    const handleLotUndone = ({ action, lot, at }) => {
+      setActiveLot(
+        lot && ['active', 'paused'].includes(lot.auctionStatus) ? lot : null,
+      )
       setFeed((current) => [
         {
           id: `undone-${at}`,

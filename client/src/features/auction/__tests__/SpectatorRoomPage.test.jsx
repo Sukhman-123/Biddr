@@ -123,4 +123,47 @@ describe('SpectatorRoomPage', () => {
 
     unmount()
   })
+
+  it('restores the current lot when an undo reopens bidding', async () => {
+    const { unmount } = render(
+      <MemoryRouter initialEntries={['/tournaments/t1/watch']}>
+        <Routes>
+          <Route path="/tournaments/:id/watch" element={<SpectatorRoomPage />} />
+        </Routes>
+      </MemoryRouter>,
+    )
+
+    act(() => {
+      handlers.get('lot:hammered')?.({
+        lot: { id: 'l1', name: 'Virat Kohli' },
+        by: { fullName: 'Auctioneer' },
+        amount: 3000000,
+        at: new Date().toISOString(),
+      })
+    })
+
+    expect(screen.getByText(/waiting for the next lot/i)).toBeInTheDocument()
+
+    act(() => {
+      handlers.get('lot:undone')?.({
+        action: { type: 'LOT_HAMMERED', by: { fullName: 'Auctioneer' } },
+        lot: {
+          id: 'l1',
+          name: 'Virat Kohli',
+          style: 'Batsman',
+          country: 'India',
+          basePrice: 2000000,
+          currentBid: 2500000,
+          bidIncrement: 500000,
+          auctionStatus: 'active',
+          set: 'Marquee',
+        },
+        at: new Date().toISOString(),
+      })
+    })
+
+    expect(screen.getByText('Virat Kohli')).toBeInTheDocument()
+
+    unmount()
+  })
 })

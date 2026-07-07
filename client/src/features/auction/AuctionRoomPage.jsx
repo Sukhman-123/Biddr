@@ -19,6 +19,7 @@ import {
   undoLastActionRequest,
   deactivateLotRequest,
 } from './auctionRoom.api'
+import { endAuctionRequest } from '../tournaments/tournament.api'
 import { formatPurse } from '../tournaments/tournament.utils'
 import TopBar from './components/TopBar'
 import CurrentLotCard from './components/CurrentLotCard'
@@ -27,6 +28,7 @@ import PaddlesRail from './components/PaddlesRail'
 import BidFeed from './components/BidFeed'
 import TeamBudgetSidebar from './components/TeamBudgetSidebar'
 import PlayerQueuePanel from './components/PlayerQueuePanel'
+import EndAuctionModal from '../tournaments/EndAuctionModal'
 import './AuctionRoomPage.css'
 
 // =============================================================
@@ -76,12 +78,19 @@ export default function AuctionRoomPage() {
   const [activeLot, setActiveLot] = useState(null)
   const [feed, setFeed] = useState([])
   const joinedRef = useRef(false)
-  const userId = user?.id
+  const lastUndoLotIdRef = useRef(null)
+  const [undoAvailable, setUndoAvailable] = useState(false)
+  const [endOpen, setEndOpen] = useState(false)
+  const [endBusy, setEndBusy] = useState(false)
+  const [endError, setEndError] = useState(null)
 
   // Seed local state from the snapshot whenever it loads.
   useEffect(() => {
     if (snapshotQuery.data) {
       setActiveLot(snapshotQuery.data.activeLot)
+      setUndoAvailable(Boolean(snapshotQuery.data.undoAvailable))
+      lastUndoLotIdRef.current =
+        snapshotQuery.data.lastUndoLotId ?? snapshotQuery.data.activeLot?.id ?? null
     }
   }, [snapshotQuery.data])
 
@@ -119,6 +128,7 @@ export default function AuctionRoomPage() {
     const onLotActivated = ({ lot, by, at }) => {
       if (!lot) return
       setActiveLot(lot)
+      lastUndoLotIdRef.current = lot.id
       setFeed((current) =>
         [
           {
@@ -137,6 +147,8 @@ export default function AuctionRoomPage() {
     const onLotHammered = ({ lot, by, at }) => {
       if (!lot) return
       setActiveLot(null)
+      setUndoAvailable(true)
+      lastUndoLotIdRef.current = lot.id
       setFeed((current) =>
         [
           {
@@ -157,6 +169,8 @@ export default function AuctionRoomPage() {
     const onLotPassed = ({ lot, by, at }) => {
       if (!lot) return
       setActiveLot(null)
+      setUndoAvailable(true)
+      lastUndoLotIdRef.current = lot.id
       setFeed((current) =>
         [
           {
@@ -174,6 +188,8 @@ export default function AuctionRoomPage() {
     const onBidPlaced = ({ lot, franchise, amount, by, at }) => {
       if (!lot) return
       setActiveLot(lot)
+      setUndoAvailable(true)
+      lastUndoLotIdRef.current = lot.id
       setFeed((current) =>
         [
           {
@@ -192,6 +208,7 @@ export default function AuctionRoomPage() {
     const onAuctionPaused = ({ lot, by, at }) => {
       if (!lot) return
       setActiveLot(lot)
+      lastUndoLotIdRef.current = lot.id
       setFeed((current) =>
         [
           {
@@ -208,6 +225,7 @@ export default function AuctionRoomPage() {
     const onAuctionResumed = ({ lot, by, at }) => {
       if (!lot) return
       setActiveLot(lot)
+      lastUndoLotIdRef.current = lot.id
       setFeed((current) =>
         [
           {
@@ -222,7 +240,12 @@ export default function AuctionRoomPage() {
       toast.info('Auction resumed')
     }
 
-    const onLotUndone = ({ action, at }) => {
+    const onLotUndone = ({ action, lot, at, undoAvailable: nextUndoAvailable }) => {
+      setActiveLot(
+        lot && ['active', 'paused'].includes(lot.auctionStatus) ? lot : null,
+      )
+      setUndoAvailable(Boolean(nextUndoAvailable))
+      lastUndoLotIdRef.current = lot?.id ?? action?.lotId ?? null
       setFeed((current) =>
         [
           {
@@ -236,9 +259,13 @@ export default function AuctionRoomPage() {
         ].slice(0, 30),
       )
       toast.info('Last action undone')
+      queryClient.invalidateQueries({ queryKey: ['auction-room-lots', tournamentId] })
     }
 
     const onLotDeactivated = ({ lot, at }) => {
+      setActiveLot(null)
+      setUndoAvailable(false)
+      lastUndoLotIdRef.current = null
       setFeed((current) =>
         [
           {
@@ -251,6 +278,7 @@ export default function AuctionRoomPage() {
         ].slice(0, 30),
       )
       toast.info('Lot returned to queue')
+      queryClient.invalidateQueries({ queryKey: ['auction-room-lots', tournamentId] })
     }
 
     if (socket.connected) onConnect()
@@ -379,17 +407,18 @@ export default function AuctionRoomPage() {
   }, [isHost, activeLot, toast])
 
   const onUndo = useCallback(async () => {
-    if (!isHost || !activeLot) return
+    const targetLotId = activeLot?.id || lastUndoLotIdRef.current
+    if (!isHost || !targetLotId || !undoAvailable) return
     setBusy(true)
     try {
-      await undoLastActionRequest(activeLot.id)
+      await undoLastActionRequest(targetLotId)
       toast.success('Action undone')
     } catch (err) {
       toast.error(err.message)
     } finally {
       setBusy(false)
     }
-  }, [isHost, activeLot, toast])
+  }, [isHost, activeLot, toast, undoAvailable])
 
   const onDeactivate = useCallback(async () => {
     if (!isHost || !activeLot) return
@@ -403,6 +432,26 @@ export default function AuctionRoomPage() {
       setBusy(false)
     }
   }, [isHost, activeLot, toast])
+
+  const onEndAuction = useCallback(async () => {
+    if (!isHost || endBusy) return
+    setEndBusy(true)
+    setEndError(null)
+    try {
+      await endAuctionRequest(tournamentId)
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ['tournament', tournamentId] }),
+        queryClient.invalidateQueries({ queryKey: ['auction-room', tournamentId] }),
+        queryClient.invalidateQueries({ queryKey: ['auction-room-probe', tournamentId] }),
+      ])
+      toast.success('Auction completed')
+      navigate(`/tournaments/${tournamentId}`)
+    } catch (err) {
+      setEndError(err.message)
+    } finally {
+      setEndBusy(false)
+    }
+  }, [isHost, endBusy, tournamentId, queryClient, toast, navigate])
 
   const onPlaceBid = useCallback(async (franchiseId, amount) => {
     if (!isHost || !activeLot) return
@@ -460,6 +509,17 @@ export default function AuctionRoomPage() {
         tournament={tournament}
         connected={connected}
         onLeave={() => navigate(`/tournaments/${tournamentId}`)}
+        showEndAuction={isHost && tournament?.status === 'live'}
+        endDisabled={Boolean(activeLot) || endBusy}
+        endDisabledReason={
+          activeLot
+            ? 'Resolve the current lot before ending the auction'
+            : undefined
+        }
+        onEndAuction={() => {
+          setEndError(null)
+          setEndOpen(true)
+        }}
       />
 
       <motion.section
@@ -477,6 +537,7 @@ export default function AuctionRoomPage() {
             timerSeconds={timerSeconds}
             franchises={tournament?.franchises || []}
             auctionMode={tournament?.auctionMode || 'remote'}
+            canUndo={undoAvailable}
             onActivate={onActivate}
             onHammer={onHammer}
             onPass={onPass}
@@ -522,6 +583,15 @@ export default function AuctionRoomPage() {
           <BidFeed items={feed} currency={tournament?.currency || 'INR'} />
         </aside>
       </motion.section>
+
+      <EndAuctionModal
+        open={endOpen}
+        tournament={tournament}
+        busy={endBusy}
+        errorMessage={endError}
+        onConfirm={onEndAuction}
+        onCancel={() => !endBusy && setEndOpen(false)}
+      />
     </main>
   )
 }

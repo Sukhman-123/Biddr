@@ -10,7 +10,7 @@ const Lot = require('../models/Lot');
 const Tournament = require('../models/Tournament');
 const { assertCanSeeTournament, HttpError } = require('../middleware/canSeeTournament');
 const { canAffordBid, getMinBid } = require('../utils/wallet');
-const { push, pop, peek, depth } = require('../services/undoService');
+const { push, pop, peek, clear, depth } = require('../services/undoService');
 
 // =============================================================
 // Auction-room controller.
@@ -487,6 +487,8 @@ const getRoomSnapshot = async (req, res, next) => {
       tournament: tournament.toDetailJSON(),
       activeLot: activeLot ? activeLot.toJSON() : null,
       recentBids: activeLot?.bidHistory ?? [],
+      undoAvailable: depth(tournament._id.toString()) > 0,
+      lastUndoLotId: peek(tournament._id.toString())?.lotId ?? null,
     });
   } catch (error) {
     if (error instanceof HttpError) {
@@ -536,9 +538,14 @@ const undoLastAction = async (req, res, next) => {
         throw new HttpError(400, `Cannot undo: ${action.type}`);
     }
 
-    broadcast(req, tournament._id.toString(), 'lot:undone', {
+    const tournamentId = tournament._id.toString()
+
+    broadcast(req, tournamentId, 'lot:undone', {
       action: { ...action, reverted: true },
-      tournamentId: tournament._id.toString(),
+      tournamentId,
+      lot: revertedLot ? revertedLot.toJSON() : null,
+      undoAvailable: depth(tournamentId) > 0,
+      at: new Date().toISOString(),
     });
 
     return res.status(200).json({
@@ -575,9 +582,9 @@ const deactivateLot = async (req, res, next) => {
     lot.status = 'queued';
     await lot.save();
 
-    // Skip/deactivate is non-revertible — don't push onto the undo stack.
-    // The undo stack is reserved for actions that can be cleanly reversed
-    // (BID_PLACED, LOT_HAMMERED, LOT_PASSED).
+    // Skip/deactivate is non-revertible, so clear any queued undo state.
+    clear(tournament._id.toString());
+
     broadcast(req, tournament._id.toString(), 'lot:deactivated', {
       lot: lot.toJSON(),
       by: { id: req.user._id.toString(), fullName: req.user.fullName },

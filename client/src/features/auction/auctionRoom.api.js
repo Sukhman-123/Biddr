@@ -32,6 +32,9 @@ export async function fetchRoomSnapshotRequest(tournamentId) {
       tournament: data?.tournament ?? null,
       activeLot: data?.activeLot ?? null,
       recentBids: Array.isArray(data?.recentBids) ? data.recentBids : [],
+      undoAvailable: Boolean(data?.undoAvailable),
+      lastUndoLotId:
+        typeof data?.lastUndoLotId === 'string' ? data.lastUndoLotId : null,
     }
   } catch (error) {
     throw wrapError(error, 'Could not load the auction room')
