@@ -7,6 +7,8 @@ import {
   CheckCircle2,
   EyeOff,
   Globe,
+  Gavel,
+  Laptop2,
   Plus,
   RefreshCw,
   Sparkles,
@@ -81,6 +83,7 @@ const initialState = () => ({
   currency: 'INR',
   pursePerFranchise: '100000000',
   visibility: 'public',
+  auctionMode: 'remote',
   cover: {
     presetId: 'midnight',
     gradientFrom: '#1d2436',
@@ -202,6 +205,7 @@ function CreateTournamentPage() {
         startDate: form.startDate ? new Date(form.startDate).toISOString() : null,
         endDate: form.endDate ? new Date(form.endDate).toISOString() : null,
         visibility: form.visibility,
+        auctionMode: form.auctionMode,
         hostName: user.fullName,
         cover: {
           gradientFrom: form.cover.gradientFrom,
@@ -344,6 +348,18 @@ function CreateTournamentPage() {
               }
             />
           </div>
+
+          <Field
+            label="Auction type"
+            hint="Remote lets franchise owners bid from their own devices. Physical gives total bid-entry control to the auctioneer."
+            error={errors.auctionMode}
+            input={
+              <AuctionModeToggle
+                value={form.auctionMode}
+                onChange={updateField('auctionMode')}
+              />
+            }
+          />
         </section>
 
         <section className="create-card">
@@ -604,7 +620,8 @@ function CreateTournamentPage() {
             <span>
               {validFranchiseCount} {validFranchiseCount === 1 ? 'team' : 'teams'}{' '}
               · {form.startDate ? 'dates set' : 'no dates'} ·{' '}
-              {form.visibility === 'invite-only' ? 'invite-only' : 'public'}
+              {form.visibility === 'invite-only' ? 'invite-only' : 'public'} ·{' '}
+              {form.auctionMode}
             </span>
           </div>
 
@@ -679,6 +696,37 @@ function VisibilityToggle({ value, onChange }) {
       >
         <EyeOff size={14} />
         Invite-only
+      </button>
+    </div>
+  )
+}
+
+function AuctionModeToggle({ value, onChange }) {
+  return (
+    <div className="create-toggle" role="radiogroup" aria-label="Auction type">
+      <button
+        type="button"
+        role="radio"
+        aria-checked={value === 'remote'}
+        className={clsx('create-toggle-btn', {
+          active: value === 'remote',
+        })}
+        onClick={() => onChange({ target: { value: 'remote' } })}
+      >
+        <Laptop2 size={14} />
+        Remote
+      </button>
+      <button
+        type="button"
+        role="radio"
+        aria-checked={value === 'physical'}
+        className={clsx('create-toggle-btn', {
+          active: value === 'physical',
+        })}
+        onClick={() => onChange({ target: { value: 'physical' } })}
+      >
+        <Gavel size={14} />
+        Physical
       </button>
     </div>
   )

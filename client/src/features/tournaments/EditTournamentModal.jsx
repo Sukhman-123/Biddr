@@ -39,6 +39,7 @@ function EditTournamentModal({ tournament, onClose, onSaved }) {
   const [startDate, setStartDate] = useState(isoToInput(tournament.startDate))
   const [endDate, setEndDate] = useState(isoToInput(tournament.endDate))
   const [visibility, setVisibility] = useState(tournament.visibility ?? 'public')
+  const [auctionMode, setAuctionMode] = useState(tournament.auctionMode ?? 'remote')
   const cover = tournament.cover ?? {}
   const [gradientFrom, setGradientFrom] = useState(cover.gradientFrom ?? '#1d2436')
   const [gradientVia, setGradientVia] = useState(cover.gradientVia ?? '#3a2a52')
@@ -87,6 +88,7 @@ function EditTournamentModal({ tournament, onClose, onSaved }) {
         description: description.trim(),
         region: region.trim(),
         visibility,
+        auctionMode,
         startDate: startDate ? new Date(startDate).toISOString() : null,
         endDate: endDate ? new Date(endDate).toISOString() : null,
         cover: {
@@ -158,7 +160,7 @@ function EditTournamentModal({ tournament, onClose, onSaved }) {
                   {name || 'Your tournament'}
                 </span>
                 <span className="edit-cover-preview-pill">
-                  {visibility === 'invite-only' ? 'Invite-only' : 'Open'}
+                  {visibility === 'invite-only' ? 'Invite-only' : 'Open'} · {auctionMode}
                 </span>
               </div>
             </div>
@@ -208,6 +210,25 @@ function EditTournamentModal({ tournament, onClose, onSaved }) {
                     onClick={() => setVisibility('invite-only')}
                   >
                     Invite-only
+                  </button>
+                </div>
+              </div>
+              <div className="edit-field">
+                <span>Auction type</span>
+                <div className="edit-vis-toggle">
+                  <button
+                    type="button"
+                    className={`edit-vis-option${auctionMode === 'remote' ? ' is-active' : ''}`}
+                    onClick={() => setAuctionMode('remote')}
+                  >
+                    Remote
+                  </button>
+                  <button
+                    type="button"
+                    className={`edit-vis-option${auctionMode === 'physical' ? ' is-active' : ''}`}
+                    onClick={() => setAuctionMode('physical')}
+                  >
+                    Physical
                   </button>
                 </div>
               </div>

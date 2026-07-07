@@ -35,6 +35,10 @@ export function validateCreateTournament(form) {
     errors.pursePerFranchise = 'Enter a positive purse'
   }
 
+  if (!['remote', 'physical'].includes(form.auctionMode)) {
+    errors.auctionMode = 'Choose remote or physical auction mode'
+  }
+
   const validFranchises = form.franchises.filter((f) => f.name.trim())
   if (validFranchises.length < 2) {
     errors.franchises = 'Add at least two franchise teams'

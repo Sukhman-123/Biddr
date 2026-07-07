@@ -14,6 +14,7 @@ describe('validateCreateTournament', () => {
     endDate: '',
     pursePerFranchise: '100000000',
     visibility: 'public',
+    auctionMode: 'remote',
     franchises: [validFranchise('A'), validFranchise('B')],
     ...overrides,
   })
@@ -67,6 +68,13 @@ describe('validateCreateTournament', () => {
     expect(
       validateCreateTournament(makeValidForm({ pursePerFranchise: 'abc' })),
     ).toHaveProperty('pursePerFranchise')
+  })
+
+  it('rejects an invalid auction mode', () => {
+    const errors = validateCreateTournament(
+      makeValidForm({ auctionMode: 'hybrid' }),
+    )
+    expect(errors.auctionMode).toMatch(/remote or physical/i)
   })
 
   it('rejects fewer than 2 named franchises', () => {
