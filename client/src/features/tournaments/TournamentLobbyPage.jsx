@@ -552,9 +552,13 @@ function TournamentLobbyPage() {
         <EditTournamentModal
           tournament={tournament}
           onClose={() => setEditing(false)}
-          onSaved={() => {
+          onSaved={(updatedTournament) => {
             setEditing(false)
-            refetch()
+            if (updatedTournament?.id) {
+              queryClient.setQueryData(['tournament', id], updatedTournament)
+            }
+            queryClient.invalidateQueries({ queryKey: ['tournament', id] })
+            queryClient.invalidateQueries({ queryKey: ['auction-room-probe', id] })
           }}
         />
       ) : null}
