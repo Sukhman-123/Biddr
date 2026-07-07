@@ -1,6 +1,43 @@
 const Tournament = require('../models/Tournament');
 const User = require('../models/User');
-const { HttpError } = require('../middleware/canSeeTournament');
+const {
+  assertCanSeeTournament,
+  HttpError,
+} = require('../middleware/canSeeTournament');
+
+const isTournamentHost = (tournament, user) =>
+  tournament.ownerId.toString() === user._id.toString();
+
+const isFranchiseOwner = (franchise, user) =>
+  (franchise.members || []).some(
+    (m) => m.role === 'owner' && m.userId.toString() === user._id.toString(),
+  );
+
+const isFranchiseMember = (franchise, user) =>
+  (franchise.members || []).some(
+    (m) => m.userId.toString() === user._id.toString(),
+  );
+
+const getTournamentAndFranchise = async (tournamentId, franchiseId, user) => {
+  const tournament = await assertCanSeeTournament(tournamentId, user);
+  const franchise = tournament.franchises.find(
+    (f) => f._id.toString() === franchiseId,
+  );
+  if (!franchise) {
+    throw new HttpError(404, 'Franchise not found');
+  }
+  return { tournament, franchise };
+};
+
+const assertCanManageMembers = (tournament, franchise, user) => {
+  if (isTournamentHost(tournament, user) || isFranchiseOwner(franchise, user)) {
+    return;
+  }
+  throw new HttpError(
+    403,
+    'Only the tournament host or a franchise owner can manage members',
+  );
+};
 
 /**
  * Add a member to a franchise.
@@ -19,21 +56,16 @@ const addMember = async (req, res, next) => {
       throw new HttpError(400, 'Role must be "owner" or "member"');
     }
 
-    const tournament = await Tournament.findById(tournamentId);
-    if (!tournament) {
-      throw new HttpError(404, 'Tournament not found');
-    }
+    const { tournament, franchise } = await getTournamentAndFranchise(
+      tournamentId,
+      franchiseId,
+      req.user,
+    );
+    assertCanManageMembers(tournament, franchise, req.user);
 
     // Only tournament host can add franchise owners
-    if (role === 'owner' && tournament.ownerId.toString() !== req.user._id.toString()) {
+    if (role === 'owner' && !isTournamentHost(tournament, req.user)) {
       throw new HttpError(403, 'Only the tournament host can assign franchise owners');
-    }
-
-    const franchise = tournament.franchises.find(
-      (f) => f._id.toString() === franchiseId,
-    );
-    if (!franchise) {
-      throw new HttpError(404, 'Franchise not found');
     }
 
     // Check if user exists
@@ -96,18 +128,11 @@ const addMember = async (req, res, next) => {
 const removeMember = async (req, res, next) => {
   try {
     const { tournamentId, franchiseId, userId } = req.params;
-
-    const tournament = await Tournament.findById(tournamentId);
-    if (!tournament) {
-      throw new HttpError(404, 'Tournament not found');
-    }
-
-    const franchise = tournament.franchises.find(
-      (f) => f._id.toString() === franchiseId,
+    const { tournament, franchise } = await getTournamentAndFranchise(
+      tournamentId,
+      franchiseId,
+      req.user,
     );
-    if (!franchise) {
-      throw new HttpError(404, 'Franchise not found');
-    }
 
     const memberIndex = (franchise.members || []).findIndex(
       (m) => m.userId.toString() === userId,
@@ -119,11 +144,18 @@ const removeMember = async (req, res, next) => {
     const member = franchise.members[memberIndex];
 
     // Only tournament host or the member themselves can remove
-    const isTournamentHost = tournament.ownerId.toString() === req.user._id.toString();
+    const isHost = isTournamentHost(tournament, req.user);
+    const callerOwnsFranchise = isFranchiseOwner(franchise, req.user);
     const isRemovingSelf = member.userId.toString() === req.user._id.toString();
+    const isRemovingOwner = member.role === 'owner';
 
-    if (!isTournamentHost && !isRemovingSelf) {
-      throw new HttpError(403, 'Only the tournament host or the member can remove them');
+    if (!isHost && !isRemovingSelf) {
+      if (!callerOwnsFranchise || isRemovingOwner) {
+        throw new HttpError(
+          403,
+          'Only the tournament host, the member, or a franchise owner removing a non-owner can remove them',
+        );
+      }
     }
 
     // Cannot remove the last owner
@@ -172,28 +204,25 @@ const updateMemberRole = async (req, res, next) => {
       throw new HttpError(400, 'Role must be "owner" or "member"');
     }
 
-    const tournament = await Tournament.findById(tournamentId);
-    if (!tournament) {
-      throw new HttpError(404, 'Tournament not found');
-    }
-
-    // Only tournament host can change roles
-    if (tournament.ownerId.toString() !== req.user._id.toString()) {
-      throw new HttpError(403, 'Only the tournament host can change member roles');
-    }
-
-    const franchise = tournament.franchises.find(
-      (f) => f._id.toString() === franchiseId,
+    const { tournament, franchise } = await getTournamentAndFranchise(
+      tournamentId,
+      franchiseId,
+      req.user,
     );
-    if (!franchise) {
-      throw new HttpError(404, 'Franchise not found');
-    }
+    assertCanManageMembers(tournament, franchise, req.user);
 
     const member = (franchise.members || []).find(
       (m) => m.userId.toString() === userId,
     );
     if (!member) {
       throw new HttpError(404, 'User is not a member of this franchise');
+    }
+
+    const ownerCount = (franchise.members || []).filter(
+      (m) => m.role === 'owner',
+    ).length;
+    if (member.role === 'owner' && role === 'member' && ownerCount <= 1) {
+      throw new HttpError(400, 'Cannot demote the last owner of a franchise');
     }
 
     // If promoting to owner, demote existing owners first
@@ -235,17 +264,16 @@ const updateMemberRole = async (req, res, next) => {
 const getMembers = async (req, res, next) => {
   try {
     const { tournamentId, franchiseId } = req.params;
-
-    const tournament = await Tournament.findById(tournamentId);
-    if (!tournament) {
-      throw new HttpError(404, 'Tournament not found');
-    }
-
-    const franchise = tournament.franchises.find(
-      (f) => f._id.toString() === franchiseId,
+    const { tournament, franchise } = await getTournamentAndFranchise(
+      tournamentId,
+      franchiseId,
+      req.user,
     );
-    if (!franchise) {
-      throw new HttpError(404, 'Franchise not found');
+    if (!isTournamentHost(tournament, req.user) && !isFranchiseMember(franchise, req.user)) {
+      throw new HttpError(
+        403,
+        'Only the tournament host or franchise members can view the member list',
+      );
     }
 
     // Populate user details

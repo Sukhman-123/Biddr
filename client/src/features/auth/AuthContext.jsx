@@ -6,7 +6,7 @@ import {
   logoutRequest,
   registerRequest,
 } from './auth.api'
-import { tokenStorage } from '../../lib/api'
+import { AUTH_EXPIRED_EVENT, tokenStorage } from '../../lib/api'
 import { AUTH_STATUS, AuthContext } from './authContextObject'
 
 export function AuthProvider({ children }) {
@@ -36,8 +36,18 @@ export function AuthProvider({ children }) {
     }
 
     rehydrate()
+
+    const handleAuthExpired = () => {
+      if (cancelled) return
+      setUser(null)
+      setStatus(AUTH_STATUS.UNAUTHENTICATED)
+      setError(null)
+    }
+
+    window.addEventListener(AUTH_EXPIRED_EVENT, handleAuthExpired)
     return () => {
       cancelled = true
+      window.removeEventListener(AUTH_EXPIRED_EVENT, handleAuthExpired)
     }
   }, [])
 

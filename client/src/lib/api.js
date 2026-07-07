@@ -1,6 +1,7 @@
 import axios from 'axios'
 
 const TOKEN_STORAGE_KEY = 'biddr:token'
+export const AUTH_EXPIRED_EVENT = 'biddr:auth-expired'
 
 export const tokenStorage = {
   get: () => {
@@ -26,6 +27,11 @@ export const tokenStorage = {
   },
 }
 
+const dispatchAuthExpired = () => {
+  if (typeof window === 'undefined') return
+  window.dispatchEvent(new CustomEvent(AUTH_EXPIRED_EVENT))
+}
+
 const api = axios.create({
   baseURL: '/api',
   timeout: 15000,
@@ -46,6 +52,7 @@ api.interceptors.response.use(
     const status = error?.response?.status
     if (status === 401) {
       tokenStorage.clear()
+      dispatchAuthExpired()
     }
     return Promise.reject(error)
   },
