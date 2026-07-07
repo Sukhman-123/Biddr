@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest'
-import { fireEvent, render, screen } from '@testing-library/react'
+import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 import AuctioneerPanel from '../components/AuctioneerPanel'
 
 describe('AuctioneerPanel', () => {
@@ -19,7 +19,7 @@ describe('AuctioneerPanel', () => {
       <AuctioneerPanel
         tournament={tournament}
         activeLot={null}
-        queuedLots={[{ id: 'l1', name: 'Virat', style: 'Batsman', basePrice: 2000000 }]}
+        queuedLots={[{ id: 'l1', name: 'Virat', style: 'Batsman', basePrice: 2000000, bidIncrement: 500000 }]}
         undoAvailable={false}
         connected
         busy={false}
@@ -73,5 +73,39 @@ describe('AuctioneerPanel', () => {
     expect(screen.getByText(/team b is leading/i)).toBeInTheDocument()
     expect(screen.getByRole('button', { name: /pause/i })).toBeInTheDocument()
     expect(screen.getByText(/recent floor activity/i)).toBeInTheDocument()
+  })
+
+  it('lets the auctioneer save bid increment before activation', async () => {
+    const onSaveBidIncrement = vi.fn().mockResolvedValue(true)
+    const onActivateNext = vi.fn()
+
+    render(
+      <AuctioneerPanel
+        tournament={tournament}
+        activeLot={null}
+        queuedLots={[{ id: 'l1', name: 'Hardik', style: 'All-rounder', basePrice: 2000000, bidIncrement: null }]}
+        undoAvailable={false}
+        connected
+        busy={false}
+        recentEvents={[]}
+        onActivateNext={onActivateNext}
+        onPause={vi.fn()}
+        onResume={vi.fn()}
+        onUndo={vi.fn()}
+        onDeactivate={vi.fn()}
+        onOpenEndAuction={vi.fn()}
+        onSaveBidIncrement={onSaveBidIncrement}
+      />,
+    )
+
+    fireEvent.change(screen.getByLabelText(/bid increment/i), { target: { value: '500000' } })
+    fireEvent.click(screen.getByRole('button', { name: /save and activate/i }))
+
+    await waitFor(() => {
+      expect(onSaveBidIncrement).toHaveBeenCalledWith('l1', 500000)
+    })
+    await waitFor(() => {
+      expect(onActivateNext).toHaveBeenCalledWith('l1')
+    })
   })
 })

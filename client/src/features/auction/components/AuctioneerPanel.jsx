@@ -1,3 +1,4 @@
+import { useEffect, useState } from 'react'
 import { CircleDot, Clock3, Gavel, Pause, Play, RotateCcw, SkipForward } from 'lucide-react'
 import { formatPurse } from '../../tournaments/tournament.utils'
 import './AuctioneerPanel.css'
@@ -16,16 +17,52 @@ export default function AuctioneerPanel({
   onUndo,
   onDeactivate,
   onOpenEndAuction,
+  onSaveBidIncrement,
 }) {
   const auctionMode = tournament?.auctionMode || 'remote'
   const isPhysical = auctionMode === 'physical'
   const nextLot = queuedLots?.[0] ?? null
+  const nextLotNeedsIncrement = Boolean(nextLot && nextLot.bidIncrement == null)
   const currentLeader = activeLot
     ? tournament?.franchises?.find(
         (franchise) => franchise.id === activeLot.currentBidderFranchiseId,
       ) ?? null
     : null
   const panelEvents = Array.isArray(recentEvents) ? recentEvents.slice(0, 4) : []
+  const [incrementDraft, setIncrementDraft] = useState('')
+  const [showIncrementEditor, setShowIncrementEditor] = useState(false)
+
+  useEffect(() => {
+    if (!nextLot) {
+      setIncrementDraft('')
+      setShowIncrementEditor(false)
+      return
+    }
+
+    setIncrementDraft(nextLot.bidIncrement != null ? String(nextLot.bidIncrement) : '')
+    setShowIncrementEditor(nextLot.bidIncrement == null)
+  }, [nextLot?.id, nextLot?.bidIncrement])
+
+  const openNextLot = () => {
+    if (!nextLot || busy) return
+    if (nextLotNeedsIncrement) {
+      setShowIncrementEditor(true)
+      return
+    }
+    onActivateNext?.(nextLot.id)
+  }
+
+  const saveIncrement = async (activateAfterSave = false) => {
+    if (!nextLot || !onSaveBidIncrement || busy) return
+    const value = Number(incrementDraft)
+    if (!Number.isFinite(value) || value < 0) return
+    const saved = await onSaveBidIncrement(nextLot.id, value)
+    if (!saved) return
+    setShowIncrementEditor(false)
+    if (activateAfterSave) {
+      onActivateNext?.(nextLot.id)
+    }
+  }
 
   return (
     <section className="auctioneer-panel" aria-label="Auctioneer control panel">
@@ -111,11 +148,15 @@ export default function AuctioneerPanel({
               <button
                 type="button"
                 className="auctioneer-panel-btn is-gold"
-                onClick={() => nextLot && onActivateNext?.(nextLot.id)}
+                onClick={openNextLot}
                 disabled={busy || !nextLot}
               >
                 <Gavel size={15} />
-                {nextLot ? `Bring ${nextLot.name}` : 'No next lot'}
+                {nextLot
+                  ? nextLotNeedsIncrement
+                    ? `Set increment for ${nextLot.name}`
+                    : `Bring ${nextLot.name}`
+                  : 'No next lot'}
               </button>
             )}
           </div>
@@ -134,18 +175,56 @@ export default function AuctioneerPanel({
           </strong>
           <p className="auctioneer-panel-copy">
             {nextLot
-              ? `${nextLot.style || 'Player'} · base ${formatPurse(nextLot.basePrice, tournament?.currency || 'INR')}`
+              ? `${nextLot.style || 'Player'} · base ${formatPurse(nextLot.basePrice, tournament?.currency || 'INR')}${nextLot.bidIncrement != null ? ` · increment ${formatPurse(nextLot.bidIncrement, tournament?.currency || 'INR', { compact: true })}` : ' · bid increment needed'}`
               : 'Add more lots from the lobby if you want to continue the auction after this room clears.'}
           </p>
+          {nextLot && showIncrementEditor ? (
+            <div className="auctioneer-panel-increment-editor">
+              <label className="auctioneer-panel-increment-field">
+                <span>Bid increment</span>
+                <input
+                  type="number"
+                  min="0"
+                  step="1"
+                  value={incrementDraft}
+                  onChange={(event) => setIncrementDraft(event.target.value)}
+                  placeholder="500000"
+                  disabled={busy}
+                />
+              </label>
+              <p className="auctioneer-panel-copy auctioneer-panel-copy--warning">
+                Set the floor increment once, then activate this lot from the same desk.
+              </p>
+              <div className="auctioneer-panel-actions">
+                <button
+                  type="button"
+                  className="auctioneer-panel-btn is-neutral"
+                  onClick={() => saveIncrement(false)}
+                  disabled={busy || incrementDraft.trim() === ''}
+                >
+                  Save increment
+                </button>
+                <button
+                  type="button"
+                  className="auctioneer-panel-btn is-gold"
+                  onClick={() => saveIncrement(true)}
+                  disabled={busy || incrementDraft.trim() === '' || Boolean(activeLot)}
+                >
+                  <Play size={15} />
+                  Save and activate
+                </button>
+              </div>
+            </div>
+          ) : null}
           <div className="auctioneer-panel-actions">
             <button
               type="button"
               className="auctioneer-panel-btn is-gold"
-              onClick={() => nextLot && onActivateNext?.(nextLot.id)}
+              onClick={openNextLot}
               disabled={busy || !nextLot || Boolean(activeLot)}
             >
               <Play size={15} />
-              Activate next lot
+              {nextLotNeedsIncrement ? 'Set increment first' : 'Activate next lot'}
             </button>
             <button
               type="button"

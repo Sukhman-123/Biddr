@@ -19,7 +19,7 @@ import {
   undoLastActionRequest,
   deactivateLotRequest,
 } from './auctionRoom.api'
-import { endAuctionRequest } from '../tournaments/tournament.api'
+import { endAuctionRequest, updateLotRequest } from '../tournaments/tournament.api'
 import { formatPurse } from '../tournaments/tournament.utils'
 import TopBar from './components/TopBar'
 import AuctioneerPanel from './components/AuctioneerPanel'
@@ -355,6 +355,24 @@ export default function AuctionRoomPage() {
     },
     [isHost, tournamentId, toast],
   )
+  const onSaveBidIncrement = useCallback(
+    async (lotId, bidIncrement) => {
+      if (!isHost) return false
+      setBusy(true)
+      try {
+        await updateLotRequest(lotId, { bidIncrement })
+        await queryClient.invalidateQueries({ queryKey: ['auction-room-lots', tournamentId] })
+        toast.success('Bid increment saved')
+        return true
+      } catch (err) {
+        toast.error(err.message)
+        return false
+      } finally {
+        setBusy(false)
+      }
+    },
+    [isHost, queryClient, toast, tournamentId],
+  )
   const onHammer = useCallback(
     async (franchiseId) => {
       if (!isHost || !activeLot) return
@@ -541,6 +559,7 @@ export default function AuctionRoomPage() {
             setEndError(null)
             setEndOpen(true)
           }}
+          onSaveBidIncrement={onSaveBidIncrement}
         />
       ) : null}
 
