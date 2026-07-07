@@ -9,7 +9,7 @@ const wrapError = (error, fallback) => {
 export async function addFranchiseMemberRequest(tournamentId, franchiseId, userId, role = 'member') {
   try {
     const { data } = await api.post(
-      `/franchises/${tournamentId}/franchises/${franchiseId}/members`,
+      `/franchises/${tournamentId}/${franchiseId}/members`,
       { userId, role },
     )
     return data
@@ -21,7 +21,7 @@ export async function addFranchiseMemberRequest(tournamentId, franchiseId, userI
 export async function removeFranchiseMemberRequest(tournamentId, franchiseId, userId) {
   try {
     const { data } = await api.delete(
-      `/franchises/${tournamentId}/franchises/${franchiseId}/members/${userId}`,
+      `/franchises/${tournamentId}/${franchiseId}/members/${userId}`,
     )
     return data
   } catch (error) {
@@ -32,7 +32,7 @@ export async function removeFranchiseMemberRequest(tournamentId, franchiseId, us
 export async function updateFranchiseMemberRoleRequest(tournamentId, franchiseId, userId, role) {
   try {
     const { data } = await api.put(
-      `/franchises/${tournamentId}/franchises/${franchiseId}/members/${userId}`,
+      `/franchises/${tournamentId}/${franchiseId}/members/${userId}`,
       { role },
     )
     return data
@@ -44,7 +44,7 @@ export async function updateFranchiseMemberRoleRequest(tournamentId, franchiseId
 export async function getFranchiseMembersRequest(tournamentId, franchiseId) {
   try {
     const { data } = await api.get(
-      `/franchises/${tournamentId}/franchises/${franchiseId}/members`,
+      `/franchises/${tournamentId}/${franchiseId}/members`,
     )
     return data.members || []
   } catch (error) {

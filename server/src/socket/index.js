@@ -45,7 +45,7 @@ const attachSocketAuth = (io) => {
     }
     try {
       const payload = jwt.verify(token, process.env.JWT_SECRET);
-      const user = await User.findById(payload.id).select(
+      const user = await User.findById(payload.sub).select(
         '_id fullName email',
       );
       if (!user) return next(new Error('unauthorized'));

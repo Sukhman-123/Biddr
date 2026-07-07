@@ -124,10 +124,10 @@ describe('assertCanSubscribe (socket room:join access check)', () => {
 describe('JWT secret handling', () => {
   it('signs and verifies a token with the configured secret', () => {
     // The middleware reads JWT_SECRET; in tests it's set to a known
-    // value. Confirm we're using the same secret to sign in tests so
-    // the middleware would accept a hand-crafted token.
-    const token = jwt.sign({ id: testUser._id.toString() }, process.env.JWT_SECRET)
+    // value. Confirm the socket layer expects the same `sub` claim
+    // shape as the REST auth middleware and signToken().
+    const token = jwt.sign({ sub: testUser._id.toString() }, process.env.JWT_SECRET)
     const decoded = jwt.verify(token, process.env.JWT_SECRET)
-    expect(decoded.id).toBe(testUser._id.toString())
+    expect(decoded.sub).toBe(testUser._id.toString())
   })
 })
