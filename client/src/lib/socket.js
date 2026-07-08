@@ -32,21 +32,31 @@ function getSocket() {
 // connection state. We grab the singleton synchronously (it's a module
 // variable, not a ref) so there's no need to read .current during render.
 export function useSocket() {
-  const [connected, setConnected] = useState(false)
+  const [connected, setConnected] = useState(() => getSocket().connected)
   const s = getSocket()
 
   useEffect(() => {
-    s.connect()
-
     const onConnect = () => setConnected(true)
     const onDisconnect = () => setConnected(false)
+    const onConnectError = () => setConnected(false)
 
     s.on('connect', onConnect)
     s.on('disconnect', onDisconnect)
+    s.on('connect_error', onConnectError)
+
+    // Sync immediately in case the singleton socket is already connected
+    // before this hook subscribes to events.
+    setConnected(s.connected)
+
+    if (!s.connected) {
+      s.connect()
+    }
 
     return () => {
       s.off('connect', onConnect)
       s.off('disconnect', onDisconnect)
+      s.off('connect_error', onConnectError)
+      setConnected(false)
       s.disconnect()
     }
   }, [s])
