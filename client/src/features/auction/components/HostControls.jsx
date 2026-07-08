@@ -190,6 +190,7 @@ function ActiveControls({
   auctionMode,
   onHammer,
   onPass,
+  onDeactivate,
   onPause,
   onResume,
   onUndo,

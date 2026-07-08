@@ -126,6 +126,28 @@ describe('HostControls — active mode (lot on the floor)', () => {
     expect(onPass).toHaveBeenCalledOnce()
   })
 
+  it('requires confirmation before re-queueing a lot', () => {
+    const onDeactivate = vi.fn()
+    render(
+      <HostControls
+        mode="active"
+        lot={lot}
+        busy={false}
+        onHammer={vi.fn()}
+        onPass={vi.fn()}
+        onDeactivate={onDeactivate}
+        franchises={[]}
+      />,
+    )
+
+    fireEvent.click(screen.getByRole('button', { name: /skip \/ re-queue/i }))
+    expect(onDeactivate).not.toHaveBeenCalled()
+    expect(screen.getByRole('button', { name: /confirm skip/i })).toBeInTheDocument()
+
+    fireEvent.click(screen.getByRole('button', { name: /confirm skip/i }))
+    expect(onDeactivate).toHaveBeenCalledOnce()
+  })
+
   it('cancel button on the confirm step does not mutate state', () => {
     const onHammer = vi.fn()
     render(<HostControls mode="active" lot={lot} busy={false} onHammer={onHammer} onPass={vi.fn()} franchises={[]} />)
