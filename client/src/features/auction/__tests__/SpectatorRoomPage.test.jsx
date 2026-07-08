@@ -3,6 +3,29 @@ import { render, screen, act } from '@testing-library/react'
 import { MemoryRouter, Route, Routes } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 
+const makeSnapshot = () => ({
+  tournament: {
+    id: 't1',
+    name: 'League',
+    currency: 'INR',
+    auctionMode: 'remote',
+    franchises: [],
+  },
+  activeLot: {
+    id: 'l1',
+    name: 'Virat Kohli',
+    style: 'Batsman',
+    country: 'India',
+    basePrice: 2000000,
+    currentBid: 2500000,
+    bidIncrement: 500000,
+    currentBidAt: '2026-07-07T06:29:15.000Z',
+    auctionStatus: 'active',
+    set: 'Marquee',
+  },
+  recentBids: [],
+})
+
 const handlers = new Map()
 const socket = {
   connected: true,
@@ -17,28 +40,7 @@ const socket = {
 
 vi.mock('@tanstack/react-query', () => ({
   useQuery: vi.fn(() => ({
-    data: {
-      tournament: {
-        id: 't1',
-        name: 'League',
-        currency: 'INR',
-        auctionMode: 'remote',
-        franchises: [],
-      },
-      activeLot: {
-        id: 'l1',
-        name: 'Virat Kohli',
-        style: 'Batsman',
-        country: 'India',
-        basePrice: 2000000,
-        currentBid: 2500000,
-        bidIncrement: 500000,
-        currentBidAt: '2026-07-07T06:29:15.000Z',
-        auctionStatus: 'active',
-        set: 'Marquee',
-      },
-      recentBids: [],
-    },
+    data: makeSnapshot(),
     isLoading: false,
   })),
 }))
@@ -95,39 +97,22 @@ import SpectatorRoomPage from '../SpectatorRoomPage'
 
 describe('SpectatorRoomPage', () => {
   beforeEach(() => {
-    vi.spyOn(Date, 'now').mockReturnValue(new Date('2026-07-07T06:29:30.000Z').getTime())
+    vi.useFakeTimers()
+    vi.setSystemTime(new Date('2026-07-07T06:29:30.000Z'))
+    const snapshot = makeSnapshot()
     handlers.clear()
     socket.emit.mockClear()
     socket.on.mockClear()
     socket.off.mockClear()
     useQuery.mockImplementation(() => ({
-      data: {
-        tournament: {
-          id: 't1',
-          name: 'League',
-          currency: 'INR',
-          auctionMode: 'remote',
-          franchises: [],
-        },
-        activeLot: {
-          id: 'l1',
-          name: 'Virat Kohli',
-          style: 'Batsman',
-          country: 'India',
-          basePrice: 2000000,
-          currentBid: 2500000,
-          bidIncrement: 500000,
-          currentBidAt: '2026-07-07T06:29:15.000Z',
-          auctionStatus: 'active',
-          set: 'Marquee',
-        },
-        recentBids: [],
-      },
+      data: snapshot,
       isLoading: false,
     }))
   })
 
   afterEach(() => {
+    vi.clearAllTimers()
+    vi.useRealTimers()
     vi.restoreAllMocks()
   })
 
@@ -210,6 +195,12 @@ describe('SpectatorRoomPage', () => {
     )
 
     expect(screen.getByTestId('current-lot-timer')).toHaveTextContent('45')
+
+    act(() => {
+      vi.advanceTimersByTime(5000)
+    })
+
+    expect(screen.getByTestId('current-lot-timer')).toHaveTextContent('40')
 
     unmount()
   })
