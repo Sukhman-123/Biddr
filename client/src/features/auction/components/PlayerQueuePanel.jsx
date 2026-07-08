@@ -34,6 +34,10 @@ export default function PlayerQueuePanel({ lots, onSelectLot, busy, currency = '
   const startIndex = (currentPage - 1) * pageSize
   const visibleLots = filteredLots.slice(startIndex, startIndex + pageSize)
   const featuredLot = visibleLots[0] ?? null
+  const handleSelectLot = (lotId) => {
+    if (busy) return
+    onSelectLot?.(lotId)
+  }
 
   return (
     <div className="player-queue">
@@ -110,7 +114,7 @@ export default function PlayerQueuePanel({ lots, onSelectLot, busy, currency = '
                 type="button"
                 className="queue-activate-btn"
                 disabled={busy}
-                onClick={() => onSelectLot && onSelectLot(featuredLot.id)}
+                onClick={() => handleSelectLot(featuredLot.id)}
               >
                 <Play size={16} />
                 Activate now
@@ -155,7 +159,7 @@ export default function PlayerQueuePanel({ lots, onSelectLot, busy, currency = '
                 initial={{ opacity: 0, y: 8 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.2, delay: index * 0.02 }}
-                onClick={() => onSelectLot && onSelectLot(lot.id)}
+                onClick={() => handleSelectLot(lot.id)}
               >
                 <div className="queue-card-top">
                   <div className="queue-item-info">
@@ -183,7 +187,7 @@ export default function PlayerQueuePanel({ lots, onSelectLot, busy, currency = '
                   disabled={busy}
                   onClick={(e) => {
                     e.stopPropagation()
-                    onSelectLot && onSelectLot(lot.id)
+                    handleSelectLot(lot.id)
                   }}
                 >
                   <Play size={16} />

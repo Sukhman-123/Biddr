@@ -342,17 +342,25 @@ export default function AuctionRoomPage() {
   const onActivate = useCallback(
     async (pickLotId) => {
       if (!isHost) return
+      if (activeLot) {
+        toast.info('Resolve the current lot before activating another player')
+        return
+      }
       setBusy(true)
       try {
-        await activateLotRequest(tournamentId, pickLotId)
-        // The socket broadcast will update activeLot.
+        const lot = await activateLotRequest(tournamentId, pickLotId)
+        if (lot) {
+          setActiveLot(lot)
+          lastUndoLotIdRef.current = lot.id
+        }
+        await queryClient.invalidateQueries({ queryKey: ['auction-room-lots', tournamentId] })
       } catch (err) {
         toast.error(err.message)
       } finally {
         setBusy(false)
       }
     },
-    [isHost, tournamentId, toast],
+    [isHost, activeLot, tournamentId, toast, queryClient],
   )
   const onHammer = useCallback(
     async (franchiseId) => {
@@ -579,7 +587,7 @@ export default function AuctionRoomPage() {
             <PlayerQueuePanel
               lots={lotsQuery.data || []}
               onSelectLot={onActivate}
-              busy={busy}
+              busy={busy || Boolean(activeLot)}
               currency={tournament?.currency || 'INR'}
             />
           )}

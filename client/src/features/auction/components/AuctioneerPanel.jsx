@@ -78,12 +78,13 @@ export default function AuctioneerPanel({
   }, [queuedLots, selectedLotId])
 
   const activateSelectedLot = () => {
-    if (!selectedLot || busy) return
+    if (!selectedLot || busy || activeLot) return
     onActivateNext?.(selectedLot.id)
   }
 
   const saveIncrement = async (activateAfterSave = false) => {
     if (!selectedLot || !onSaveBidIncrement || busy) return
+    if (activateAfterSave && activeLot) return
     const value = Number(incrementDraft)
     if (!Number.isFinite(value) || value < 0) return
     const saved = await onSaveBidIncrement(selectedLot.id, value)
