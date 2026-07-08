@@ -46,6 +46,36 @@
   transition: background 0.15s ease, color 0.15s ease, opacity 0.15s ease;
 }
 
+.room-topbar-aux {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 8px 14px;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.05);
+  color: #d8dde8;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+}
+
+.room-topbar-aux:hover {
+  background: rgba(255, 255, 255, 0.08);
+  color: #f2f5fb;
+}
+
+.room-topbar-aux.is-gold {
+  border-color: rgba(245, 185, 74, 0.28);
+  background: rgba(245, 185, 74, 0.12);
+  color: #ffd18a;
+}
+
+.room-topbar-aux.is-gold:hover {
+  background: rgba(245, 185, 74, 0.18);
+}
+
 .room-topbar-end:hover:not(:disabled) {
   background: rgba(255, 138, 138, 0.14);
   color: #ffd0d0;

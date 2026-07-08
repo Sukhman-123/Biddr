@@ -7,6 +7,9 @@ export default function TopBar({
   tournament,
   connected,
   onLeave,
+  auxActionLabel,
+  onAuxAction,
+  auxActionTone = 'neutral',
   showEndAuction = false,
   endDisabled = false,
   endDisabledReason,
@@ -32,6 +35,16 @@ export default function TopBar({
           {tournament?.shortCode ? `#${tournament.shortCode}` : 'Live auction floor'}
         </span>
       </div>
+
+      {auxActionLabel ? (
+        <button
+          type="button"
+          className={`room-topbar-aux is-${auxActionTone}`}
+          onClick={onAuxAction}
+        >
+          {auxActionLabel}
+        </button>
+      ) : null}
 
       {showEndAuction ? (
         <button
