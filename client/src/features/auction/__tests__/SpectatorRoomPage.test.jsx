@@ -43,6 +43,10 @@ vi.mock('@tanstack/react-query', () => ({
     data: makeSnapshot(),
     isLoading: false,
   })),
+  useQueryClient: () => ({
+    setQueryData: vi.fn(),
+    invalidateQueries: vi.fn(),
+  }),
 }))
 
 vi.mock('../../auth/useAuth', () => ({

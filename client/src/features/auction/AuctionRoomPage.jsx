@@ -83,14 +83,27 @@ export default function AuctionRoomPage() {
   const [endError, setEndError] = useState(null)
 
   const refreshRoomQueries = useCallback(
-    async ({ includeTournament = false } = {}) => {
+    async ({ includeTournament = false, updatedTournament = null } = {}) => {
+      if (updatedTournament) {
+        queryClient.setQueryData(['tournament', tournamentId], updatedTournament)
+        queryClient.setQueriesData({ queryKey: ['auction-room', tournamentId] }, (current) =>
+          current ? { ...current, tournament: updatedTournament } : current,
+        )
+        queryClient.setQueryData(['auction-room-probe', tournamentId], (current) =>
+          current ? { ...current, tournament: updatedTournament } : current,
+        )
+      }
+
       const invalidations = [
         queryClient.invalidateQueries({ queryKey: ['auction-room-lots', tournamentId] }),
+        queryClient.invalidateQueries({ queryKey: ['auction-lots', tournamentId] }),
         queryClient.invalidateQueries({ queryKey: ['auction-room', tournamentId, lotId] }),
+        queryClient.invalidateQueries({ queryKey: ['auction-room-probe', tournamentId] }),
       ]
       if (includeTournament) {
         invalidations.push(
           queryClient.invalidateQueries({ queryKey: ['tournament', tournamentId] }),
+          queryClient.invalidateQueries({ queryKey: ['tournaments'] }),
         )
       }
       await Promise.all(invalidations)
@@ -290,6 +303,10 @@ export default function AuctionRoomPage() {
       refreshRoomQueries()
     }
 
+    const onSetupUpdated = ({ tournament: updatedTournament }) => {
+      refreshRoomQueries({ includeTournament: true, updatedTournament })
+    }
+
     if (socket.connected) onConnect()
     socket.on('connect', onConnect)
     socket.on('lot:activated', onLotActivated)
@@ -300,6 +317,7 @@ export default function AuctionRoomPage() {
     socket.on('auction:resumed', onAuctionResumed)
     socket.on('lot:undone', onLotUndone)
     socket.on('lot:deactivated', onLotDeactivated)
+    socket.on('auction:setup-updated', onSetupUpdated)
 
     return () => {
       socket.off('connect', onConnect)
@@ -311,6 +329,7 @@ export default function AuctionRoomPage() {
       socket.off('auction:resumed', onAuctionResumed)
       socket.off('lot:undone', onLotUndone)
       socket.off('lot:deactivated', onLotDeactivated)
+      socket.off('auction:setup-updated', onSetupUpdated)
       if (joinedRef.current) {
         socket.emit('room:leave', { tournamentId })
         joinedRef.current = false

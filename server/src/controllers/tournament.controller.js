@@ -9,6 +9,16 @@ const VALID_STATUSES = ['upcoming', 'live', 'completed'];
 const isOwner = (tournament, user) =>
   user && tournament.ownerId.toString() === user._id.toString();
 
+const broadcastSetupUpdated = (req, tournament, reason = 'tournament') => {
+  const io = req.app.get('io');
+  if (!io || !tournament?._id) return;
+  io.to(`tournament:${tournament._id.toString()}`).emit('auction:setup-updated', {
+    reason,
+    tournament: tournament.toDetailJSON(),
+    at: new Date().toISOString(),
+  });
+};
+
 const listTournaments = async (req, res, next) => {
   try {
     const filter = {};
@@ -401,6 +411,7 @@ const updateTournament = async (req, res, next) => {
     }
 
     await tournament.save();
+    broadcastSetupUpdated(req, tournament, Array.isArray(req.body.franchises) ? 'franchises' : 'tournament');
     return res
       .status(200)
       .json({ tournament: tournament.toDetailJSON() });

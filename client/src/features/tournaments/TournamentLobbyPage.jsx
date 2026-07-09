@@ -1,6 +1,6 @@
 import { Link, useParams } from 'react-router-dom'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import EditTournamentModal from './EditTournamentModal'
 import AuctionPoolSection from './AuctionPoolSection'
@@ -27,6 +27,7 @@ import {
 } from 'lucide-react'
 import clsx from 'clsx'
 import api from '../../lib/api'
+import { useSocket } from '../../lib/socket'
 import { useAuth } from '../auth/useAuth'
 import { formatDateRange, formatPurse } from './tournament.utils'
 import {
@@ -47,6 +48,7 @@ async function fetchTournament(id) {
 function TournamentLobbyPage() {
   const { id } = useParams()
   const { user } = useAuth()
+  const { socket, connected } = useSocket()
   const queryClient = useQueryClient()
 
   const { data: tournament, isLoading, isError, error, refetch } = useQuery({
@@ -87,6 +89,31 @@ function TournamentLobbyPage() {
   const [startOpen, setStartOpen] = useState(false)
   const [startBusy, setStartBusy] = useState(false)
   const [startError, setStartError] = useState(null)
+
+  useEffect(() => {
+    if (!socket || !connected || !id) return undefined
+
+    socket.emit('room:join', { tournamentId: id })
+
+    const handleSetupUpdated = ({ tournament: updatedTournament }) => {
+      if (updatedTournament) {
+        queryClient.setQueryData(['tournament', id], updatedTournament)
+        queryClient.setQueryData(['auction-room-probe', id], (current) =>
+          current ? { ...current, tournament: updatedTournament } : current,
+        )
+      }
+      queryClient.invalidateQueries({ queryKey: ['tournament', id] })
+      queryClient.invalidateQueries({ queryKey: ['auction-room-probe', id] })
+      queryClient.invalidateQueries({ queryKey: ['tournaments'] })
+    }
+
+    socket.on('auction:setup-updated', handleSetupUpdated)
+
+    return () => {
+      socket.off('auction:setup-updated', handleSetupUpdated)
+      socket.emit('room:leave', { tournamentId: id })
+    }
+  }, [socket, connected, id, queryClient])
 
   const sendInvite = async (e) => {
     e.preventDefault()

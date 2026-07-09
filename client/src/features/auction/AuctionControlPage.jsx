@@ -21,6 +21,75 @@ import './AuctionRoomPage.css'
 const isHostFor = (tournament, user) =>
   Boolean(tournament?.ownerId && user?.id && tournament.ownerId === user.id)
 
+const sameValue = (left, right) => JSON.stringify(left) === JSON.stringify(right)
+
+const normalizeDate = (value) => (value ? new Date(value).toISOString() : null)
+
+const normalizeTournamentSettings = (tournament) => ({
+  name: (tournament?.name || '').trim(),
+  region: (tournament?.region || '').trim(),
+  currency: tournament?.currency || 'INR',
+  pursePerFranchise: Number(tournament?.pursePerFranchise || 0),
+  visibility: tournament?.visibility || 'public',
+  auctionMode: tournament?.auctionMode || 'physical',
+  startDate: normalizeDate(tournament?.startDate),
+  endDate: normalizeDate(tournament?.endDate),
+  settings: {
+    minBidIncrement: Number(tournament?.settings?.minBidIncrement || 0),
+    autoExtendSeconds: Number(tournament?.settings?.autoExtendSeconds || 0),
+    maxSquadSize: Number(tournament?.settings?.maxSquadSize || 11),
+    allowReAuction: Boolean(tournament?.settings?.allowReAuction),
+  },
+})
+
+const normalizeTournamentPatch = (patch) => ({
+  name: (patch?.name || '').trim(),
+  region: (patch?.region || '').trim(),
+  currency: patch?.currency || 'INR',
+  pursePerFranchise: Number(patch?.pursePerFranchise || 0),
+  visibility: patch?.visibility || 'public',
+  auctionMode: patch?.auctionMode || 'physical',
+  startDate: normalizeDate(patch?.startDate),
+  endDate: normalizeDate(patch?.endDate),
+  settings: {
+    minBidIncrement: Number(patch?.settings?.minBidIncrement || 0),
+    autoExtendSeconds: Number(patch?.settings?.autoExtendSeconds || 0),
+    maxSquadSize: Number(patch?.settings?.maxSquadSize || 11),
+    allowReAuction: Boolean(patch?.settings?.allowReAuction),
+  },
+})
+
+const normalizeFranchiseList = (franchises = []) =>
+  franchises
+    .filter((franchise) => (franchise?.name || '').trim())
+    .map((franchise) => ({
+      id: String(franchise?.id || franchise?._id || ''),
+      name: (franchise?.name || '').trim(),
+      city: (franchise?.city || '').trim(),
+      colorHex: franchise?.colorHex || '#f5b94a',
+      wallet: {
+        initial: Number(franchise?.wallet?.initial || 0),
+        spent: Number(franchise?.wallet?.spent || 0),
+      },
+      squad: {
+        maxSize: Number(franchise?.squad?.maxSize || 11),
+        playerIds: (franchise?.squad?.playerIds || []).map(String),
+      },
+    }))
+
+const normalizeLot = (lot) => ({
+  name: (lot?.name || '').trim(),
+  style: lot?.style || 'Batsman',
+  country: (lot?.country || '').trim(),
+  basePrice: Number(lot?.basePrice || 0),
+  photoUrl: lot?.photoUrl || '',
+  set: lot?.set || 'Squad',
+  bidIncrement: lot?.bidIncrement == null || lot?.bidIncrement === '' ? null : Number(lot.bidIncrement),
+  status: lot?.status || 'queued',
+  soldToFranchiseId: lot?.soldToFranchiseId || null,
+  soldPrice: lot?.soldPrice == null || lot?.soldPrice === '' ? null : Number(lot.soldPrice),
+})
+
 export default function AuctionControlPage() {
   const { id: tournamentId } = useParams()
   const navigate = useNavigate()
@@ -46,15 +115,28 @@ export default function AuctionControlPage() {
   const [busy, setBusy] = useState(false)
 
   const refreshRoomQueries = useCallback(
-    async ({ includeTournament = false } = {}) => {
+    async ({ includeTournament = false, updatedTournament = null } = {}) => {
+      if (updatedTournament) {
+        queryClient.setQueryData(['tournament', tournamentId], updatedTournament)
+        queryClient.setQueriesData({ queryKey: ['auction-room', tournamentId] }, (current) =>
+          current ? { ...current, tournament: updatedTournament } : current,
+        )
+        queryClient.setQueryData(['auction-room-probe', tournamentId], (current) =>
+          current ? { ...current, tournament: updatedTournament } : current,
+        )
+      }
+
       const invalidations = [
         queryClient.invalidateQueries({ queryKey: ['auction-room-lots', tournamentId] }),
+        queryClient.invalidateQueries({ queryKey: ['auction-lots', tournamentId] }),
         queryClient.invalidateQueries({ queryKey: ['auction-room', tournamentId] }),
+        queryClient.invalidateQueries({ queryKey: ['auction-room-probe', tournamentId] }),
       ]
 
       if (includeTournament) {
         invalidations.push(
           queryClient.invalidateQueries({ queryKey: ['tournament', tournamentId] }),
+          queryClient.invalidateQueries({ queryKey: ['tournaments'] }),
         )
       }
 
@@ -77,10 +159,14 @@ export default function AuctionControlPage() {
 
   const onSaveTournament = useCallback(async (patch) => {
     if (!isHost) return false
+    if (sameValue(normalizeTournamentSettings(tournament), normalizeTournamentPatch(patch))) {
+      toast.info('No changes to update')
+      return false
+    }
     try {
       await withBusy(async () => {
-        await updateTournamentRequest(tournamentId, patch)
-        await refreshRoomQueries({ includeTournament: true })
+        const updatedTournament = await updateTournamentRequest(tournamentId, patch)
+        await refreshRoomQueries({ includeTournament: true, updatedTournament })
         toast.success('Tournament settings updated')
       })
       return true
@@ -88,14 +174,18 @@ export default function AuctionControlPage() {
       toast.error(err.message)
       return false
     }
-  }, [isHost, tournamentId, refreshRoomQueries, toast, withBusy])
+  }, [isHost, tournament, tournamentId, refreshRoomQueries, toast, withBusy])
 
   const onSaveFranchises = useCallback(async (patch) => {
     if (!isHost) return false
+    if (sameValue(normalizeFranchiseList(tournament?.franchises || []), normalizeFranchiseList(patch?.franchises || []))) {
+      toast.info('No changes to update')
+      return false
+    }
     try {
       await withBusy(async () => {
-        await updateTournamentRequest(tournamentId, patch)
-        await refreshRoomQueries({ includeTournament: true })
+        const updatedTournament = await updateTournamentRequest(tournamentId, patch)
+        await refreshRoomQueries({ includeTournament: true, updatedTournament })
         toast.success('Team setup updated')
       })
       return true
@@ -103,7 +193,7 @@ export default function AuctionControlPage() {
       toast.error(err.message)
       return false
     }
-  }, [isHost, tournamentId, refreshRoomQueries, toast, withBusy])
+  }, [isHost, tournament?.franchises, tournamentId, refreshRoomQueries, toast, withBusy])
 
   const onCreateLot = useCallback(async (payload) => {
     if (!isHost) return false
@@ -122,6 +212,11 @@ export default function AuctionControlPage() {
 
   const onUpdateLot = useCallback(async (lotId, patch) => {
     if (!isHost) return false
+    const currentLot = (lotsQuery.data || []).find((lot) => lot.id === lotId)
+    if (currentLot && sameValue(normalizeLot(currentLot), normalizeLot(patch))) {
+      toast.info('No changes to update')
+      return false
+    }
     try {
       await withBusy(async () => {
         await updateLotRequest(lotId, patch)
@@ -133,7 +228,7 @@ export default function AuctionControlPage() {
       toast.error(err.message)
       return false
     }
-  }, [isHost, refreshRoomQueries, toast, withBusy])
+  }, [isHost, lotsQuery.data, refreshRoomQueries, toast, withBusy])
 
   const onDeleteLot = useCallback(async (lotId) => {
     if (!isHost) return false

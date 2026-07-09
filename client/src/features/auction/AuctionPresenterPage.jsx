@@ -228,6 +228,17 @@ export default function AuctionPresenterPage() {
       )
     }
 
+    const onSetupUpdated = ({ tournament: updatedTournament }) => {
+      if (updatedTournament) {
+        queryClient.setQueryData(['tournament', tournamentId], updatedTournament)
+        queryClient.setQueriesData({ queryKey: ['auction-room', tournamentId] }, (current) =>
+          current ? { ...current, tournament: updatedTournament } : current,
+        )
+      }
+      queryClient.invalidateQueries({ queryKey: ['auction-room', tournamentId, 'presenter'] })
+      queryClient.invalidateQueries({ queryKey: ['auction-lots', tournamentId, 'presenter'] })
+    }
+
     socket.on('connect', joinRoom)
     socket.on('lot:activated', onLotActivated)
     socket.on('bid:placed', onBidPlaced)
@@ -237,6 +248,7 @@ export default function AuctionPresenterPage() {
     socket.on('auction:resumed', onAuctionResumed)
     socket.on('lot:undone', onLotUndone)
     socket.on('lot:deactivated', onLotDeactivated)
+    socket.on('auction:setup-updated', onSetupUpdated)
 
     return () => {
       socket.emit('room:leave', { tournamentId })
@@ -249,6 +261,7 @@ export default function AuctionPresenterPage() {
       socket.off('auction:resumed', onAuctionResumed)
       socket.off('lot:undone', onLotUndone)
       socket.off('lot:deactivated', onLotDeactivated)
+      socket.off('auction:setup-updated', onSetupUpdated)
     }
   }, [socket, connected, tournamentId, queryClient])
 

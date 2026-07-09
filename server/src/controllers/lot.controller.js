@@ -42,6 +42,16 @@ const PHOTO_RE = /^https?:\/\//i;
 const isOwner = (tournament, user) =>
   user && tournament.ownerId.toString() === user._id.toString();
 
+const broadcastSetupUpdated = (req, tournament, reason = 'lots') => {
+  const io = req.app.get('io');
+  if (!io || !tournament?._id) return;
+  io.to(`tournament:${tournament._id.toString()}`).emit('auction:setup-updated', {
+    reason,
+    tournament: tournament.toDetailJSON(),
+    at: new Date().toISOString(),
+  });
+};
+
 const ensureHost = async (req, res, paramsKey = 'id') => {
   const tournament = await Tournament.findById(req.params[paramsKey]);
   if (!tournament) {
@@ -245,6 +255,7 @@ const createLot = async (req, res, next) => {
       tournamentId: tournament._id,
       createdById: req.user._id,
     });
+    broadcastSetupUpdated(req, tournament, 'lot-created');
     return res.status(201).json({ lot: lot.toJSON() });
   } catch (error) {
     return next(error);
@@ -435,6 +446,7 @@ const updateLot = async (req, res, next) => {
 
     await tournament.save();
     await lot.save();
+    broadcastSetupUpdated(req, tournament, 'lot-updated');
     return res.json({ lot: lot.toJSON() });
   } catch (error) {
     return next(error);
@@ -461,6 +473,7 @@ const deleteLot = async (req, res, next) => {
       }
     }
     await lot.deleteOne();
+    broadcastSetupUpdated(req, tournament, 'lot-deleted');
     return res.json({ deleted: true });
   } catch (error) {
     return next(error);

@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useParams, Link } from 'react-router-dom'
-import { useQuery } from '@tanstack/react-query'
+import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { motion, useReducedMotion } from 'framer-motion'
 import { ArrowLeft } from 'lucide-react'
 import { useSocket } from '../../lib/socket'
@@ -16,6 +16,7 @@ export default function SpectatorRoomPage() {
   const { id: tournamentId } = useParams()
   const { user } = useAuth()
   const { socket, connected } = useSocket()
+  const queryClient = useQueryClient()
   const reduceMotion = useReducedMotion()
 
   // Server-side snapshot — drives the initial render. After mount,
@@ -189,6 +190,17 @@ export default function SpectatorRoomPage() {
       ].slice(0, 30))
     }
 
+    const handleSetupUpdated = ({ tournament: updatedTournament }) => {
+      if (updatedTournament) {
+        queryClient.setQueryData(['tournament', tournamentId], updatedTournament)
+        queryClient.setQueryData(['auction-room', tournamentId], (current) =>
+          current ? { ...current, tournament: updatedTournament } : current,
+        )
+      }
+      queryClient.invalidateQueries({ queryKey: ['auction-room', tournamentId] })
+      queryClient.invalidateQueries({ queryKey: ['auction-room-probe', tournamentId] })
+    }
+
     // Socket events
     socket.on('connect', handleConnect)
     socket.on('disconnect', handleDisconnect)
@@ -200,6 +212,7 @@ export default function SpectatorRoomPage() {
     socket.on('auction:resumed', handleAuctionResumed)
     socket.on('lot:undone', handleLotUndone)
     socket.on('lot:deactivated', handleLotDeactivated)
+    socket.on('auction:setup-updated', handleSetupUpdated)
 
     return () => {
       socket.emit('room:leave', { tournamentId })
@@ -213,8 +226,9 @@ export default function SpectatorRoomPage() {
       socket.off('auction:resumed', handleAuctionResumed)
       socket.off('lot:undone', handleLotUndone)
       socket.off('lot:deactivated', handleLotDeactivated)
+      socket.off('auction:setup-updated', handleSetupUpdated)
     }
-  }, [socket, connected, tournamentId])
+  }, [socket, connected, tournamentId, queryClient])
 
   const tournament = snapshotQuery.data?.tournament
 
