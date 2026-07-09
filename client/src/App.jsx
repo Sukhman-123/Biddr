@@ -12,6 +12,7 @@ import AppShell from './components/AppShell'
 import AuctionRoomPage from './features/auction/AuctionRoomPage'
 import AuctionControlPage from './features/auction/AuctionControlPage'
 import SpectatorRoomPage from './features/auction/SpectatorRoomPage'
+import AuctionPresenterPage from './features/auction/AuctionPresenterPage'
 import { ToastProvider } from './components/ToastProvider'
 
 function Shell({ children }) {
@@ -46,6 +47,7 @@ function App() {
             <Route path="/tournaments/:id/room" element={<AuthGate><Shell><AuctionRoomPage /></Shell></AuthGate>} />
             <Route path="/tournaments/:id/control-room" element={<AuthGate><Shell><AuctionControlPage /></Shell></AuthGate>} />
             <Route path="/tournaments/:id/watch" element={<AuthGate><Shell><SpectatorRoomPage /></Shell></AuthGate>} />
+            <Route path="/tournaments/:id/presenter" element={<AuthGate><AuctionPresenterPage /></AuthGate>} />
             <Route path="/tournaments/:id/rooms/:lotId" element={<AuthGate><Shell><AuctionRoomPage /></Shell></AuthGate>} />
             <Route path="/profile" element={<AuthGate><Shell><UserProfilePage /></Shell></AuthGate>} />
             <Route path="/squad" element={<AuthGate><Shell><ComingSoon label="Squad" /></Shell></AuthGate>} />
