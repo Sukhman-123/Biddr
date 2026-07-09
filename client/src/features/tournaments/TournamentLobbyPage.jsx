@@ -388,14 +388,17 @@ function TournamentLobbyPage() {
               const roomUrl = liveLot
                 ? `/tournaments/${id}/rooms/${liveLot.id}`
                 : `/tournaments/${id}/room`
+              const viewerUrl = `/tournaments/${id}/watch`
               return (
                 <div className="lobby-live-actions">
-                  <Link to={roomUrl} className="cta-btn">
+                  <Link to={isHost ? roomUrl : viewerUrl} className="cta-btn">
                     <span className="cta-btn-content">
-                      <Gavel size={16} />
-                      {liveLot
-                        ? `Enter the room — ${liveLot.name}`
-                        : 'Enter the auction room'}
+                      {isHost ? <Gavel size={16} /> : <Laptop2 size={16} />}
+                      {isHost
+                        ? liveLot
+                          ? `Enter the room — ${liveLot.name}`
+                          : 'Enter the auction room'
+                        : 'Watch live auction'}
                     </span>
                   </Link>
                   {isHost ? (

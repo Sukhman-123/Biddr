@@ -343,6 +343,12 @@ export default function AuctionRoomPage() {
 
   const tournament = snapshotQuery.data?.tournament
   const isHost = isHostFor(tournament, user)
+
+  useEffect(() => {
+    if (!tournament || isHost || tournament.auctionMode !== 'physical') return
+    navigate(`/tournaments/${tournamentId}/presenter`, { replace: true })
+  }, [isHost, navigate, tournament, tournamentId])
+
   const queuedLots = useMemo(
     () => (lotsQuery.data || []).filter((l) => l.status === 'queued' && l.auctionStatus === 'idle'),
     [lotsQuery.data],
