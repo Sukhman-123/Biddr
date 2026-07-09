@@ -71,6 +71,8 @@ export default function AuctionRoomPage() {
     queryKey: ['auction-room-lots', tournamentId],
     queryFn: () => listTournamentLotsRequest(tournamentId),
     enabled: Boolean(tournamentId),
+    refetchInterval: 5000,
+    refetchOnWindowFocus: true,
   })
 
   // Local mirrors of the live state. We keep the snapshot as the
@@ -678,6 +680,7 @@ export default function AuctionRoomPage() {
           <TeamBudgetSidebar
             franchises={tournament?.franchises || []}
             activeLot={activeLot}
+            lots={lotsQuery.data || []}
             currency={tournament?.currency || 'INR'}
           />
           <BidFeed items={feed} currency={tournament?.currency || 'INR'} />
