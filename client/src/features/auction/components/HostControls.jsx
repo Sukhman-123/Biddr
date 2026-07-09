@@ -446,7 +446,7 @@ function ActiveControls({
             <span className="host-action-icon"><Gavel size={22} /></span>
             <span className="host-action-copy">
               <strong>Sold</strong>
-              <small>Hammer the player to the winning team</small>
+              <small>Hammer winner</small>
             </span>
           </span>
         </button>
@@ -461,7 +461,7 @@ function ActiveControls({
             <span className="host-action-icon"><Ban size={22} /></span>
             <span className="host-action-copy">
               <strong>Unsold</strong>
-              <small>Close this lot with no winner</small>
+              <small>No winner</small>
             </span>
           </span>
         </button>
@@ -476,7 +476,7 @@ function ActiveControls({
             <span className="host-action-icon"><SkipForward size={22} /></span>
             <span className="host-action-copy">
               <strong>Skip / Re-queue</strong>
-              <small>Move this player back into the pool</small>
+              <small>Back to pool</small>
             </span>
           </span>
         </button>
