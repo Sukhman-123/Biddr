@@ -27,9 +27,9 @@ export default function BidControls({
           (franchise?.wallet?.initial || 0) - (franchise?.wallet?.spent || 0)
         const squadSize = (franchise?.squad?.playerIds || []).length
         const maxSquad = franchise?.squad?.maxSize || 11
-        return remaining > 0 && squadSize < maxSquad
+        return remaining >= minBid && squadSize < maxSquad
       }),
-    [franchises],
+    [franchises, minBid],
   )
 
   useEffect(() => {
@@ -62,9 +62,16 @@ export default function BidControls({
     const franchise = franchises?.find(f => f.id === selectedFranchiseId)
     if (!franchise) return false
 
-    // Check wallet (simplified - backend will validate strictly)
-    if (franchise?.wallet?.spent >= franchise?.wallet?.initial) {
-      toast.error('Franchise has insufficient funds')
+    const remaining = (franchise?.wallet?.initial || 0) - (franchise?.wallet?.spent || 0)
+    if (amount > remaining) {
+      toast.error(`Insufficient purse. ${formatPurse(remaining, currency)} remaining.`)
+      return false
+    }
+
+    const squadSize = (franchise?.squad?.playerIds || []).length
+    const maxSquad = franchise?.squad?.maxSize || 11
+    if (squadSize >= maxSquad) {
+      toast.error(`Squad is full (${squadSize}/${maxSquad})`)
       return false
     }
 
@@ -128,6 +135,12 @@ export default function BidControls({
             const remaining = (franchise?.wallet?.initial || 0) - (franchise?.wallet?.spent || 0)
             const squadSize = (franchise?.squad?.playerIds || []).length
             const maxSquad = franchise?.squad?.maxSize || 11
+            const disabledReason =
+              remaining < minBid
+                ? `Needs ${formatPurse(minBid, currency)} to bid`
+                : squadSize >= maxSquad
+                  ? 'Squad full'
+                  : ''
 
             return (
               <button
@@ -135,7 +148,8 @@ export default function BidControls({
                 type="button"
                 className={`bid-controls-franchise ${isSelected ? 'is-selected' : ''} ${isCurrent ? 'is-current' : ''}`}
                 onClick={() => setSelectedFranchiseId(franchise.id)}
-                disabled={busy || remaining <= 0 || squadSize >= maxSquad}
+                disabled={busy || Boolean(disabledReason)}
+                title={disabledReason}
               >
                 <div className="bid-controls-franchise-header">
                   <span className="bid-controls-franchise-name">{franchise.name}</span>
@@ -146,7 +160,7 @@ export default function BidControls({
                     {formatPurse(remaining, currency)} remaining
                   </span>
                   <span className="bid-controls-franchise-squad">
-                    {squadSize}/{maxSquad} squad
+                    {disabledReason || `${squadSize}/${maxSquad} squad`}
                   </span>
                 </div>
               </button>
@@ -166,7 +180,12 @@ export default function BidControls({
                 type="button"
                 className="bid-controls-preset"
                 onClick={() => handleBid(option.amount)}
-                disabled={busy || !selectedFranchiseId}
+                disabled={busy || !selectedFranchiseId || option.amount > (selectedRemaining ?? 0)}
+                title={
+                  selectedRemaining != null && option.amount > selectedRemaining
+                    ? `Insufficient purse: ${formatPurse(selectedRemaining, currency)} remaining`
+                    : undefined
+                }
               >
                 <ArrowUp size={14} />
                 {option.step === 1 ? 'Next bid' : `+${option.step - 1} steps`}
@@ -185,6 +204,7 @@ export default function BidControls({
               placeholder={`Enter amount (min: ${formatPurse(minBid, currency)})`}
               className="bid-controls-input"
               min={minBid}
+              max={selectedRemaining ?? undefined}
               disabled={busy || !selectedFranchiseId}
             />
             <button
@@ -211,7 +231,12 @@ export default function BidControls({
                     toast.error(`Minimum bid is ${formatPurse(minBid, currency)}`)
                   }
                 }}
-                disabled={busy || !selectedFranchiseId || !customAmount}
+                disabled={
+                  busy ||
+                  !selectedFranchiseId ||
+                  !customAmount ||
+                  Number(customAmount) > (selectedRemaining ?? 0)
+                }
               >
                 Place Bid
               </button>
@@ -240,7 +265,12 @@ export default function BidControls({
             type="button"
             className="cta-btn bid-controls-quick-bid"
             onClick={() => handleBid(minBid)}
-            disabled={busy}
+            disabled={busy || minBid > (selectedRemaining ?? 0)}
+            title={
+              selectedRemaining != null && minBid > selectedRemaining
+                ? `Insufficient purse: ${formatPurse(selectedRemaining, currency)} remaining`
+                : undefined
+            }
           >
             Record next bid
           </button>

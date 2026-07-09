@@ -69,6 +69,7 @@ export default function HostControls({
         timerSeconds={timerSeconds}
         franchises={franchises}
         auctionMode={auctionMode}
+        currency={currency}
         onHammer={onHammer}
         onPass={onPass}
         onDeactivate={onDeactivate}
@@ -188,6 +189,7 @@ function ActiveControls({
   timerSeconds,
   franchises,
   auctionMode,
+  currency = 'INR',
   onHammer,
   onPass,
   onDeactivate,
@@ -206,6 +208,23 @@ function ActiveControls({
   const isPaused = mode === 'paused'
   const isPhysical = auctionMode === 'physical'
   const toast = useToast()
+  const salePrice = lot?.currentBid > 0 ? lot.currentBid : lot?.basePrice || 0
+  const selectedWinner = (franchises || []).find(
+    (franchise) => franchise.id === selectedHammerWinner,
+  )
+  const selectedWinnerHasWallet =
+    selectedWinner?.wallet && selectedWinner.wallet.initial != null
+  const selectedWinnerRemaining = selectedWinner
+    ? (selectedWinner.wallet?.initial || 0) - (selectedWinner.wallet?.spent || 0)
+    : null
+  const selectedWinnerSquadSize = selectedWinner?.squad?.playerIds?.length || 0
+  const selectedWinnerMaxSquad = selectedWinner?.squad?.maxSize || 11
+  const hammerBlockedReason =
+    selectedWinner && selectedWinnerHasWallet && selectedWinnerRemaining < salePrice
+      ? `Insufficient purse. ${formatPurse(selectedWinnerRemaining, currency)} remaining but price is ${formatPurse(salePrice, currency)}.`
+      : selectedWinner && selectedWinnerSquadSize >= selectedWinnerMaxSquad
+        ? `Squad is full (${selectedWinnerSquadSize}/${selectedWinnerMaxSquad}).`
+        : ''
 
   useEffect(() => {
     setSelectedHammerWinner(lot?.currentBidderFranchiseId || '')
@@ -268,7 +287,8 @@ function ActiveControls({
               ))}
             </select>
             <p className="host-controls-winner-help">
-              Physical auctions stay under your control. Pick the final table winner before you hammer the lot.
+              {hammerBlockedReason ||
+                `Final price: ${formatPurse(salePrice, currency)}. Pick the final table winner before you hammer the lot.`}
             </p>
           </div>
         ) : null}
@@ -280,7 +300,8 @@ function ActiveControls({
               onHammer(selectedHammerWinner || undefined)
               setConfirmHammer(false)
             }}
-            disabled={busy}
+            disabled={busy || Boolean(hammerBlockedReason)}
+            title={hammerBlockedReason || undefined}
           >
             <span className="cta-btn-content">
               <Check size={16} />

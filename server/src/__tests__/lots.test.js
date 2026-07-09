@@ -360,6 +360,38 @@ describe('PATCH /api/lots/:lotId', () => {
     expect(updatedFranchise.squad.playerIds.map(String)).toContain(lot.body.lot.id)
   })
 
+  it('rejects assigning a sold player above the franchise purse', async () => {
+    const token = await getOwnerToken()
+    const create = await createTournament(token, { pursePerFranchise: 100 })
+    const tournament = create.body.tournament
+    const franchise = tournament.franchises[0]
+    const lot = await request(app)
+      .post(`/api/tournaments/${tournament.id}/lots`)
+      .set('Authorization', `Bearer ${token}`)
+      .send({
+        name: 'Too Expensive',
+        style: 'Batsman',
+        country: 'India',
+        basePrice: 100,
+      })
+
+    const patch = await request(app)
+      .patch(`/api/lots/${lot.body.lot.id}`)
+      .set('Authorization', `Bearer ${token}`)
+      .send({
+        status: 'sold',
+        soldToFranchiseId: franchise.id,
+        soldPrice: 250,
+      })
+    expect(patch.status).toBe(400)
+    expect(patch.body.message).toMatch(/insufficient funds/i)
+
+    const detail = await request(app)
+      .get(`/api/tournaments/${tournament.id}`)
+      .set('Authorization', `Bearer ${token}`)
+    expect(detail.body.tournament.franchises[0].wallet.spent).toBe(0)
+  })
+
   it('reassigns a sold player between franchises without double-counting wallet spend', async () => {
     const token = await getOwnerToken()
     const create = await createTournament(token)

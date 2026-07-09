@@ -136,6 +136,17 @@ const hammerLot = async (req, res, next) => {
       winnerFranchiseId = lot.currentBidderFranchiseId;
     }
 
+    const soldPrice = lot.currentBid > 0 ? lot.currentBid : lot.basePrice;
+    if (winnerFranchiseId) {
+      const franchise = tournament.franchises.find(
+        (f) => f._id.toString() === winnerFranchiseId,
+      );
+      const check = canAffordBid(franchise, soldPrice, 0);
+      if (!check.canBid) {
+        throw new HttpError(400, check.reason);
+      }
+    }
+
     const previousLot = cleanLotSnapshot(lot.toObject())
     // Snapshot franchise wallets before the sale so we can restore them on undo.
     const previousWallets = tournament.franchises.map((f) => ({
@@ -147,7 +158,7 @@ const hammerLot = async (req, res, next) => {
     lot.status = 'sold';
     lot.auctionStatus = 'hammered';
     lot.soldToFranchiseId = winnerFranchiseId;
-    lot.soldPrice = lot.currentBid > 0 ? lot.currentBid : lot.basePrice;
+    lot.soldPrice = soldPrice;
 
     // Update the winning franchise's wallet.
     if (winnerFranchiseId) {

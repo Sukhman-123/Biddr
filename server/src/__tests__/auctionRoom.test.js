@@ -318,6 +318,27 @@ describe('POST /api/lots/:lotId/hammer', () => {
     expect(res.body.lot.soldToFranchiseId).toBe(franchises[0].id)
   })
 
+  it('rejects hammering a player above the winning franchise purse', async () => {
+    const token = await getToken('host@example.com', 'Host')
+    const create = await createTournament(token, { pursePerFranchise: 1000000 })
+    const id = create.body.tournament.id
+    const lotRes = await createLot(token, id, {
+      basePrice: 2000000,
+      bidIncrement: 500000,
+    })
+    const lotId = lotRes.body.lot.id
+    await request(app)
+      .post(`/api/tournaments/${id}/lots/${lotId}/activate`)
+      .set('Authorization', `Bearer ${token}`)
+
+    const res = await request(app)
+      .post(`/api/lots/${lotId}/hammer`)
+      .set('Authorization', `Bearer ${token}`)
+      .send({ franchiseId: create.body.tournament.franchises[0].id })
+    expect(res.status).toBe(400)
+    expect(res.body.message).toMatch(/insufficient funds/i)
+  })
+
   it('returns 400 when the franchiseId does not match any franchise on the tournament', async () => {
     const { token, lotId } = await activeLot()
     const res = await request(app)

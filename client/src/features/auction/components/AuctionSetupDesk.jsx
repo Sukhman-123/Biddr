@@ -141,6 +141,13 @@ export default function AuctionSetupDesk({
 
   const selectedFranchise = franchiseDrafts.find((franchise) => franchise.id === selectedFranchiseId)
   const selectedLot = lotDrafts.find((lot) => lot.id === selectedLotId)
+  const selectedPersistedLot = (lots || []).find((lot) => lot.id === selectedLotId)
+  const selectedLotSaleCheck = getLotSaleCheck(
+    selectedLot,
+    selectedPersistedLot,
+    tournament?.franchises || [],
+    settingsDraft.currency,
+  )
   const visibleLots = useMemo(() => {
     const query = playerSearch.trim().toLowerCase()
     return lotDrafts.filter((lot) => {
@@ -707,7 +714,8 @@ export default function AuctionSetupDesk({
                             soldPrice: selectedLot.soldPrice === '' ? null : Number(selectedLot.soldPrice),
                           })
                         }
-                        disabled={busy}
+                        disabled={busy || Boolean(selectedLotSaleCheck.message)}
+                        title={selectedLotSaleCheck.message || undefined}
                       >
                         <Save size={15} />
                         Save
@@ -730,6 +738,7 @@ export default function AuctionSetupDesk({
                     franchises={tournament?.franchises || []}
                     onChange={(patch) => updateLot(selectedLot.id, patch)}
                     showSaleFields
+                    saleCheck={selectedLotSaleCheck}
                   />
                 </>
               ) : (
@@ -743,7 +752,7 @@ export default function AuctionSetupDesk({
   )
 }
 
-function PlayerForm({ lot, busy, franchises, onChange, showSaleFields }) {
+function PlayerForm({ lot, busy, franchises, onChange, showSaleFields, saleCheck }) {
   return (
     <div className="setup-form-grid">
       <label className="setup-field">
@@ -852,11 +861,15 @@ function PlayerForm({ lot, busy, franchises, onChange, showSaleFields }) {
             <input
               type="number"
               min="0"
+              max={saleCheck?.maxPrice ?? undefined}
               value={lot.soldPrice}
               onChange={(event) => onChange({ soldPrice: event.target.value, status: 'sold' })}
               disabled={busy}
             />
           </label>
+          {saleCheck?.message ? (
+            <p className="setup-validation-note setup-field-wide">{saleCheck.message}</p>
+          ) : null}
         </>
       ) : null}
       <label className="setup-field setup-field-wide">
@@ -870,6 +883,46 @@ function PlayerForm({ lot, busy, franchises, onChange, showSaleFields }) {
       </label>
     </div>
   )
+}
+
+function getLotSaleCheck(lot, persistedLot, franchises, currency = 'INR') {
+  if (!lot || lot.status !== 'sold' || !lot.soldToFranchiseId) {
+    return { message: '', maxPrice: null }
+  }
+
+  const franchise = franchises.find((entry) => entry.id === lot.soldToFranchiseId)
+  if (!franchise) {
+    return { message: 'Select a valid team before saving this sold player.', maxPrice: null }
+  }
+
+  const soldPrice = Number(lot.soldPrice || 0)
+  const previousSaleCredit =
+    persistedLot?.status === 'sold' && persistedLot?.soldToFranchiseId === lot.soldToFranchiseId
+      ? Number(persistedLot?.soldPrice || 0)
+      : 0
+  const remaining =
+    (franchise.wallet?.initial || 0) - (franchise.wallet?.spent || 0) + previousSaleCredit
+  const squadSize = franchise.squad?.playerIds?.length || 0
+  const maxSquad = franchise.squad?.maxSize || 11
+  const alreadyAssigned = (franchise.squad?.playerIds || []).some(
+    (playerId) => String(playerId) === lot.id,
+  )
+
+  if (Number.isFinite(soldPrice) && soldPrice > remaining) {
+    return {
+      message: `Insufficient purse. ${formatPurse(remaining, currency)} available, sold price is ${formatPurse(soldPrice, currency)}.`,
+      maxPrice: remaining,
+    }
+  }
+
+  if (!alreadyAssigned && squadSize >= maxSquad) {
+    return {
+      message: `Squad is full (${squadSize}/${maxSquad}).`,
+      maxPrice: remaining,
+    }
+  }
+
+  return { message: '', maxPrice: remaining }
 }
 
 function buildSettingsDraft(tournament) {

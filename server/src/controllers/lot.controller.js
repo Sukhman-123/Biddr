@@ -364,6 +364,33 @@ const updateLot = async (req, res, next) => {
     const previousSoldFranchiseId = lot.status === 'sold' ? lot.soldToFranchiseId : null;
     const previousSoldPrice = lot.status === 'sold' ? lot.soldPrice ?? 0 : 0;
 
+    if (nextStatus === 'sold' && nextSoldToFranchiseId) {
+      const nextFranchise = tournament.franchises.id(nextSoldToFranchiseId);
+      if (nextFranchise) {
+        const currentSpent = nextFranchise.wallet?.spent || 0;
+        const refundablePreviousSale =
+          previousSoldFranchiseId === nextSoldToFranchiseId ? previousSoldPrice : 0;
+        const remainingAfterRefund =
+          (nextFranchise.wallet?.initial || 0) - (currentSpent - refundablePreviousSale);
+        if (nextSoldPrice > remainingAfterRefund) {
+          return res.status(400).json({
+            message: `Insufficient funds. ${remainingAfterRefund.toLocaleString('en-IN')} remaining but sold price is ${Math.round(nextSoldPrice).toLocaleString('en-IN')}.`,
+          });
+        }
+
+        const squadPlayerIds = nextFranchise.squad?.playerIds || [];
+        const alreadyAssigned = squadPlayerIds.some(
+          (playerId) => playerId.toString() === lot._id.toString(),
+        );
+        const maxSquadSize = nextFranchise.squad?.maxSize || 11;
+        if (!alreadyAssigned && squadPlayerIds.length >= maxSquadSize) {
+          return res.status(400).json({
+            message: `Squad is full (${squadPlayerIds.length}/${maxSquadSize}). No more players can be added.`,
+          });
+        }
+      }
+    }
+
     Object.assign(lot, validation.data);
     lot.status = nextStatus;
     lot.soldToFranchiseId = nextSoldToFranchiseId;
