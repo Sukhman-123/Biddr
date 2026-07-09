@@ -1,12 +1,27 @@
 .presenter-stage {
   min-height: 100vh;
-  padding: clamp(18px, 2vw, 34px);
+  padding: clamp(14px, 1.7vw, 28px);
   color: #f7f7fb;
   background:
-    linear-gradient(120deg, rgba(245, 185, 74, 0.12), transparent 30%),
-    radial-gradient(circle at 80% 10%, rgba(53, 180, 255, 0.13), transparent 28%),
+    radial-gradient(circle at 16% 12%, rgba(245, 185, 74, 0.18), transparent 25%),
+    radial-gradient(circle at 82% 8%, rgba(53, 180, 255, 0.16), transparent 26%),
+    linear-gradient(135deg, rgba(255, 255, 255, 0.035), transparent 38%),
     #06080d;
   overflow: hidden;
+  position: relative;
+}
+
+.presenter-stage::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  background-image:
+    linear-gradient(rgba(255, 255, 255, 0.035) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.035) 1px, transparent 1px);
+  background-size: 74px 74px;
+  mask-image: radial-gradient(circle at 50% 22%, black, transparent 72%);
+  opacity: 0.45;
 }
 
 .presenter-stage.is-projecting .presenter-back {
@@ -22,17 +37,20 @@
   display: grid;
   grid-template-columns: auto minmax(0, 1fr) auto;
   align-items: center;
-  gap: 18px;
-  margin-bottom: clamp(18px, 2vw, 30px);
+  gap: 14px;
+  margin-bottom: clamp(12px, 1.6vw, 22px);
+  position: relative;
+  z-index: 1;
 }
 
 .presenter-back,
 .presenter-control,
 .presenter-live {
-  min-height: 44px;
-  border-radius: 12px;
+  min-height: 40px;
+  border-radius: 999px;
   border: 1px solid rgba(255, 255, 255, 0.12);
-  background: rgba(255, 255, 255, 0.06);
+  background: rgba(16, 19, 28, 0.7);
+  backdrop-filter: blur(14px);
   color: #dfe5f2;
   display: inline-flex;
   align-items: center;
@@ -48,7 +66,7 @@
 }
 
 .presenter-back {
-  width: 44px;
+  width: 40px;
 }
 
 .presenter-control {
@@ -89,22 +107,24 @@
 .presenter-code {
   display: block;
   color: #f6c66a;
-  font-size: 13px;
+  font-size: 11px;
   font-weight: 900;
   letter-spacing: 0.14em;
   text-transform: uppercase;
 }
 
 .presenter-topbar h1 {
-  margin: 4px 0 0;
-  font-size: clamp(28px, 3vw, 54px);
+  margin: 2px 0 0;
+  font-size: clamp(24px, 2.3vw, 42px);
   line-height: 1;
 }
 
 .presenter-main {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(320px, 0.32fr);
-  gap: clamp(16px, 2vw, 28px);
+  grid-template-columns: minmax(0, 1fr) minmax(300px, 0.3fr);
+  gap: clamp(12px, 1.5vw, 22px);
+  position: relative;
+  z-index: 1;
 }
 
 .presenter-lot,
@@ -113,29 +133,45 @@
 .presenter-loading,
 .presenter-error {
   border: 1px solid rgba(255, 255, 255, 0.1);
-  background: rgba(18, 22, 31, 0.9);
-  box-shadow: 0 28px 70px rgba(0, 0, 0, 0.28);
+  background:
+    linear-gradient(145deg, rgba(255, 255, 255, 0.06), rgba(255, 255, 255, 0.025)),
+    rgba(13, 16, 24, 0.84);
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.24);
+  backdrop-filter: blur(18px);
 }
 
 .presenter-lot {
-  min-height: clamp(460px, 58vh, 680px);
-  border-radius: 28px;
-  padding: clamp(22px, 3vw, 46px);
+  min-height: clamp(360px, 49vh, 560px);
+  border-radius: 24px;
+  padding: clamp(18px, 2.4vw, 34px);
   display: grid;
   align-content: space-between;
-  gap: 32px;
+  gap: 22px;
+  overflow: hidden;
+  position: relative;
+}
+
+.presenter-lot::after {
+  content: '';
+  position: absolute;
+  inset: auto -10% -34% 30%;
+  height: 52%;
+  background: radial-gradient(circle, rgba(245, 185, 74, 0.18), transparent 62%);
+  pointer-events: none;
 }
 
 .presenter-player {
   display: grid;
-  grid-template-columns: clamp(150px, 16vw, 260px) minmax(0, 1fr);
+  grid-template-columns: clamp(118px, 12vw, 190px) minmax(0, 1fr);
   align-items: center;
-  gap: clamp(22px, 3vw, 42px);
+  gap: clamp(18px, 2.4vw, 32px);
+  position: relative;
+  z-index: 1;
 }
 
 .presenter-photo {
   aspect-ratio: 1;
-  border-radius: 28px;
+  border-radius: 24px;
   background:
     linear-gradient(145deg, rgba(245, 185, 74, 0.18), rgba(57, 89, 134, 0.16)),
     #101625;
@@ -151,7 +187,7 @@
 }
 
 .presenter-photo span {
-  font-size: clamp(72px, 8vw, 140px);
+  font-size: clamp(58px, 6.6vw, 108px);
   font-weight: 950;
   color: #ffc75b;
 }
@@ -161,65 +197,75 @@
   align-items: center;
   gap: 8px;
   color: #47e68e;
-  font-size: clamp(14px, 1.2vw, 18px);
+  font-size: clamp(12px, 1vw, 15px);
   font-weight: 900;
   letter-spacing: 0.12em;
   text-transform: uppercase;
+  width: fit-content;
+  padding: 8px 11px;
+  border-radius: 999px;
+  background: rgba(71, 230, 142, 0.1);
+  border: 1px solid rgba(71, 230, 142, 0.22);
 }
 
 .presenter-player-copy h2 {
-  margin: 12px 0 8px;
-  font-size: clamp(58px, 7vw, 122px);
-  line-height: 0.95;
-  max-width: 11ch;
+  margin: 12px 0 6px;
+  font-size: clamp(42px, 5.4vw, 88px);
+  line-height: 0.98;
+  max-width: 13ch;
+  letter-spacing: -0.055em;
 }
 
 .presenter-player-copy p {
   margin: 0;
   color: #aeb5c6;
-  font-size: clamp(22px, 2vw, 34px);
+  font-size: clamp(17px, 1.5vw, 25px);
   font-weight: 700;
 }
 
 .presenter-bid-board {
   display: grid;
   grid-template-columns: 1.4fr 1fr 1fr;
-  gap: 14px;
+  gap: 10px;
+  position: relative;
+  z-index: 1;
 }
 
 .presenter-bid-card {
-  min-height: 138px;
-  padding: 22px;
-  border-radius: 20px;
+  min-height: 104px;
+  padding: 17px;
+  border-radius: 18px;
   border: 1px solid rgba(255, 255, 255, 0.1);
-  background: rgba(255, 255, 255, 0.05);
+  background: rgba(2, 6, 14, 0.28);
   display: grid;
   align-content: center;
-  gap: 8px;
+  gap: 7px;
 }
 
 .presenter-bid-card.is-current {
   border-color: rgba(245, 185, 74, 0.42);
-  background: rgba(245, 185, 74, 0.13);
+  background:
+    linear-gradient(135deg, rgba(245, 185, 74, 0.18), rgba(245, 185, 74, 0.05)),
+    rgba(245, 185, 74, 0.08);
 }
 
 .presenter-bid-card span,
 .presenter-panel-label {
   color: #959dad;
-  font-size: 13px;
+  font-size: 11px;
   font-weight: 900;
   letter-spacing: 0.12em;
   text-transform: uppercase;
 }
 
 .presenter-bid-card strong {
-  font-size: clamp(28px, 3vw, 58px);
+  font-size: clamp(23px, 2.35vw, 44px);
   line-height: 1;
 }
 
 .presenter-bid-card.is-current strong {
   color: #ffc75b;
-  font-size: clamp(48px, 5vw, 88px);
+  font-size: clamp(38px, 4vw, 68px);
 }
 
 .presenter-side {
@@ -231,8 +277,8 @@
 .presenter-leader,
 .presenter-next-up,
 .presenter-feed {
-  border-radius: 22px;
-  padding: 20px;
+  border-radius: 20px;
+  padding: 16px;
 }
 
 .presenter-timer {
@@ -243,7 +289,7 @@
 }
 
 .presenter-timer span {
-  font-size: clamp(42px, 5vw, 76px);
+  font-size: clamp(32px, 3.8vw, 58px);
   font-weight: 950;
   line-height: 1;
 }
@@ -258,13 +304,13 @@
 }
 
 .presenter-leader strong {
-  font-size: clamp(26px, 2.6vw, 42px);
+  font-size: clamp(22px, 2.1vw, 34px);
   line-height: 1.05;
 }
 
 .presenter-leader span:last-child {
   color: #aeb5c6;
-  font-size: 17px;
+  font-size: 14px;
   font-weight: 700;
 }
 
@@ -277,13 +323,13 @@
 }
 
 .presenter-next-up strong {
-  font-size: clamp(22px, 2vw, 34px);
+  font-size: clamp(19px, 1.7vw, 28px);
   line-height: 1.05;
 }
 
 .presenter-next-up span:last-child {
   color: #aeb5c6;
-  font-size: 16px;
+  font-size: 13px;
   font-weight: 800;
 }
 
@@ -299,10 +345,10 @@
 }
 
 .presenter-feed-item {
-  padding: 12px;
-  border-radius: 14px;
+  padding: 10px 11px;
+  border-radius: 12px;
   background: rgba(255, 255, 255, 0.05);
-  border-left: 4px solid rgba(255, 255, 255, 0.18);
+  border-left: 3px solid rgba(255, 255, 255, 0.18);
 }
 
 .presenter-feed-item.is-bid {
@@ -320,29 +366,31 @@
 
 .presenter-feed-item strong {
   color: #ffffff;
-  font-size: 15px;
+  font-size: 13px;
 }
 
 .presenter-feed-item span {
   color: #aeb5c6;
   margin-top: 3px;
-  font-size: 14px;
+  font-size: 12px;
 }
 
 .presenter-teams {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
-  gap: 10px;
-  margin-top: clamp(16px, 2vw, 28px);
+  grid-template-columns: repeat(auto-fit, minmax(168px, 1fr));
+  gap: 9px;
+  margin-top: clamp(12px, 1.5vw, 20px);
+  position: relative;
+  z-index: 1;
 }
 
 .presenter-team {
-  min-height: 86px;
-  border-radius: 18px;
-  padding: 14px;
+  min-height: 74px;
+  border-radius: 16px;
+  padding: 12px;
   display: grid;
   grid-template-columns: auto minmax(0, 1fr);
-  gap: 8px 10px;
+  gap: 7px 9px;
   align-items: center;
 }
 
@@ -352,14 +400,14 @@
 }
 
 .presenter-team-swatch {
-  width: 12px;
-  height: 44px;
+  width: 10px;
+  height: 40px;
   border-radius: 999px;
   grid-row: span 3;
 }
 
 .presenter-team strong {
-  font-size: 17px;
+  font-size: 15px;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -370,7 +418,7 @@
   align-items: center;
   gap: 6px;
   color: #aeb5c6;
-  font-size: 14px;
+  font-size: 12px;
   font-weight: 800;
 }
 
@@ -378,17 +426,17 @@
 .presenter-result,
 .presenter-loading,
 .presenter-error {
-  min-height: 60vh;
+  min-height: 46vh;
   display: grid;
   place-items: center;
   text-align: center;
-  border-radius: 28px;
+  border-radius: 24px;
 }
 
 .presenter-result {
   align-self: stretch;
-  padding: clamp(28px, 4vw, 62px);
-  gap: 16px;
+  padding: clamp(24px, 3vw, 48px);
+  gap: 12px;
   background:
     radial-gradient(circle at 50% 0%, rgba(82, 240, 154, 0.22), transparent 36%),
     linear-gradient(145deg, rgba(82, 240, 154, 0.12), rgba(245, 185, 74, 0.06)),
@@ -427,7 +475,7 @@
 
 .presenter-result span {
   color: #52f09a;
-  font-size: clamp(18px, 2vw, 30px);
+  font-size: clamp(15px, 1.6vw, 24px);
   font-weight: 950;
   letter-spacing: 0.2em;
   text-transform: uppercase;
@@ -443,28 +491,34 @@
 
 .presenter-result h2 {
   margin: 0;
-  font-size: clamp(58px, 8vw, 138px);
-  line-height: 0.92;
-  max-width: 10ch;
+  font-size: clamp(46px, 6.3vw, 104px);
+  line-height: 0.96;
+  max-width: 12ch;
+  letter-spacing: -0.055em;
 }
 
 .presenter-result strong {
   color: #ffc75b;
-  font-size: clamp(52px, 7vw, 118px);
+  font-size: clamp(42px, 5.8vw, 94px);
   line-height: 0.92;
 }
 
 .presenter-result p {
   margin: 0;
   color: #c4cad8;
-  font-size: clamp(20px, 2.4vw, 36px);
+  font-size: clamp(17px, 1.9vw, 28px);
   font-weight: 800;
 }
 
 .presenter-waiting {
   align-self: center;
   justify-self: center;
-  gap: 14px;
+  gap: 11px;
+  padding: clamp(28px, 4vw, 52px);
+  background:
+    radial-gradient(circle at 50% 12%, rgba(245, 185, 74, 0.14), transparent 46%),
+    rgba(255, 255, 255, 0.025);
+  width: 100%;
 }
 
 .presenter-waiting svg {
@@ -474,13 +528,14 @@
 .presenter-waiting h2,
 .presenter-error h1 {
   margin: 0;
-  font-size: clamp(40px, 5vw, 82px);
+  font-size: clamp(32px, 4vw, 64px);
+  letter-spacing: -0.04em;
 }
 
 .presenter-waiting p {
   margin: 0;
   color: #aeb5c6;
-  font-size: clamp(18px, 2vw, 28px);
+  font-size: clamp(15px, 1.6vw, 22px);
 }
 
 .presenter-loading {
@@ -510,7 +565,11 @@
   }
 
   .presenter-photo {
-    max-width: 260px;
+    max-width: 210px;
+  }
+
+  .presenter-lot {
+    min-height: auto;
   }
 }
 
@@ -526,6 +585,18 @@
 
   .presenter-player-copy h2 {
     max-width: none;
-    font-size: 42px;
+    font-size: 38px;
+  }
+
+  .presenter-bid-board {
+    gap: 8px;
+  }
+
+  .presenter-bid-card {
+    min-height: 88px;
+  }
+
+  .presenter-control span {
+    display: none;
   }
 }
