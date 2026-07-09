@@ -10,10 +10,8 @@ const TEMPLATE_COLUMNS = [
   'basePrice',
   'photoUrl',
   'set',
-  // bidIncrement is optional. The host can set it per-lot or in bulk;
-  // if it's missing on a lot, the server refuses to activate that lot
-  // until the host sets it. See /Users/onehash/.claude/plans/spicy-greeting-hickey.md
-  // (total-host-control invariant #6).
+  // bidIncrement is optional. The host can set it per lot or use the
+  // tournament default bid increment when activating the lot.
   'bidIncrement',
 ];
 
@@ -149,9 +147,8 @@ const validateRow = (row, rowNumber) => {
     return { ok: false, message: 'set must be 60 characters or fewer' };
   }
 
-  // bidIncrement is optional. Empty / missing means "host hasn't set
-  // it" — keep the field null so the activate endpoint refuses to
-  // bring the lot to the floor until the host decides a value.
+  // bidIncrement is optional. Empty / missing means this lot inherits
+  // the tournament default when it is activated.
   let bidIncrement = null;
   if (row.bidIncrement !== undefined && row.bidIncrement !== null && row.bidIncrement !== '') {
     const parsed = Number(row.bidIncrement);

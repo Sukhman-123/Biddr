@@ -238,13 +238,14 @@ describe('POST /api/tournaments/:id/lots/:lotId/activate', () => {
     expect(res.body.message).toMatch(/auctioneer/i)
   })
 
-  it('returns 400 when bidIncrement is not set (host must decide)', async () => {
+  it('uses the tournament default when bidIncrement is not set on the lot', async () => {
     const { token, tournamentId, lotId } = await freshHostAndLot(null)
     const res = await request(app)
       .post(`/api/tournaments/${tournamentId}/lots/${lotId}/activate`)
       .set('Authorization', `Bearer ${token}`)
-    expect(res.status).toBe(400)
-    expect(res.body.message).toMatch(/bidIncrement/)
+    expect(res.status).toBe(200)
+    expect(res.body.lot.auctionStatus).toBe('active')
+    expect(res.body.lot.bidIncrement).toBe(1000)
   })
 
   it('returns 400 when the lot is already active', async () => {

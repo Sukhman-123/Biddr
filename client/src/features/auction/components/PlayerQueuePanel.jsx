@@ -103,11 +103,11 @@ export default function PlayerQueuePanel({ lots, onSelectLot, busy, currency = '
                     <Clock size={12} />
                     Base {formatPurse(featuredLot.basePrice, currency, { compact: true })}
                   </span>
-                  {featuredLot.bidIncrement != null && (
-                    <span className="queue-badge">
-                      Min +{formatPurse(featuredLot.bidIncrement, currency, { compact: true })}
-                    </span>
-                  )}
+                  <span className="queue-badge">
+                    {featuredLot.bidIncrement != null
+                      ? `Min +${formatPurse(featuredLot.bidIncrement, currency, { compact: true })}`
+                      : 'Uses default increment'}
+                  </span>
                 </div>
               </div>
               <button
@@ -175,11 +175,11 @@ export default function PlayerQueuePanel({ lots, onSelectLot, busy, currency = '
                     <Clock size={12} />
                     Base {formatPurse(lot.basePrice, currency, { compact: true })}
                   </span>
-                  {lot.bidIncrement != null && (
-                    <span className="queue-badge">
-                      Min +{formatPurse(lot.bidIncrement, currency, { compact: true })}
-                    </span>
-                  )}
+                  <span className="queue-badge">
+                    {lot.bidIncrement != null
+                      ? `Min +${formatPurse(lot.bidIncrement, currency, { compact: true })}`
+                      : 'Uses default increment'}
+                  </span>
                 </div>
                 <button
                   type="button"

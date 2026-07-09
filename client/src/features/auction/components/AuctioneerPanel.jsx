@@ -35,6 +35,8 @@ export default function AuctioneerPanel({
   const isPhysical = auctionMode === 'physical'
   const panelEvents = Array.isArray(recentEvents) ? recentEvents.slice(0, 6) : []
   const franchises = tournament?.franchises || []
+  const defaultBidIncrement = tournament?.settings?.minBidIncrement
+  const hasDefaultBidIncrement = Number.isFinite(defaultBidIncrement) && defaultBidIncrement > 0
   const [selectedLotId, setSelectedLotId] = useState('')
   const [incrementDraft, setIncrementDraft] = useState('')
 
@@ -43,7 +45,8 @@ export default function AuctioneerPanel({
     return queuedLots.find((lot) => lot.id === selectedLotId) || queuedLots[0] || null
   }, [queuedLots, selectedLotId])
 
-  const selectedLotNeedsIncrement = Boolean(selectedLot && selectedLot.bidIncrement == null)
+  const selectedLotNeedsIncrement = Boolean(selectedLot && selectedLot.bidIncrement == null && !hasDefaultBidIncrement)
+  const selectedLotIncrement = selectedLot?.bidIncrement ?? defaultBidIncrement
   const currentLeader = activeLot
     ? franchises.find((franchise) => franchise.id === activeLot.currentBidderFranchiseId) ?? null
     : null
@@ -186,13 +189,15 @@ export default function AuctioneerPanel({
                     {formatPurse(selectedLot.basePrice, tournament?.currency || 'INR')} ·{' '}
                     {selectedLot.bidIncrement != null
                       ? `increment ${formatPurse(selectedLot.bidIncrement, tournament?.currency || 'INR', { compact: true })}`
-                      : 'bid increment still needed'}
+                      : hasDefaultBidIncrement
+                        ? `uses default ${formatPurse(defaultBidIncrement, tournament?.currency || 'INR', { compact: true })}`
+                        : 'bid increment still needed'}
                   </p>
                 </div>
                 <span
                   className={`auctioneer-panel-tag ${selectedLotNeedsIncrement ? 'is-warning' : 'is-ready'}`}
                 >
-                  {selectedLotNeedsIncrement ? 'Needs increment' : 'Ready for floor'}
+                  {selectedLotNeedsIncrement ? 'Needs increment' : selectedLot.bidIncrement == null ? 'Uses default' : 'Ready for floor'}
                 </span>
               </div>
 
@@ -215,7 +220,9 @@ export default function AuctioneerPanel({
                           {lot.style} · {formatPurse(lot.basePrice, tournament?.currency || 'INR', { compact: true })}
                           {lot.bidIncrement != null
                             ? ` · +${formatPurse(lot.bidIncrement, tournament?.currency || 'INR', { compact: true })}`
-                            : ' · increment needed'}
+                            : hasDefaultBidIncrement
+                              ? ` · default +${formatPurse(defaultBidIncrement, tournament?.currency || 'INR', { compact: true })}`
+                              : ' · increment needed'}
                         </span>
                       </span>
                     </button>
@@ -225,26 +232,26 @@ export default function AuctioneerPanel({
 
               <div className="auctioneer-panel-increment-editor">
                 <label className="auctioneer-panel-increment-field">
-                  <span>Bid increment</span>
+                  <span>Player bid increment</span>
                   <input
                     type="number"
                     min="0"
                     step="1"
                     value={incrementDraft}
                     onChange={(event) => setIncrementDraft(event.target.value)}
-                    placeholder="500000"
+                    placeholder={hasDefaultBidIncrement ? `Default ${defaultBidIncrement}` : '500000'}
                     disabled={busy}
                   />
                 </label>
 
                 <div className="auctioneer-panel-inline-summary">
                   <span className="auctioneer-panel-copy">
-                    Save auction settings for this selected lot before bringing it to the floor.
+                    Leave blank to use the tournament default, or save a custom increment for this player.
                   </span>
                   <span className="auctioneer-panel-inline-value">
-                    {selectedLot.bidIncrement != null || incrementDraft.trim()
+                    {incrementDraft.trim() || selectedLotIncrement
                       ? `Floor call ${formatPurse(
-                          Number(incrementDraft || selectedLot.bidIncrement || 0),
+                          Number(incrementDraft || selectedLotIncrement || 0),
                           tournament?.currency || 'INR',
                           { compact: true },
                         )}`

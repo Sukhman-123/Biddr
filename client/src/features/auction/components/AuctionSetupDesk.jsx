@@ -319,14 +319,15 @@ export default function AuctionSetupDesk({
               />
             </label>
             <label className="setup-field">
-              <span>Min bid increment</span>
+              <span>Default bid increment</span>
               <input
                 type="number"
-                min="0"
+                min="1"
                 value={settingsDraft.minBidIncrement}
                 onChange={(event) => setSettingsDraft((current) => ({ ...current, minBidIncrement: event.target.value }))}
                 disabled={busy}
               />
+              <small>Used for every player unless an individual player has a custom increment.</small>
             </label>
             <label className="setup-field">
               <span>Auto extend seconds</span>
@@ -609,6 +610,7 @@ export default function AuctionSetupDesk({
                 lot={newLotDraft}
                 busy={busy}
                 currency={settingsDraft.currency}
+                defaultBidIncrement={settingsDraft.minBidIncrement}
                 franchises={tournament?.franchises || []}
                 onChange={(patch) => setNewLotDraft((current) => ({ ...current, ...patch }))}
                 showSaleFields={false}
@@ -621,7 +623,9 @@ export default function AuctionSetupDesk({
                     ...newLotDraft,
                     basePrice: Number(newLotDraft.basePrice || 0),
                     bidIncrement:
-                      newLotDraft.bidIncrement === '' ? null : Number(newLotDraft.bidIncrement),
+                      newLotDraft.bidIncrement === ''
+                        ? Number(settingsDraft.minBidIncrement || 0)
+                        : Number(newLotDraft.bidIncrement),
                   })
                   if (created) {
                     setNewLotDraft(makeNewLotDraft())
@@ -735,6 +739,7 @@ export default function AuctionSetupDesk({
                     lot={selectedLot}
                     busy={busy}
                     currency={settingsDraft.currency}
+                    defaultBidIncrement={settingsDraft.minBidIncrement}
                     franchises={tournament?.franchises || []}
                     onChange={(patch) => updateLot(selectedLot.id, patch)}
                     showSaleFields
@@ -752,7 +757,7 @@ export default function AuctionSetupDesk({
   )
 }
 
-function PlayerForm({ lot, busy, franchises, onChange, showSaleFields, saleCheck }) {
+function PlayerForm({ lot, busy, franchises, onChange, showSaleFields, saleCheck, defaultBidIncrement }) {
   return (
     <div className="setup-form-grid">
       <label className="setup-field">
@@ -807,14 +812,16 @@ function PlayerForm({ lot, busy, franchises, onChange, showSaleFields, saleCheck
         />
       </label>
       <label className="setup-field">
-        <span>Bid increment</span>
+        <span>Player bid increment</span>
         <input
           type="number"
           min="0"
           value={lot.bidIncrement}
           onChange={(event) => onChange({ bidIncrement: event.target.value })}
           disabled={busy}
+          placeholder={defaultBidIncrement ? `Default ${defaultBidIncrement}` : 'Uses tournament default'}
         />
+        <small>Leave blank to use the tournament default.</small>
       </label>
       {showSaleFields ? (
         <>

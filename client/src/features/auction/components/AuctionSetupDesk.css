@@ -208,6 +208,12 @@
   letter-spacing: 0.08em;
 }
 
+.setup-field small {
+  color: #8d93a5;
+  font-size: 11px;
+  line-height: 1.35;
+}
+
 .setup-field input,
 .setup-field select {
   width: 100%;

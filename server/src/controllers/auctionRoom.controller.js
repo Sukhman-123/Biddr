@@ -42,9 +42,8 @@ const broadcast = (req, tournamentId, event, payload) => {
 //
 // Validation: lot must belong to the tournament and must be in
 // `idle` (i.e. not already on the floor, not already hammered).
-// `bidIncrement` is required to be set by the host before a lot
-// can go on the floor — the server refuses to silently invent a
-// value (total-host-control invariant #6).
+// `bidIncrement` can be set per lot. If it is blank, the tournament's
+// default bid increment is applied before the lot goes on the floor.
 const activateLot = async (req, res, next) => {
   try {
     const { id: tournamentId, lotId } = req.params;
@@ -63,14 +62,17 @@ const activateLot = async (req, res, next) => {
         `Lot is not idle (current auctionStatus: ${lot.auctionStatus})`,
       );
     }
-    if (lot.bidIncrement == null) {
+    const defaultBidIncrement = tournament.settings?.minBidIncrement;
+    const effectiveBidIncrement = lot.bidIncrement ?? defaultBidIncrement;
+    if (!Number.isFinite(effectiveBidIncrement) || effectiveBidIncrement <= 0) {
       throw new HttpError(
         400,
-        'Auctioneer must set bidIncrement on this lot before activating it',
+        'Auctioneer must set a default bid increment before activating lots',
       );
     }
 
     lot.auctionStatus = 'active';
+    lot.bidIncrement = effectiveBidIncrement;
     lot.currentBid = lot.basePrice;
     lot.currentBidAt = new Date();
     await lot.save();

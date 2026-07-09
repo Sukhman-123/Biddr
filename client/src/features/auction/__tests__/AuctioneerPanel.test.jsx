@@ -108,4 +108,33 @@ describe('AuctioneerPanel', () => {
       expect(onActivateNext).toHaveBeenCalledWith('l1')
     })
   })
+
+  it('lets the auctioneer activate a lot that uses the default bid increment', () => {
+    const onActivateNext = vi.fn()
+
+    render(
+      <AuctioneerPanel
+        tournament={{
+          ...tournament,
+          settings: { minBidIncrement: 500000 },
+        }}
+        activeLot={null}
+        queuedLots={[{ id: 'l1', name: 'Hardik', style: 'All-rounder', basePrice: 2000000, bidIncrement: null }]}
+        undoAvailable={false}
+        connected
+        busy={false}
+        recentEvents={[]}
+        onActivateNext={onActivateNext}
+        onPause={vi.fn()}
+        onResume={vi.fn()}
+        onUndo={vi.fn()}
+        onDeactivate={vi.fn()}
+        onOpenEndAuction={vi.fn()}
+      />,
+    )
+
+    expect(screen.getAllByText(/uses default/i).length).toBeGreaterThan(0)
+    fireEvent.click(screen.getByRole('button', { name: /bring hardik/i }))
+    expect(onActivateNext).toHaveBeenCalledWith('l1')
+  })
 })

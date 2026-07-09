@@ -156,7 +156,9 @@ function IdlePicker({ queuedLots, busy, currency, canUndo, onActivate, onUndo })
                   <span className="host-picker-name">{l.name}</span>
                   <span className="host-picker-sub">
                     {l.style} · {l.country} · base {l.basePrice != null ? formatPurse(l.basePrice, currency, { compact: true }) : '—'}
-                    {l.bidIncrement != null ? ` · +${formatPurse(l.bidIncrement, currency, { compact: true })}` : ' · +—'}
+                    {l.bidIncrement != null
+                      ? ` · +${formatPurse(l.bidIncrement, currency, { compact: true })}`
+                      : ' · default increment'}
                   </span>
                   {pick === l.id ? <Check size={16} className="host-picker-tick" /> : null}
                 </li>
