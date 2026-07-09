@@ -551,6 +551,7 @@ const undoLastAction = async (req, res, next) => {
     return res.status(200).json({
       action: { ...action, reverted: true },
       lot: revertedLot ? revertedLot.toJSON() : null,
+      undoAvailable: depth(tournamentId) > 0,
     });
   } catch (error) {
     if (error instanceof HttpError) return res.status(error.status).json({ message: error.message });

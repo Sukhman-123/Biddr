@@ -63,9 +63,26 @@ export default function AuctionControlPage() {
   const [busy, setBusy] = useState(false)
   const [timerSeconds, setTimerSeconds] = useState(0)
 
+  const refreshRoomQueries = useCallback(
+    async ({ includeTournament = false } = {}) => {
+      const invalidations = [
+        queryClient.invalidateQueries({ queryKey: ['auction-room-lots', tournamentId] }),
+        queryClient.invalidateQueries({ queryKey: ['auction-room', tournamentId, lotId] }),
+      ]
+      if (includeTournament) {
+        invalidations.push(
+          queryClient.invalidateQueries({ queryKey: ['tournament', tournamentId] }),
+        )
+      }
+      await Promise.all(invalidations)
+    },
+    [queryClient, tournamentId, lotId],
+  )
+
   useEffect(() => {
     if (snapshotQuery.data) {
       setActiveLot(snapshotQuery.data.activeLot)
+      setFeed(mapRecentBidsToFeed(snapshotQuery.data.recentBids, snapshotQuery.data.activeLot))
       setUndoAvailable(Boolean(snapshotQuery.data.undoAvailable))
       lastUndoLotIdRef.current =
         snapshotQuery.data.lastUndoLotId ?? snapshotQuery.data.activeLot?.id ?? null
@@ -108,7 +125,7 @@ export default function AuctionControlPage() {
           ...current,
         ].slice(0, 30),
       )
-      queryClient.invalidateQueries({ queryKey: ['auction-room-lots', tournamentId] })
+      refreshRoomQueries()
     }
 
     const onLotHammered = ({ lot, by, at }) => {
@@ -133,7 +150,7 @@ export default function AuctionControlPage() {
       toast.success(
         `${lot.name} sold${lot.soldPrice ? ` for ${formatPurse(lot.soldPrice, snapshotQuery.data?.tournament?.currency || 'INR')}` : ''}`,
       )
-      queryClient.invalidateQueries({ queryKey: ['auction-room-lots', tournamentId] })
+      refreshRoomQueries({ includeTournament: true })
     }
 
     const onLotPassed = ({ lot, by, at }) => {
@@ -153,7 +170,7 @@ export default function AuctionControlPage() {
           ...current,
         ].slice(0, 30),
       )
-      queryClient.invalidateQueries({ queryKey: ['auction-room-lots', tournamentId] })
+      refreshRoomQueries()
     }
 
     const onBidPlaced = ({ lot, franchise, amount, by, at }) => {
@@ -214,7 +231,7 @@ export default function AuctionControlPage() {
         ].slice(0, 30),
       )
       toast.info('Last action undone')
-      queryClient.invalidateQueries({ queryKey: ['auction-room-lots', tournamentId] })
+      refreshRoomQueries({ includeTournament: true })
     }
 
     const onLotDeactivated = ({ at }) => {
@@ -225,7 +242,7 @@ export default function AuctionControlPage() {
         [{ id: `deactivated-${at}`, type: 'deactivated', actor: 'Auctioneer', at }, ...current].slice(0, 30),
       )
       toast.info('Lot returned to queue')
-      queryClient.invalidateQueries({ queryKey: ['auction-room-lots', tournamentId] })
+      refreshRoomQueries()
     }
 
     if (socket.connected) onConnect()
@@ -254,7 +271,7 @@ export default function AuctionControlPage() {
         joinedRef.current = false
       }
     }
-  }, [socket, connected, tournamentId, toast, queryClient, snapshotQuery.data?.tournament?.currency])
+  }, [socket, connected, tournamentId, toast, refreshRoomQueries, snapshotQuery.data?.tournament?.currency])
 
   const tournament = snapshotQuery.data?.tournament
   const isHost = isHostFor(tournament, user)
@@ -292,20 +309,20 @@ export default function AuctionControlPage() {
         setActiveLot(lot)
         lastUndoLotIdRef.current = lot.id
       }
-      await queryClient.invalidateQueries({ queryKey: ['auction-room-lots', tournamentId] })
+      await refreshRoomQueries()
     } catch (err) {
       toast.error(err.message)
     } finally {
       setBusy(false)
     }
-  }, [isHost, activeLot, tournamentId, toast, queryClient])
+  }, [isHost, activeLot, tournamentId, toast, refreshRoomQueries])
 
   const onSaveBidIncrement = useCallback(async (lotId, bidIncrement) => {
     if (!isHost) return false
     setBusy(true)
     try {
       await updateLotRequest(lotId, { bidIncrement })
-      await queryClient.invalidateQueries({ queryKey: ['auction-room-lots', tournamentId] })
+      await refreshRoomQueries()
       toast.success('Bid increment saved')
       return true
     } catch (err) {
@@ -314,37 +331,53 @@ export default function AuctionControlPage() {
     } finally {
       setBusy(false)
     }
-  }, [isHost, queryClient, toast, tournamentId])
+  }, [isHost, refreshRoomQueries, toast])
 
   const onHammer = useCallback(async (franchiseId) => {
     if (!isHost || !activeLot) return
     setBusy(true)
     try {
-      await hammerLotRequest(activeLot.id, franchiseId ? { franchiseId } : {})
+      const lot = await hammerLotRequest(activeLot.id, franchiseId ? { franchiseId } : {})
+      if (lot) {
+        setActiveLot(null)
+        setUndoAvailable(true)
+        lastUndoLotIdRef.current = lot.id
+      }
+      await refreshRoomQueries({ includeTournament: true })
     } catch (err) {
       toast.error(err.message)
     } finally {
       setBusy(false)
     }
-  }, [isHost, activeLot, toast])
+  }, [isHost, activeLot, toast, refreshRoomQueries])
 
   const onPass = useCallback(async () => {
     if (!isHost || !activeLot) return
     setBusy(true)
     try {
-      await passLotRequest(activeLot.id)
+      const lot = await passLotRequest(activeLot.id)
+      if (lot) {
+        setActiveLot(null)
+        setUndoAvailable(true)
+        lastUndoLotIdRef.current = lot.id
+      }
+      await refreshRoomQueries()
     } catch (err) {
       toast.error(err.message)
     } finally {
       setBusy(false)
     }
-  }, [isHost, activeLot, toast])
+  }, [isHost, activeLot, toast, refreshRoomQueries])
 
   const onPause = useCallback(async () => {
     if (!isHost || !activeLot) return
     setBusy(true)
     try {
-      await pauseLotRequest(activeLot.id)
+      const lot = await pauseLotRequest(activeLot.id)
+      if (lot) {
+        setActiveLot(lot)
+        lastUndoLotIdRef.current = lot.id
+      }
       toast.info('Auction paused')
     } catch (err) {
       toast.error(err.message)
@@ -357,7 +390,11 @@ export default function AuctionControlPage() {
     if (!isHost || !activeLot) return
     setBusy(true)
     try {
-      await resumeLotRequest(activeLot.id)
+      const lot = await resumeLotRequest(activeLot.id)
+      if (lot) {
+        setActiveLot(lot)
+        lastUndoLotIdRef.current = lot.id
+      }
       toast.info('Auction resumed')
     } catch (err) {
       toast.error(err.message)
@@ -371,27 +408,36 @@ export default function AuctionControlPage() {
     if (!isHost || !targetLotId || !undoAvailable) return
     setBusy(true)
     try {
-      await undoLastActionRequest(targetLotId)
+      const result = await undoLastActionRequest(targetLotId)
+      const lot = result?.lot
+      setActiveLot(lot && ['active', 'paused'].includes(lot.auctionStatus) ? lot : null)
+      setUndoAvailable(Boolean(result?.undoAvailable))
+      lastUndoLotIdRef.current = lot?.id ?? result?.action?.lotId ?? null
+      await refreshRoomQueries({ includeTournament: true })
       toast.success('Action undone')
     } catch (err) {
       toast.error(err.message)
     } finally {
       setBusy(false)
     }
-  }, [isHost, activeLot, toast, undoAvailable])
+  }, [isHost, activeLot, toast, undoAvailable, refreshRoomQueries])
 
   const onDeactivate = useCallback(async () => {
     if (!isHost || !activeLot) return
     setBusy(true)
     try {
       await deactivateLotRequest(activeLot.id)
+      setActiveLot(null)
+      setUndoAvailable(false)
+      lastUndoLotIdRef.current = null
+      await refreshRoomQueries()
       toast.success('Lot returned to queue')
     } catch (err) {
       toast.error(err.message)
     } finally {
       setBusy(false)
     }
-  }, [isHost, activeLot, toast])
+  }, [isHost, activeLot, toast, refreshRoomQueries])
 
   const onEndAuction = useCallback(async () => {
     if (!isHost || endBusy) return
@@ -417,7 +463,12 @@ export default function AuctionControlPage() {
     if (!isHost || !activeLot) return
     setBusy(true)
     try {
-      await placeBidRequest(activeLot.id, { franchiseId, amount })
+      const lot = await placeBidRequest(activeLot.id, { franchiseId, amount })
+      if (lot) {
+        setActiveLot(lot)
+        setUndoAvailable(true)
+        lastUndoLotIdRef.current = lot.id
+      }
       toast.success('Bid placed')
     } catch (err) {
       toast.error(err.message)
@@ -512,6 +563,7 @@ export default function AuctionControlPage() {
             onUndo={onUndo}
             onRaisePaddle={() => {}}
             onPlaceBid={onPlaceBid}
+            currentUserId={user?.id}
           />
         </div>
         <aside className="auction-room-right" aria-label="Auction event feed">
@@ -544,4 +596,20 @@ function RoomSkeleton() {
       <div className="skel" style={{ height: 220, borderRadius: 18 }} />
     </div>
   )
+}
+
+function mapRecentBidsToFeed(recentBids = [], activeLot = null) {
+  if (!Array.isArray(recentBids)) return []
+  return recentBids
+    .slice()
+    .reverse()
+    .map((bid, index) => ({
+      id: `${activeLot?.id || 'snapshot'}-bid-${bid.at || index}`,
+      type: 'bid',
+      actor: bid.userFullName || bid.franchiseName || 'Bidder',
+      lotName: activeLot?.name || 'Current lot',
+      franchiseName: bid.franchiseName,
+      amount: bid.amount,
+      at: bid.at,
+    }))
 }

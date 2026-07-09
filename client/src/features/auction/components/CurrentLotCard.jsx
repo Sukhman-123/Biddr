@@ -1,4 +1,4 @@
-import { Gavel, Play, Check, X, User } from 'lucide-react'
+import { Gavel, User } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 import HostControls from './HostControls'
 import { formatPurse } from '../../tournaments/tournament.utils'
@@ -6,27 +6,32 @@ import './CurrentLotCard.css'
 
 // PaddleBar — visible only to franchise owners during a live lot.
 // Lets them raise their paddle on their franchise without leaving the room.
-function PaddleBar({ lot, isHost, franchises, onRaisePaddle, currency }) {
-  let user = null
-  try {
-    user = require('../../../features/auth/useAuth').useAuth().user
-  } catch (_) {
-    // No AuthProvider — silently skip
-  }
+function PaddleBar({
+  lot,
+  isHost,
+  franchises,
+  onRaisePaddle,
+  currency,
+  currentUserId,
+  auctionMode,
+}) {
+  if (auctionMode !== 'remote') return null
+
   const myFranchise = franchises?.find((f) =>
-    (f.members || []).some((m) => m.userId === user?.id),
+    (f.members || []).some((m) => m.userId === currentUserId),
   )
 
   if (!myFranchise || isHost) return null
 
   const isOwner = (myFranchise.members || []).some(
-    (m) => m.userId === user?.id && m.role === 'owner',
+    (m) => m.userId === currentUserId && m.role === 'owner',
   )
 
   if (!isOwner) return null
 
   const currentBidder = lot.currentBidderFranchiseId === myFranchise.id
   const nextBid = (lot.currentBid || lot.basePrice) + (lot.bidIncrement || 0)
+  const isLiveBidding = lot.auctionStatus === 'active'
 
   return (
     <div className="paddle-bar">
@@ -39,10 +44,11 @@ function PaddleBar({ lot, isHost, franchises, onRaisePaddle, currency }) {
       </div>
       <button
         className="paddle-bar-btn"
-        onClick={() => onRaisePaddle(myFranchise.id, nextBid)}
+        onClick={() => isLiveBidding && onRaisePaddle(myFranchise.id, nextBid)}
+        disabled={!isLiveBidding || currentBidder}
         aria-label={`Raise paddle for ${myFranchise.name}`}
       >
-        Raise Paddle
+        {isLiveBidding ? 'Raise Paddle' : 'Paused'}
       </button>
     </div>
   )
@@ -75,6 +81,7 @@ export default function CurrentLotCard({
   onUndo,
   onRaisePaddle,
   onPlaceBid,
+  currentUserId,
 }) {
   return (
     <div className="current-lot-card">
@@ -144,6 +151,8 @@ export default function CurrentLotCard({
                 franchises={franchises}
                 onRaisePaddle={onRaisePaddle}
                 currency={currency}
+                currentUserId={currentUserId}
+                auctionMode={auctionMode}
               />
             )}
 
@@ -156,6 +165,7 @@ export default function CurrentLotCard({
                 franchises={franchises}
                 auctionMode={auctionMode}
                 currency={currency}
+                canUndo={canUndo}
                 onHammer={onHammer}
                 onPass={onPass}
                 onPause={onPause}

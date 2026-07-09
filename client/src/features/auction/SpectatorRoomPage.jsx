@@ -5,7 +5,6 @@ import { motion, useReducedMotion } from 'framer-motion'
 import { ArrowLeft } from 'lucide-react'
 import { useSocket } from '../../lib/socket'
 import { useAuth } from '../auth/useAuth'
-import { formatPurse } from '../tournaments/tournament.utils'
 import { fetchRoomSnapshotRequest } from './auctionRoom.api'
 import CurrentLotCard from './components/CurrentLotCard'
 import PaddlesRail from './components/PaddlesRail'
@@ -36,7 +35,7 @@ export default function SpectatorRoomPage() {
   useEffect(() => {
     if (snapshotQuery.data) {
       setActiveLot(snapshotQuery.data.activeLot)
-      setFeed(snapshotQuery.data.recentBids || [])
+      setFeed(mapRecentBidsToFeed(snapshotQuery.data.recentBids, snapshotQuery.data.activeLot))
     }
   }, [snapshotQuery.data])
 
@@ -97,7 +96,7 @@ export default function SpectatorRoomPage() {
           type: 'hammered',
           actor: by?.fullName || franchise?.name || 'Auctioneer',
           lotName: lot?.name,
-          amount,
+          amount: amount ?? lot?.soldPrice ?? lot?.currentBid,
           at,
         },
         ...current,
@@ -275,12 +274,15 @@ export default function SpectatorRoomPage() {
             onUndo={() => {}}
             onRaisePaddle={() => {}}
             onPlaceBid={() => {}}
+            currentUserId={user?.id}
           />
           {/* PaddlesRail for spectators to see who's bidding */}
           <PaddlesRail
             franchises={tournament?.franchises || []}
             activeLot={activeLot}
             auctionMode={tournament?.auctionMode || 'remote'}
+            currentUserId={user?.id}
+            isHost={false}
             currency={tournament?.currency || 'INR'}
             onPaddleClick={() => {}}
           />
@@ -296,4 +298,20 @@ export default function SpectatorRoomPage() {
       </motion.section>
     </main>
   )
+}
+
+function mapRecentBidsToFeed(recentBids = [], activeLot = null) {
+  if (!Array.isArray(recentBids)) return []
+  return recentBids
+    .slice()
+    .reverse()
+    .map((bid, index) => ({
+      id: `${activeLot?.id || 'snapshot'}-bid-${bid.at || index}`,
+      type: 'bid',
+      actor: bid.userFullName || bid.franchiseName || 'Bidder',
+      lotName: activeLot?.name || 'Current lot',
+      franchiseName: bid.franchiseName,
+      amount: bid.amount,
+      at: bid.at,
+    }))
 }

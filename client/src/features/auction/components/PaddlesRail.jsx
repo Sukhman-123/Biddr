@@ -9,6 +9,8 @@ export default function PaddlesRail({
   franchises,
   activeLot,
   auctionMode,
+  currentUserId,
+  isHost = false,
   onPaddleClick,
   currency = 'INR',
 }) {
@@ -26,6 +28,7 @@ export default function PaddlesRail({
   const leadingFranchise = franchises.find(f => f.id === currentBidder)
   const baseIncrement = activeLot?.bidIncrement ?? 1000000
   const isActive = Boolean(activeLot)
+  const isLiveBidding = activeLot?.auctionStatus === 'active'
 
   return (
     <div className="paddles-rail" aria-label="Franchise paddles">
@@ -36,6 +39,8 @@ export default function PaddlesRail({
             ? 'Inactive until a lot is on the floor'
             : auctionMode === 'physical'
               ? 'Auctioneer records bids from the floor. Paddles stay visual for table awareness only.'
+              : !isLiveBidding
+                ? 'Bidding is paused by the auctioneer.'
               : `Leading bid increment: ${formatPurse(baseIncrement, currency, { compact: true })}. Click to bid the next amount.`
           }
         </span>
@@ -64,14 +69,17 @@ export default function PaddlesRail({
         {franchises.map((f) => {
           const color = f.colorHex || '#f5b94a'
           const isLeading = f.id === currentBidder
-          const canBid = !isLeading && auctionMode === 'remote'
+          const isOwner = (f.members || []).some(
+            (member) => member.userId === currentUserId && member.role === 'owner',
+          )
+          const canBid = !isHost && isLiveBidding && !isLeading && auctionMode === 'remote' && isOwner
 
           return (
             <motion.button
               key={f.id}
               type="button"
               className={`paddle ${isActive ? 'is-active' : 'is-inactive'} ${isLeading ? 'is-leading' : ''}`}
-              onClick={() => isActive && onPaddleClick?.(f, activeLot.currentBid + baseIncrement)}
+              onClick={() => canBid && onPaddleClick?.(f, activeLot.currentBid + baseIncrement)}
               disabled={!isActive || !canBid}
               style={{ '--paddle-color': color }}
               role="listitem"
@@ -96,6 +104,9 @@ export default function PaddlesRail({
                     Next {formatPurse(activeLot.currentBid + baseIncrement, currency, { compact: true })}
                   </span>
                 )}
+                {!canBid && auctionMode === 'remote' && isLiveBidding && !isLeading && !isHost ? (
+                  <span className="paddle-bid-hint">Owner only</span>
+                ) : null}
               </span>
             </motion.button>
           )

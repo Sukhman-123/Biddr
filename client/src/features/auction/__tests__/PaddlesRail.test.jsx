@@ -13,8 +13,8 @@ vi.mock('framer-motion', () => ({
 }))
 
 const franchises = [
-  { id: 'f1', name: 'Mumbai', colorHex: '#004ba0' },
-  { id: 'f2', name: 'Chennai', colorHex: '#f7c200' },
+  { id: 'f1', name: 'Mumbai', colorHex: '#004ba0', members: [{ userId: 'u1', role: 'owner' }] },
+  { id: 'f2', name: 'Chennai', colorHex: '#f7c200', members: [{ userId: 'u2', role: 'owner' }] },
 ]
 
 describe('PaddlesRail', () => {
@@ -43,8 +43,10 @@ describe('PaddlesRail', () => {
           currentBid: 2500000,
           bidIncrement: 500000,
           currentBidderFranchiseId: 'f1',
+          auctionStatus: 'active',
         }}
         auctionMode="remote"
+        currentUserId="u2"
         onPaddleClick={onPaddleClick}
       />,
     )
@@ -62,8 +64,10 @@ describe('PaddlesRail', () => {
           currentBid: 2500000,
           bidIncrement: 500000,
           currentBidderFranchiseId: 'f1',
+          auctionStatus: 'active',
         }}
         auctionMode="remote"
+        currentUserId="u2"
         currency="USD"
         onPaddleClick={vi.fn()}
       />,
@@ -71,5 +75,59 @@ describe('PaddlesRail', () => {
 
     expect(screen.getByText(/\$2,500,000/)).toBeInTheDocument()
     expect(screen.getByText(/\$3\.0m/i)).toBeInTheDocument()
+  })
+
+  it('does not let non-owners bid for another franchise', async () => {
+    const user = userEvent.setup()
+    const onPaddleClick = vi.fn()
+
+    render(
+      <PaddlesRail
+        franchises={franchises}
+        activeLot={{
+          currentBid: 2500000,
+          bidIncrement: 500000,
+          currentBidderFranchiseId: 'f1',
+          auctionStatus: 'active',
+        }}
+        auctionMode="remote"
+        currentUserId="u3"
+        onPaddleClick={onPaddleClick}
+      />,
+    )
+
+    const chennaiPaddle = screen.getByRole('listitem', { name: /bid next amount for chennai/i })
+    expect(chennaiPaddle).toBeDisabled()
+    expect(screen.getAllByText(/owner only/i).length).toBeGreaterThan(0)
+
+    await user.click(chennaiPaddle)
+    expect(onPaddleClick).not.toHaveBeenCalled()
+  })
+
+  it('blocks bidding while the auctioneer has paused the lot', async () => {
+    const user = userEvent.setup()
+    const onPaddleClick = vi.fn()
+
+    render(
+      <PaddlesRail
+        franchises={franchises}
+        activeLot={{
+          currentBid: 2500000,
+          bidIncrement: 500000,
+          currentBidderFranchiseId: 'f1',
+          auctionStatus: 'paused',
+        }}
+        auctionMode="remote"
+        currentUserId="u2"
+        onPaddleClick={onPaddleClick}
+      />,
+    )
+
+    expect(screen.getByText(/bidding is paused/i)).toBeInTheDocument()
+    const chennaiPaddle = screen.getByRole('listitem', { name: /bid next amount for chennai/i })
+    expect(chennaiPaddle).toBeDisabled()
+
+    await user.click(chennaiPaddle)
+    expect(onPaddleClick).not.toHaveBeenCalled()
   })
 })

@@ -75,7 +75,7 @@ export default function HostControls({
         onPause={onPause}
         onResume={onResume}
         onUndo={onUndo}
-        onPlaceBid={onPlaceBid}
+        canUndo={canUndo}
       />
     </div>
   )
@@ -194,7 +194,7 @@ function ActiveControls({
   onPause,
   onResume,
   onUndo,
-  onPlaceBid,
+  canUndo,
 }) {
   const [confirmHammer, setConfirmHammer] = useState(false)
   const [confirmPass, setConfirmPass] = useState(false)
@@ -229,9 +229,9 @@ function ActiveControls({
           clearInterval(interval)
           setTimerRunning(false)
           if (lot?.currentBid > 0) {
-            toast.warn('Timer expired! Auto-hammer would sell this lot.')
+            toast.warn('Timer expired. Auctioneer must sell, pause, or continue the lot.')
           } else {
-            toast.warn('Timer expired! No bids — mark unsold.')
+            toast.warn('Timer expired. No bids yet — auctioneer must mark unsold or continue.')
           }
           return 0
         }
@@ -480,7 +480,7 @@ function ActiveControls({
           type="button"
           className="cta-btn host-controls-undo"
           onClick={() => setConfirmUndo(true)}
-          disabled={busy}
+          disabled={busy || !canUndo}
         >
           <span className="cta-btn-content">
             <RotateCcw size={16} />
