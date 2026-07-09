@@ -362,14 +362,29 @@ function TournamentLobbyPage() {
                 ? `/tournaments/${id}/rooms/${liveLot.id}`
                 : `/tournaments/${id}/room`
               return (
-                <Link to={roomUrl} className="cta-btn">
-                  <span className="cta-btn-content">
-                    <Gavel size={16} />
-                    {liveLot
-                      ? `Enter the room — ${liveLot.name}`
-                      : 'Enter the auction room'}
-                  </span>
-                </Link>
+                <div className="lobby-live-actions">
+                  <Link to={roomUrl} className="cta-btn">
+                    <span className="cta-btn-content">
+                      <Gavel size={16} />
+                      {liveLot
+                        ? `Enter the room — ${liveLot.name}`
+                        : 'Enter the auction room'}
+                    </span>
+                  </Link>
+                  {isHost ? (
+                    <Link
+                      to={`/tournaments/${id}/presenter`}
+                      className="cta-btn is-secondary"
+                      target="_blank"
+                      rel="noreferrer"
+                    >
+                      <span className="cta-btn-content">
+                        <Laptop2 size={16} />
+                        Presenter view
+                      </span>
+                    </Link>
+                  ) : null}
+                </div>
               )
             }
             if (tournament.status === 'upcoming' && isHost) {

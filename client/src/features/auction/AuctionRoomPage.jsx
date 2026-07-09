@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useParams, Link, useNavigate } from 'react-router-dom'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
-import { ArrowLeft } from 'lucide-react'
+import { ArrowLeft, MonitorUp } from 'lucide-react'
 import { motion, useReducedMotion } from 'framer-motion'
 import { useAuth } from '../auth/useAuth'
 import { useSocket } from '../../lib/socket'
@@ -565,11 +565,21 @@ export default function AuctionRoomPage() {
         tournament={tournament}
         connected={connected}
         onLeave={() => navigate(`/tournaments/${tournamentId}`)}
-        auxActionLabel={isHost ? 'Open admin panel' : undefined}
-        auxActionTone="gold"
-        onAuxAction={
+        auxActions={
           isHost
-            ? () => window.open(`/tournaments/${tournamentId}/control-room`, '_blank', 'noopener,noreferrer')
+            ? [
+                {
+                  label: 'Open admin panel',
+                  tone: 'gold',
+                  onClick: () => window.open(`/tournaments/${tournamentId}/control-room`, '_blank', 'noopener,noreferrer'),
+                },
+                {
+                  label: 'Presenter view',
+                  tone: 'blue',
+                  icon: <MonitorUp size={15} />,
+                  onClick: () => window.open(`/tournaments/${tournamentId}/presenter`, '_blank', 'noopener,noreferrer'),
+                },
+              ]
             : undefined
         }
         showEndAuction={isHost && tournament?.status === 'live'}

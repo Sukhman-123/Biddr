@@ -46,10 +46,19 @@
   transition: background 0.15s ease, color 0.15s ease, opacity 0.15s ease;
 }
 
+.room-topbar-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
 .room-topbar-aux {
   display: inline-flex;
   align-items: center;
   justify-content: center;
+  gap: 6px;
   padding: 8px 14px;
   border-radius: 999px;
   border: 1px solid rgba(255, 255, 255, 0.12);
@@ -74,6 +83,16 @@
 
 .room-topbar-aux.is-gold:hover {
   background: rgba(245, 185, 74, 0.18);
+}
+
+.room-topbar-aux.is-blue {
+  border-color: rgba(112, 180, 255, 0.3);
+  background: rgba(112, 180, 255, 0.1);
+  color: #b9dcff;
+}
+
+.room-topbar-aux.is-blue:hover {
+  background: rgba(112, 180, 255, 0.16);
 }
 
 .room-topbar-end:hover:not(:disabled) {
@@ -143,4 +162,12 @@
 @media (max-width: 720px) {
   .room-topbar { flex-wrap: wrap; }
   .room-topbar-meta { order: 3; width: 100%; }
+  .room-topbar-actions {
+    order: 4;
+    width: 100%;
+    justify-content: stretch;
+  }
+  .room-topbar-aux {
+    flex: 1 1 150px;
+  }
 }

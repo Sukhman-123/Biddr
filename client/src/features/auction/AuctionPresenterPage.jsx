@@ -1,10 +1,10 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { motion, useReducedMotion } from 'framer-motion'
-import { ArrowLeft, CircleDot, Clock3, Gavel, Trophy, Users, Wallet, Wifi, WifiOff } from 'lucide-react'
+import { ArrowLeft, CircleDot, Clock3, Gavel, Maximize2, Minimize2, Trophy, Users, Wallet, Wifi, WifiOff } from 'lucide-react'
 import { useSocket } from '../../lib/socket'
-import { fetchRoomSnapshotRequest } from './auctionRoom.api'
+import { fetchRoomSnapshotRequest, listTournamentLotsRequest } from './auctionRoom.api'
 import { formatPurse } from '../tournaments/tournament.utils'
 import './AuctionPresenterPage.css'
 
@@ -13,9 +13,12 @@ export default function AuctionPresenterPage() {
   const queryClient = useQueryClient()
   const { socket, connected } = useSocket()
   const reduceMotion = useReducedMotion()
+  const stageRef = useRef(null)
   const [activeLot, setActiveLot] = useState(null)
   const [feed, setFeed] = useState([])
+  const [saleMoment, setSaleMoment] = useState(null)
   const [timerSeconds, setTimerSeconds] = useState(0)
+  const [isFullscreen, setIsFullscreen] = useState(false)
 
   const snapshotQuery = useQuery({
     queryKey: ['auction-room', tournamentId, 'presenter'],
@@ -23,11 +26,33 @@ export default function AuctionPresenterPage() {
     enabled: Boolean(tournamentId),
   })
 
+  const lotsQuery = useQuery({
+    queryKey: ['auction-lots', tournamentId, 'presenter'],
+    queryFn: () => listTournamentLotsRequest(tournamentId),
+    enabled: Boolean(tournamentId),
+    staleTime: 5_000,
+  })
+
   useEffect(() => {
     if (!snapshotQuery.data) return
     setActiveLot(snapshotQuery.data.activeLot)
     setFeed(mapRecentBidsToFeed(snapshotQuery.data.recentBids, snapshotQuery.data.activeLot))
   }, [snapshotQuery.data])
+
+  useEffect(() => {
+    const onFullscreenChange = () => {
+      setIsFullscreen(Boolean(document.fullscreenElement))
+    }
+
+    document.addEventListener('fullscreenchange', onFullscreenChange)
+    return () => document.removeEventListener('fullscreenchange', onFullscreenChange)
+  }, [])
+
+  useEffect(() => {
+    if (!saleMoment) return undefined
+    const id = setTimeout(() => setSaleMoment(null), 8000)
+    return () => clearTimeout(id)
+  }, [saleMoment])
 
   useEffect(() => {
     if (!activeLot?.currentBidAt) {
@@ -58,6 +83,8 @@ export default function AuctionPresenterPage() {
     const onLotActivated = ({ lot, by, at }) => {
       if (!lot) return
       setActiveLot(lot)
+      setSaleMoment(null)
+      queryClient.invalidateQueries({ queryKey: ['auction-lots', tournamentId, 'presenter'] })
       setFeed((current) =>
         [
           {
@@ -75,6 +102,7 @@ export default function AuctionPresenterPage() {
     const onBidPlaced = ({ lot, franchise, amount, by, at }) => {
       if (!lot) return
       setActiveLot(lot)
+      setSaleMoment(null)
       setFeed((current) =>
         [
           {
@@ -93,6 +121,14 @@ export default function AuctionPresenterPage() {
 
     const onLotHammered = ({ lot, franchise, amount, by, at }) => {
       setActiveLot(null)
+      setSaleMoment({
+        id: `hammered-${lot?.id || 'lot'}-${at}`,
+        type: 'sold',
+        lotName: lot?.name,
+        franchiseName: franchise?.name,
+        amount: amount ?? lot?.soldPrice ?? lot?.currentBid,
+        at,
+      })
       setFeed((current) =>
         [
           {
@@ -108,10 +144,18 @@ export default function AuctionPresenterPage() {
         ].slice(0, 12),
       )
       queryClient.invalidateQueries({ queryKey: ['auction-room', tournamentId, 'presenter'] })
+      queryClient.invalidateQueries({ queryKey: ['auction-lots', tournamentId, 'presenter'] })
     }
 
     const onLotPassed = ({ lot, by, at }) => {
       setActiveLot(null)
+      setSaleMoment({
+        id: `passed-${lot?.id || 'lot'}-${at}`,
+        type: 'unsold',
+        lotName: lot?.name,
+        at,
+      })
+      queryClient.invalidateQueries({ queryKey: ['auction-lots', tournamentId, 'presenter'] })
       setFeed((current) =>
         [
           {
@@ -150,6 +194,7 @@ export default function AuctionPresenterPage() {
 
     const onLotUndone = ({ action, lot, at }) => {
       setActiveLot(lot && ['active', 'paused'].includes(lot.auctionStatus) ? lot : null)
+      setSaleMoment(null)
       setFeed((current) =>
         [
           {
@@ -163,10 +208,18 @@ export default function AuctionPresenterPage() {
         ].slice(0, 12),
       )
       queryClient.invalidateQueries({ queryKey: ['auction-room', tournamentId, 'presenter'] })
+      queryClient.invalidateQueries({ queryKey: ['auction-lots', tournamentId, 'presenter'] })
     }
 
     const onLotDeactivated = ({ lot, at }) => {
       setActiveLot(null)
+      setSaleMoment({
+        id: `deactivated-${lot?.id || 'lot'}-${at}`,
+        type: 'requeued',
+        lotName: lot?.name,
+        at,
+      })
+      queryClient.invalidateQueries({ queryKey: ['auction-lots', tournamentId, 'presenter'] })
       setFeed((current) =>
         [
           { id: `deactivated-${lot?.id || 'lot'}-${at}`, type: 'deactivated', actor: 'Auctioneer', lotName: lot?.name, at },
@@ -214,6 +267,26 @@ export default function AuctionPresenterPage() {
       }),
     [franchises],
   )
+  const queuedLots = useMemo(
+    () =>
+      (lotsQuery.data || [])
+        .filter((lot) => lot.auctionStatus === 'queued')
+        .sort((a, b) => (a.order || 0) - (b.order || 0)),
+    [lotsQuery.data],
+  )
+  const nextLot = queuedLots[0]
+
+  const toggleFullscreen = async () => {
+    try {
+      if (document.fullscreenElement) {
+        await document.exitFullscreen()
+        return
+      }
+      await stageRef.current?.requestFullscreen?.()
+    } catch {
+      // Fullscreen can be blocked by the browser; presenter still works normally.
+    }
+  }
 
   if (snapshotQuery.isLoading) {
     return (
@@ -235,7 +308,7 @@ export default function AuctionPresenterPage() {
   }
 
   return (
-    <main className="presenter-stage">
+    <main className={`presenter-stage ${isFullscreen ? 'is-projecting' : ''}`} ref={stageRef}>
       <header className="presenter-topbar">
         <Link to={`/tournaments/${tournamentId}`} className="presenter-back" aria-label="Back to lobby">
           <ArrowLeft size={18} />
@@ -244,9 +317,20 @@ export default function AuctionPresenterPage() {
           <span className="presenter-code">{tournament?.shortCode ? `#${tournament.shortCode}` : 'Live auction'}</span>
           <h1>{tournament?.name || 'Auction Presenter'}</h1>
         </div>
-        <div className={`presenter-live ${connected ? 'is-live' : 'is-offline'}`}>
-          {connected ? <Wifi size={18} /> : <WifiOff size={18} />}
-          <span>{connected ? 'Live' : 'Reconnecting'}</span>
+        <div className="presenter-topbar-actions">
+          <button
+            type="button"
+            className="presenter-control"
+            onClick={toggleFullscreen}
+            disabled={document.fullscreenEnabled === false}
+          >
+            {isFullscreen ? <Minimize2 size={18} /> : <Maximize2 size={18} />}
+            <span>{isFullscreen ? 'Exit fullscreen' : 'Fullscreen'}</span>
+          </button>
+          <div className={`presenter-live ${connected ? 'is-live' : 'is-offline'}`}>
+            {connected ? <Wifi size={18} /> : <WifiOff size={18} />}
+            <span>{connected ? 'Live' : 'Reconnecting'}</span>
+          </div>
         </div>
       </header>
 
@@ -298,6 +382,8 @@ export default function AuctionPresenterPage() {
                 </div>
               </div>
             </>
+          ) : saleMoment ? (
+            <ResultMoment moment={saleMoment} currency={currency} />
           ) : (
             <div className="presenter-waiting">
               <Gavel size={52} />
@@ -325,6 +411,22 @@ export default function AuctionPresenterPage() {
                 <Trophy size={28} />
                 <strong>Opening call</strong>
                 <span>No leading bid yet</span>
+              </>
+            )}
+          </div>
+          <div className="presenter-next-up">
+            <span className="presenter-panel-label">Next up</span>
+            {nextLot ? (
+              <>
+                <strong>{nextLot.name}</strong>
+                <span>
+                  {nextLot.style} · {formatPurse(nextLot.basePrice, currency, { compact: true })}
+                </span>
+              </>
+            ) : (
+              <>
+                <strong>Queue clear</strong>
+                <span>No queued players left</span>
               </>
             )}
           </div>
@@ -367,6 +469,35 @@ export default function AuctionPresenterPage() {
         })}
       </section>
     </main>
+  )
+}
+
+function ResultMoment({ moment, currency }) {
+  const isSold = moment.type === 'sold'
+  const isUnsold = moment.type === 'unsold'
+  const title = isSold ? 'Sold' : isUnsold ? 'Unsold' : 'Re-queued'
+  const subtitle = isSold
+    ? `${moment.franchiseName || 'Winning team'} wins ${moment.lotName || 'the player'}`
+    : isUnsold
+    ? `${moment.lotName || 'Player'} returns unsold`
+    : `${moment.lotName || 'Player'} will come back later`
+
+  return (
+    <motion.div
+      key={moment.id}
+      className={`presenter-result is-${moment.type}`}
+      initial={{ opacity: 0, scale: 0.94, y: 20 }}
+      animate={{ opacity: 1, scale: 1, y: 0 }}
+      transition={{ duration: 0.32, ease: [0.22, 1, 0.36, 1] }}
+    >
+      <Gavel size={58} />
+      <span>{title}</span>
+      <h2>{moment.lotName || 'Current player'}</h2>
+      {isSold ? (
+        <strong>{formatPurse(moment.amount, currency, { compact: true })}</strong>
+      ) : null}
+      <p>{subtitle}</p>
+    </motion.div>
   )
 }
 

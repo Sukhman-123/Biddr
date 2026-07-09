@@ -8,6 +8,7 @@ export default function TopBar({
   connected,
   showConnection = true,
   onLeave,
+  auxActions,
   auxActionLabel,
   onAuxAction,
   auxActionTone = 'neutral',
@@ -16,6 +17,12 @@ export default function TopBar({
   endDisabledReason,
   onEndAuction,
 }) {
+  const resolvedAuxActions = auxActions?.length
+    ? auxActions
+    : auxActionLabel
+    ? [{ label: auxActionLabel, onClick: onAuxAction, tone: auxActionTone }]
+    : []
+
   return (
     <header className="room-topbar">
       <button
@@ -37,14 +44,20 @@ export default function TopBar({
         </span>
       </div>
 
-      {auxActionLabel ? (
-        <button
-          type="button"
-          className={`room-topbar-aux is-${auxActionTone}`}
-          onClick={onAuxAction}
-        >
-          {auxActionLabel}
-        </button>
+      {resolvedAuxActions.length > 0 ? (
+        <div className="room-topbar-actions">
+          {resolvedAuxActions.map((action) => (
+            <button
+              key={action.label}
+              type="button"
+              className={`room-topbar-aux is-${action.tone || 'neutral'}`}
+              onClick={action.onClick}
+            >
+              {action.icon || null}
+              <span>{action.label}</span>
+            </button>
+          ))}
+        </div>
       ) : null}
 
       {showEndAuction ? (

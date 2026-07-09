@@ -182,6 +182,26 @@
   color: var(--muted);
 }
 
+.lobby-live-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.lobby-live-actions .cta-btn {
+  flex: 1 1 210px;
+}
+
+.lobby-live-actions .cta-btn.is-secondary {
+  background: rgba(112, 180, 255, 0.12);
+  border: 1px solid rgba(112, 180, 255, 0.24);
+  color: #c7e4ff;
+}
+
+.lobby-live-actions .cta-btn.is-secondary:hover {
+  background: rgba(112, 180, 255, 0.18);
+}
+
 .lobby-grid {
   display: grid;
   grid-template-columns: minmax(0, 1.6fr) minmax(280px, 1fr);
