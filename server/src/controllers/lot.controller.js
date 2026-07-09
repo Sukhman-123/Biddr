@@ -308,8 +308,19 @@ const updateLot = async (req, res, next) => {
   try {
     const found = await ensureHostForLot(req, res);
     if (!found) return;
-    const { lot } = found;
-    const { name, style, country, basePrice, photoUrl, set, bidIncrement } = req.body || {};
+    const { lot, tournament } = found;
+    const {
+      name,
+      style,
+      country,
+      basePrice,
+      photoUrl,
+      set,
+      bidIncrement,
+      status,
+      soldToFranchiseId,
+      soldPrice,
+    } = req.body || {};
     const candidate = {
       name: name !== undefined ? name : lot.name,
       style: style !== undefined ? style : lot.style,
@@ -323,7 +334,79 @@ const updateLot = async (req, res, next) => {
     if (!validation.ok) {
       return res.status(400).json({ message: validation.message });
     }
+    const nextStatus = status !== undefined ? status : lot.status;
+    if (!['queued', 'sold', 'unsold'].includes(nextStatus)) {
+      return res.status(400).json({ message: 'status must be queued, sold, or unsold' });
+    }
+    const nextSoldToFranchiseId =
+      nextStatus === 'sold' ? (soldToFranchiseId ?? lot.soldToFranchiseId ?? null) : null;
+    if (nextStatus === 'sold' && !nextSoldToFranchiseId) {
+      return res.status(400).json({ message: 'Pick a franchise before marking a player sold' });
+    }
+    if (
+      nextSoldToFranchiseId &&
+      !(tournament.franchises || []).some(
+        (franchise) => franchise._id.toString() === nextSoldToFranchiseId,
+      )
+    ) {
+      return res.status(400).json({ message: 'Selected franchise no longer exists' });
+    }
+    const nextSoldPrice =
+      nextStatus === 'sold'
+        ? soldPrice !== undefined && soldPrice !== null
+          ? Number(soldPrice)
+          : lot.soldPrice ?? validation.data.basePrice
+        : null;
+    if (nextStatus === 'sold' && (!Number.isFinite(nextSoldPrice) || nextSoldPrice < 0)) {
+      return res.status(400).json({ message: 'soldPrice must be a non-negative number' });
+    }
+
+    const previousSoldFranchiseId = lot.status === 'sold' ? lot.soldToFranchiseId : null;
+    const previousSoldPrice = lot.status === 'sold' ? lot.soldPrice ?? 0 : 0;
+
     Object.assign(lot, validation.data);
+    lot.status = nextStatus;
+    lot.soldToFranchiseId = nextSoldToFranchiseId;
+    lot.soldPrice = nextStatus === 'sold' ? Math.round(nextSoldPrice) : null;
+
+    if (nextStatus === 'sold') {
+      lot.auctionStatus = 'hammered';
+    } else {
+      lot.currentBidderFranchiseId = null;
+      lot.currentBidByUserId = null;
+      lot.currentBidAt = null;
+      lot.currentBid = 0;
+      lot.bidHistory = [];
+      lot.auctionStatus = nextStatus === 'queued' ? 'idle' : 'unsold';
+    }
+
+    if (previousSoldFranchiseId) {
+      const previousFranchise = tournament.franchises.id(previousSoldFranchiseId);
+      if (previousFranchise) {
+        previousFranchise.wallet.spent = Math.max(
+          0,
+          (previousFranchise.wallet.spent || 0) - previousSoldPrice,
+        );
+        previousFranchise.squad.playerIds = (previousFranchise.squad.playerIds || []).filter(
+          (playerId) => playerId.toString() !== lot._id.toString(),
+        );
+      }
+    }
+
+    if (nextStatus === 'sold' && nextSoldToFranchiseId) {
+      const nextFranchise = tournament.franchises.id(nextSoldToFranchiseId);
+      if (nextFranchise) {
+        nextFranchise.wallet.spent = (nextFranchise.wallet.spent || 0) + Math.round(nextSoldPrice);
+        const alreadyAssigned = (nextFranchise.squad.playerIds || []).some(
+          (playerId) => playerId.toString() === lot._id.toString(),
+        );
+        if (!alreadyAssigned) {
+          nextFranchise.squad.playerIds.push(lot._id);
+        }
+      }
+    }
+
+    await tournament.save();
     await lot.save();
     return res.json({ lot: lot.toJSON() });
   } catch (error) {
@@ -335,7 +418,22 @@ const deleteLot = async (req, res, next) => {
   try {
     const found = await ensureHostForLot(req, res);
     if (!found) return;
-    await found.lot.deleteOne();
+    const { lot, tournament } = found;
+
+    if (lot.status === 'sold' && lot.soldToFranchiseId) {
+      const franchise = tournament.franchises.id(lot.soldToFranchiseId);
+      if (franchise) {
+        franchise.wallet.spent = Math.max(
+          0,
+          (franchise.wallet.spent || 0) - (lot.soldPrice ?? 0),
+        );
+        franchise.squad.playerIds = (franchise.squad.playerIds || []).filter(
+          (playerId) => playerId.toString() !== lot._id.toString(),
+        );
+        await tournament.save();
+      }
+    }
+    await lot.deleteOne();
     return res.json({ deleted: true });
   } catch (error) {
     return next(error);

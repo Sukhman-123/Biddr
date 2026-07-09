@@ -248,6 +248,7 @@ const updateTournament = async (req, res, next) => {
       'description',
       'region',
       'coverImage',
+      'currency',
       'pursePerFranchise',
     ];
     for (const field of allowed) {
@@ -302,6 +303,69 @@ const updateTournament = async (req, res, next) => {
       if (typeof s.allowReAuction === 'boolean') {
         tournament.settings.allowReAuction = s.allowReAuction;
       }
+    }
+
+    if (Array.isArray(req.body.franchises)) {
+      const existingById = new Map(
+        (tournament.franchises || []).map((franchise) => [
+          franchise._id.toString(),
+          franchise,
+        ]),
+      )
+
+      tournament.franchises = req.body.franchises
+        .filter((franchise) => franchise && typeof franchise.name === 'string' && franchise.name.trim())
+        .map((franchise) => {
+          const existing =
+            existingById.get(franchise.id) ||
+            existingById.get(franchise._id) ||
+            null
+
+          const initialWallet = Number(
+            franchise.wallet?.initial ?? existing?.wallet?.initial ?? tournament.pursePerFranchise ?? 0,
+          )
+          const spentWallet = Number(
+            franchise.wallet?.spent ?? existing?.wallet?.spent ?? 0,
+          )
+          const maxSize = Number(
+            franchise.squad?.maxSize ?? franchise.maxSquadSize ?? existing?.squad?.maxSize ?? 11,
+          )
+
+          return {
+            _id: existing?._id,
+            name: franchise.name.trim(),
+            city: typeof franchise.city === 'string' ? franchise.city.trim() : '',
+            colorHex:
+              typeof franchise.colorHex === 'string' && franchise.colorHex.startsWith('#')
+                ? franchise.colorHex
+                : existing?.colorHex || '#f5b94a',
+            wallet: {
+              initial: Number.isFinite(initialWallet) && initialWallet >= 0
+                ? Math.round(initialWallet)
+                : existing?.wallet?.initial ?? 0,
+              spent: Number.isFinite(spentWallet) && spentWallet >= 0
+                ? Math.round(spentWallet)
+                : existing?.wallet?.spent ?? 0,
+            },
+            squad: {
+              playerIds: Array.isArray(franchise.squad?.playerIds)
+                ? franchise.squad.playerIds
+                : existing?.squad?.playerIds ?? [],
+              maxSize: Number.isFinite(maxSize) && maxSize > 0
+                ? Math.min(Math.round(maxSize), 30)
+                : existing?.squad?.maxSize ?? 11,
+            },
+            members: Array.isArray(franchise.members)
+              ? franchise.members
+                  .filter((member) => member?.userId)
+                  .map((member) => ({
+                    userId: member.userId,
+                    role: member.role === 'owner' ? 'owner' : 'member',
+                    addedAt: member.addedAt ? new Date(member.addedAt) : new Date(),
+                  }))
+              : existing?.members ?? [],
+          };
+        });
     }
 
     if (

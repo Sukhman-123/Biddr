@@ -6,6 +6,7 @@ import './TopBar.css'
 export default function TopBar({
   tournament,
   connected,
+  showConnection = true,
   onLeave,
   auxActionLabel,
   onAuxAction,
@@ -58,24 +59,26 @@ export default function TopBar({
         </button>
       ) : null}
 
-      <div
-        className={`room-topbar-conn ${connected ? 'is-on' : 'is-off'}`}
-        role="status"
-        aria-live="polite"
-      >
-        {connected ? (
-          <>
-            <CircleDot size={12} className="room-topbar-conn-dot" />
-            <Wifi size={14} />
-            <span>Live</span>
-          </>
-        ) : (
-          <>
-            <WifiOff size={14} />
-            <span>Reconnecting</span>
-          </>
-        )}
-      </div>
+      {showConnection ? (
+        <div
+          className={`room-topbar-conn ${connected ? 'is-on' : 'is-off'}`}
+          role="status"
+          aria-live="polite"
+        >
+          {connected ? (
+            <>
+              <CircleDot size={12} className="room-topbar-conn-dot" />
+              <Wifi size={14} />
+              <span>Live</span>
+            </>
+          ) : (
+            <>
+              <WifiOff size={14} />
+              <span>Reconnecting</span>
+            </>
+          )}
+        </div>
+      ) : null}
     </header>
   )
 }
