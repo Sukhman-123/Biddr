@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Check, X, Play, ChevronDown, Pause, Zap, RotateCcw, Gavel, Ban } from 'lucide-react'
+import { Check, X, Play, ChevronDown, Pause, Zap, RotateCcw, Gavel, Ban, SkipForward, TimerReset } from 'lucide-react'
 import { useToast } from '../../../components/ToastProvider'
 import { formatPurse } from '../../tournaments/tournament.utils'
 import BidControls from './BidControls'
@@ -434,48 +434,59 @@ function ActiveControls({
 
   return (
     <div className="host-controls host-controls-active">
-      {/* Primary actions: Sold / Unsold / Skip */}
-      <div className="host-controls-row host-controls-primary-row">
+      <div className="host-action-dock">
         <button
           type="button"
-          className="cta-btn host-controls-hammer"
+          className="cta-btn host-action-card host-controls-hammer"
           onClick={() => setConfirmHammer(true)}
           disabled={busy}
+          aria-label="Sold"
         >
           <span className="cta-btn-content">
-            <Gavel size={16} />
-            Sold
+            <span className="host-action-icon"><Gavel size={22} /></span>
+            <span className="host-action-copy">
+              <strong>Sold</strong>
+              <small>Hammer the player to the winning team</small>
+            </span>
           </span>
         </button>
         <button
           type="button"
-          className="cta-btn host-controls-pass"
+          className="cta-btn host-action-card host-controls-pass"
           onClick={() => setConfirmPass(true)}
           disabled={busy}
+          aria-label="Unsold"
         >
           <span className="cta-btn-content">
-            <Ban size={16} />
-            Unsold
+            <span className="host-action-icon"><Ban size={22} /></span>
+            <span className="host-action-copy">
+              <strong>Unsold</strong>
+              <small>Close this lot with no winner</small>
+            </span>
           </span>
         </button>
         <button
           type="button"
-          className="cta-btn host-controls-secondary"
+          className="cta-btn host-action-card host-controls-secondary host-controls-skip"
           onClick={() => setConfirmSkip(true)}
           disabled={busy}
+          aria-label="Skip / Re-queue"
         >
           <span className="cta-btn-content">
-            Skip / Re-queue
+            <span className="host-action-icon"><SkipForward size={22} /></span>
+            <span className="host-action-copy">
+              <strong>Skip / Re-queue</strong>
+              <small>Move this player back into the pool</small>
+            </span>
           </span>
         </button>
       </div>
 
-      {/* Secondary controls: Pause / Resume + Undo */}
-      <div className="host-controls-row host-controls-secondary-row">
+      <div className="host-utility-dock">
         {isPaused ? (
           <button
             type="button"
-            className="cta-btn host-controls-resume"
+            className="cta-btn host-utility-btn host-controls-resume"
             onClick={onResume}
             disabled={busy}
           >
@@ -487,7 +498,7 @@ function ActiveControls({
         ) : (
           <button
             type="button"
-            className="cta-btn host-controls-pause"
+            className="cta-btn host-utility-btn host-controls-pause"
             onClick={onPause}
             disabled={busy}
           >
@@ -499,7 +510,7 @@ function ActiveControls({
         )}
         <button
           type="button"
-          className="cta-btn host-controls-undo"
+          className="cta-btn host-utility-btn host-controls-undo"
           onClick={() => setConfirmUndo(true)}
           disabled={busy || !canUndo}
         >
@@ -509,7 +520,9 @@ function ActiveControls({
           </span>
         </button>
         <div className={`host-timer ${timerRunning ? 'is-running' : 'is-paused'} ${countdown <= 10 ? 'is-warn' : ''}`}>
-          ⏱ {countdown}s
+          <TimerReset size={18} />
+          <span>{countdown}s</span>
+          <small>{timerRunning ? 'Live clock' : 'Clock paused'}</small>
         </div>
       </div>
     </div>
