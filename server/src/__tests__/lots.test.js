@@ -324,6 +324,126 @@ describe('PATCH /api/lots/:lotId', () => {
       .send({ name: 'Hacker' })
     expect(patch.status).toBe(403)
   })
+
+  it('assigns a sold player to a franchise and syncs wallet and squad', async () => {
+    const token = await getOwnerToken()
+    const create = await createTournament(token)
+    const tournament = create.body.tournament
+    const franchise = tournament.franchises[0]
+    const lot = await request(app)
+      .post(`/api/tournaments/${tournament.id}/lots`)
+      .set('Authorization', `Bearer ${token}`)
+      .send({
+        name: 'Sold Player',
+        style: 'Batsman',
+        country: 'India',
+        basePrice: 100,
+      })
+
+    const patch = await request(app)
+      .patch(`/api/lots/${lot.body.lot.id}`)
+      .set('Authorization', `Bearer ${token}`)
+      .send({
+        status: 'sold',
+        soldToFranchiseId: franchise.id,
+        soldPrice: 250,
+      })
+    expect(patch.status).toBe(200)
+    expect(patch.body.lot.status).toBe('sold')
+    expect(patch.body.lot.auctionStatus).toBe('hammered')
+
+    const detail = await request(app)
+      .get(`/api/tournaments/${tournament.id}`)
+      .set('Authorization', `Bearer ${token}`)
+    const updatedFranchise = detail.body.tournament.franchises[0]
+    expect(updatedFranchise.wallet.spent).toBe(250)
+    expect(updatedFranchise.squad.playerIds.map(String)).toContain(lot.body.lot.id)
+  })
+
+  it('reassigns a sold player between franchises without double-counting wallet spend', async () => {
+    const token = await getOwnerToken()
+    const create = await createTournament(token)
+    const tournament = create.body.tournament
+    const [firstFranchise, secondFranchise] = tournament.franchises
+    const lot = await request(app)
+      .post(`/api/tournaments/${tournament.id}/lots`)
+      .set('Authorization', `Bearer ${token}`)
+      .send({
+        name: 'Transfer Player',
+        style: 'Bowler',
+        country: 'India',
+        basePrice: 100,
+      })
+
+    await request(app)
+      .patch(`/api/lots/${lot.body.lot.id}`)
+      .set('Authorization', `Bearer ${token}`)
+      .send({
+        status: 'sold',
+        soldToFranchiseId: firstFranchise.id,
+        soldPrice: 250,
+      })
+
+    const reassign = await request(app)
+      .patch(`/api/lots/${lot.body.lot.id}`)
+      .set('Authorization', `Bearer ${token}`)
+      .send({
+        status: 'sold',
+        soldToFranchiseId: secondFranchise.id,
+        soldPrice: 300,
+      })
+    expect(reassign.status).toBe(200)
+
+    const detail = await request(app)
+      .get(`/api/tournaments/${tournament.id}`)
+      .set('Authorization', `Bearer ${token}`)
+    const [updatedFirst, updatedSecond] = detail.body.tournament.franchises
+    expect(updatedFirst.wallet.spent).toBe(0)
+    expect(updatedFirst.squad.playerIds.map(String)).not.toContain(lot.body.lot.id)
+    expect(updatedSecond.wallet.spent).toBe(300)
+    expect(updatedSecond.squad.playerIds.map(String)).toContain(lot.body.lot.id)
+  })
+
+  it('unassigns a sold player when the status is changed back to queued', async () => {
+    const token = await getOwnerToken()
+    const create = await createTournament(token)
+    const tournament = create.body.tournament
+    const franchise = tournament.franchises[0]
+    const lot = await request(app)
+      .post(`/api/tournaments/${tournament.id}/lots`)
+      .set('Authorization', `Bearer ${token}`)
+      .send({
+        name: 'Reset Player',
+        style: 'All-rounder',
+        country: 'India',
+        basePrice: 100,
+      })
+
+    await request(app)
+      .patch(`/api/lots/${lot.body.lot.id}`)
+      .set('Authorization', `Bearer ${token}`)
+      .send({
+        status: 'sold',
+        soldToFranchiseId: franchise.id,
+        soldPrice: 250,
+      })
+
+    const reset = await request(app)
+      .patch(`/api/lots/${lot.body.lot.id}`)
+      .set('Authorization', `Bearer ${token}`)
+      .send({ status: 'queued' })
+    expect(reset.status).toBe(200)
+    expect(reset.body.lot.status).toBe('queued')
+    expect(reset.body.lot.auctionStatus).toBe('idle')
+    expect(reset.body.lot.soldToFranchiseId).toBeNull()
+
+    const detail = await request(app)
+      .get(`/api/tournaments/${tournament.id}`)
+      .set('Authorization', `Bearer ${token}`)
+    const updatedFranchise = detail.body.tournament.franchises[0]
+    expect(updatedFranchise.wallet.spent).toBe(0)
+    expect(updatedFranchise.squad.playerIds.map(String)).not.toContain(lot.body.lot.id)
+  })
 })
 
   describe('POST /api/lots/:lotId/deactivate (skip/requeue)', () => {
@@ -454,6 +574,43 @@ describe('DELETE /api/lots/:lotId', () => {
       .delete(`/api/lots/${lot.body.lot.id}`)
       .set('Authorization', `Bearer ${otherToken}`)
     expect(del.status).toBe(403)
+  })
+
+  it('removes a sold lot from franchise wallet and squad', async () => {
+    const token = await getOwnerToken()
+    const create = await createTournament(token)
+    const tournament = create.body.tournament
+    const franchise = tournament.franchises[0]
+    const lot = await request(app)
+      .post(`/api/tournaments/${tournament.id}/lots`)
+      .set('Authorization', `Bearer ${token}`)
+      .send({
+        name: 'Delete Sold',
+        style: 'Batsman',
+        country: 'India',
+        basePrice: 100,
+      })
+
+    await request(app)
+      .patch(`/api/lots/${lot.body.lot.id}`)
+      .set('Authorization', `Bearer ${token}`)
+      .send({
+        status: 'sold',
+        soldToFranchiseId: franchise.id,
+        soldPrice: 250,
+      })
+
+    const del = await request(app)
+      .delete(`/api/lots/${lot.body.lot.id}`)
+      .set('Authorization', `Bearer ${token}`)
+    expect(del.status).toBe(200)
+
+    const detail = await request(app)
+      .get(`/api/tournaments/${tournament.id}`)
+      .set('Authorization', `Bearer ${token}`)
+    const updatedFranchise = detail.body.tournament.franchises[0]
+    expect(updatedFranchise.wallet.spent).toBe(0)
+    expect(updatedFranchise.squad.playerIds.map(String)).not.toContain(lot.body.lot.id)
   })
 })
 

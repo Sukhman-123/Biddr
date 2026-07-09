@@ -581,12 +581,14 @@ export default function AuctionSetupDesk({
             type="button"
             className="setup-save-btn"
             onClick={async () => {
-              await onCreateLot?.({
+              const created = await onCreateLot?.({
                 ...newLotDraft,
                 basePrice: Number(newLotDraft.basePrice || 0),
                 bidIncrement: newLotDraft.bidIncrement === '' ? null : Number(newLotDraft.bidIncrement),
               })
-              setNewLotDraft(makeNewLotDraft())
+              if (created) {
+                setNewLotDraft(makeNewLotDraft())
+              }
             }}
             disabled={busy || !newLotDraft.name.trim() || !newLotDraft.country.trim() || !newLotDraft.basePrice}
           >

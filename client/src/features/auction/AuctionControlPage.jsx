@@ -76,58 +76,78 @@ export default function AuctionControlPage() {
   }, [])
 
   const onSaveTournament = useCallback(async (patch) => {
-    if (!isHost) return
-    await withBusy(async () => {
-      await updateTournamentRequest(tournamentId, patch)
-      await refreshRoomQueries({ includeTournament: true })
-      toast.success('Tournament settings updated')
-    }).catch((err) => {
+    if (!isHost) return false
+    try {
+      await withBusy(async () => {
+        await updateTournamentRequest(tournamentId, patch)
+        await refreshRoomQueries({ includeTournament: true })
+        toast.success('Tournament settings updated')
+      })
+      return true
+    } catch (err) {
       toast.error(err.message)
-    })
+      return false
+    }
   }, [isHost, tournamentId, refreshRoomQueries, toast, withBusy])
 
   const onSaveFranchises = useCallback(async (patch) => {
-    if (!isHost) return
-    await withBusy(async () => {
-      await updateTournamentRequest(tournamentId, patch)
-      await refreshRoomQueries({ includeTournament: true })
-      toast.success('Team setup updated')
-    }).catch((err) => {
+    if (!isHost) return false
+    try {
+      await withBusy(async () => {
+        await updateTournamentRequest(tournamentId, patch)
+        await refreshRoomQueries({ includeTournament: true })
+        toast.success('Team setup updated')
+      })
+      return true
+    } catch (err) {
       toast.error(err.message)
-    })
+      return false
+    }
   }, [isHost, tournamentId, refreshRoomQueries, toast, withBusy])
 
   const onCreateLot = useCallback(async (payload) => {
-    if (!isHost) return
-    await withBusy(async () => {
-      await createLotRequest(tournamentId, payload)
-      await refreshRoomQueries()
-      toast.success('Player added to the room pool')
-    }).catch((err) => {
+    if (!isHost) return false
+    try {
+      await withBusy(async () => {
+        await createLotRequest(tournamentId, payload)
+        await refreshRoomQueries()
+        toast.success('Player added to the room pool')
+      })
+      return true
+    } catch (err) {
       toast.error(err.message)
-    })
+      return false
+    }
   }, [isHost, tournamentId, refreshRoomQueries, toast, withBusy])
 
   const onUpdateLot = useCallback(async (lotId, patch) => {
-    if (!isHost) return
-    await withBusy(async () => {
-      await updateLotRequest(lotId, patch)
-      await refreshRoomQueries({ includeTournament: true })
-      toast.success('Player updated')
-    }).catch((err) => {
+    if (!isHost) return false
+    try {
+      await withBusy(async () => {
+        await updateLotRequest(lotId, patch)
+        await refreshRoomQueries({ includeTournament: true })
+        toast.success('Player updated')
+      })
+      return true
+    } catch (err) {
       toast.error(err.message)
-    })
+      return false
+    }
   }, [isHost, refreshRoomQueries, toast, withBusy])
 
   const onDeleteLot = useCallback(async (lotId) => {
-    if (!isHost) return
-    await withBusy(async () => {
-      await deleteLotRequest(lotId)
-      await refreshRoomQueries({ includeTournament: true })
-      toast.success('Player removed from the room pool')
-    }).catch((err) => {
+    if (!isHost) return false
+    try {
+      await withBusy(async () => {
+        await deleteLotRequest(lotId)
+        await refreshRoomQueries({ includeTournament: true })
+        toast.success('Player removed from the room pool')
+      })
+      return true
+    } catch (err) {
       toast.error(err.message)
-    })
+      return false
+    }
   }, [isHost, refreshRoomQueries, toast, withBusy])
 
   const onEndAuction = useCallback(async () => {

@@ -312,6 +312,28 @@ const updateTournament = async (req, res, next) => {
           franchise,
         ]),
       )
+      const incomingExistingIds = new Set(
+        req.body.franchises
+          .map((franchise) => franchise?.id || franchise?._id)
+          .filter((idValue) => idValue && existingById.has(String(idValue)))
+          .map((idValue) => String(idValue)),
+      )
+      const removedFranchiseIds = [...existingById.keys()].filter(
+        (franchiseId) => !incomingExistingIds.has(franchiseId),
+      )
+
+      if (removedFranchiseIds.length > 0) {
+        const assignedLot = await Lot.findOne({
+          tournamentId: tournament._id,
+          status: 'sold',
+          soldToFranchiseId: { $in: removedFranchiseIds },
+        }).lean()
+        if (assignedLot) {
+          return res.status(400).json({
+            message: 'Move or unassign sold players before removing this team',
+          });
+        }
+      }
 
       tournament.franchises = req.body.franchises
         .filter((franchise) => franchise && typeof franchise.name === 'string' && franchise.name.trim())

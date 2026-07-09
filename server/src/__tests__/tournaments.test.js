@@ -214,3 +214,57 @@ describe('GET /api/tournaments (visibility)', () => {
     expect(res.status).toBe(403)
   })
 })
+
+describe('PATCH /api/tournaments/:id', () => {
+  it('prevents removing a franchise that still has sold players assigned', async () => {
+    const token = await getToken(app)
+    const create = await request(app)
+      .post('/api/tournaments')
+      .set('Authorization', `Bearer ${token}`)
+      .send({
+        name: 'Franchise Guard League',
+        shortCode: 'FGL',
+        currency: 'INR',
+        pursePerFranchise: 100000000,
+        franchises: [{ name: 'A' }, { name: 'B' }],
+      })
+    const tournament = create.body.tournament
+    const [assignedFranchise, remainingFranchise] = tournament.franchises
+    const lot = await request(app)
+      .post(`/api/tournaments/${tournament.id}/lots`)
+      .set('Authorization', `Bearer ${token}`)
+      .send({
+        name: 'Assigned Player',
+        style: 'Batsman',
+        country: 'India',
+        basePrice: 100,
+      })
+
+    await request(app)
+      .patch(`/api/lots/${lot.body.lot.id}`)
+      .set('Authorization', `Bearer ${token}`)
+      .send({
+        status: 'sold',
+        soldToFranchiseId: assignedFranchise.id,
+        soldPrice: 250,
+      })
+
+    const res = await request(app)
+      .patch(`/api/tournaments/${tournament.id}`)
+      .set('Authorization', `Bearer ${token}`)
+      .send({
+        franchises: [
+          {
+            id: remainingFranchise.id,
+            name: remainingFranchise.name,
+            city: remainingFranchise.city,
+            colorHex: remainingFranchise.colorHex,
+            wallet: remainingFranchise.wallet,
+            squad: remainingFranchise.squad,
+          },
+        ],
+      })
+    expect(res.status).toBe(400)
+    expect(res.body.message).toMatch(/move or unassign sold players/i)
+  })
+})
