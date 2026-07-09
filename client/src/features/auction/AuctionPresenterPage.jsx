@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { motion, useReducedMotion } from 'framer-motion'
-import { ArrowLeft, CircleDot, Clock3, Gavel, Maximize2, Minimize2, Trophy, Users, Wallet, Wifi, WifiOff } from 'lucide-react'
+import { Activity, ArrowLeft, Clock3, Flame, Gavel, Maximize2, Minimize2, Trophy, TrendingUp, Users, Wallet, Wifi, WifiOff } from 'lucide-react'
 import { useSocket } from '../../lib/socket'
 import { fetchRoomSnapshotRequest, listTournamentLotsRequest } from './auctionRoom.api'
 import { formatPurse } from '../tournaments/tournament.utils'
@@ -283,6 +283,22 @@ export default function AuctionPresenterPage() {
       }),
     [franchises],
   )
+  const soldLots = useMemo(
+    () => (lotsQuery.data || []).filter((lot) => lot.status === 'sold'),
+    [lotsQuery.data],
+  )
+  const remainingLots = Math.max(0, (lotsQuery.data || []).length - soldLots.length)
+  const bidWarTeams = useMemo(
+    () =>
+      [...franchises]
+        .sort((a, b) => (b?.wallet?.spent || 0) - (a?.wallet?.spent || 0))
+        .slice(0, 5),
+    [franchises],
+  )
+  const bidHistory = useMemo(
+    () => feed.filter((item) => ['bid', 'hammered'].includes(item.type)).slice(0, 5),
+    [feed],
+  )
   const queuedLots = useMemo(
     () =>
       (lotsQuery.data || [])
@@ -326,14 +342,25 @@ export default function AuctionPresenterPage() {
   return (
     <main className={`presenter-stage ${isFullscreen ? 'is-projecting' : ''}`} ref={stageRef}>
       <header className="presenter-topbar">
-        <Link to={`/tournaments/${tournamentId}`} className="presenter-back" aria-label="Back to lobby">
-          <ArrowLeft size={18} />
-        </Link>
-        <div>
-          <span className="presenter-code">{tournament?.shortCode ? `#${tournament.shortCode}` : 'Live auction'}</span>
+        <div className="presenter-title-block">
+          <Link to={`/tournaments/${tournamentId}`} className="presenter-back" aria-label="Back to lobby">
+            <ArrowLeft size={18} />
+          </Link>
+          <div className="presenter-trophy-mark">
+            <Trophy size={26} />
+          </div>
+          <div>
+            <span className="presenter-code">
+              {tournament?.shortCode ? `#${tournament.shortCode}` : '#Auction'} · Season 1 · Mega auction
+            </span>
           <h1>{tournament?.name || 'Auction Presenter'}</h1>
+          </div>
         </div>
         <div className="presenter-topbar-actions">
+          <div className="presenter-stat-pill">
+            <Users size={18} />
+            <span>{soldLots.length} sold · {remainingLots} remaining</span>
+          </div>
           <button
             type="button"
             className="presenter-control"
@@ -351,53 +378,48 @@ export default function AuctionPresenterPage() {
       </header>
 
       <motion.section
-        className="presenter-main"
+        className="presenter-arena"
         initial={reduceMotion ? false : { opacity: 0, y: 16 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.28, ease: [0.22, 1, 0.36, 1] }}
       >
-        <section className="presenter-lot">
+        <section className="presenter-player-poster">
           {activeLot ? (
-            <>
-              <div className="presenter-player">
-                <div className="presenter-photo">
-                  {activeLot.photoUrl ? (
-                    <img src={activeLot.photoUrl} alt="" />
-                  ) : (
-                    <span>{(activeLot.name || '?').slice(0, 1)}</span>
-                  )}
-                </div>
-                <div className="presenter-player-copy">
-                  <span className="presenter-status">
-                    <CircleDot size={16} />
-                    {activeLot.auctionStatus === 'paused' ? 'Paused on floor' : 'On the floor'}
+            <article className="presenter-poster-card">
+              <div className="presenter-poster-tags">
+                <span>Lot {getLotNumber(activeLot)}</span>
+                <strong>{activeLot.set || 'Player set'}</strong>
+              </div>
+              <div className="presenter-poster-photo">
+                {activeLot.photoUrl ? (
+                  <img src={activeLot.photoUrl} alt="" />
+                ) : (
+                  <span>{getInitials(activeLot.name)}</span>
+                )}
+              </div>
+              <div className="presenter-poster-copy">
+                <p>{activeLot.country || 'Country'} · {activeLot.style || 'Player'}</p>
+                <h2>{activeLot.name}</h2>
+                <div className="presenter-poster-stats">
+                  <span>
+                    <strong>{formatPurse(activeLot.basePrice, currency, { compact: true })}</strong>
+                    Base
                   </span>
-                  <h2>{activeLot.name}</h2>
-                  <p>
-                    {activeLot.style} · {activeLot.country} · {activeLot.set}
-                  </p>
+                  <span>
+                    <strong>
+                      {activeLot.bidIncrement
+                        ? formatPurse(activeLot.bidIncrement, currency, { compact: true })
+                        : 'Host'}
+                    </strong>
+                    Increment
+                  </span>
+                  <span>
+                    <strong>{timerSeconds}s</strong>
+                    Clock
+                  </span>
                 </div>
               </div>
-
-              <div className="presenter-bid-board">
-                <div className="presenter-bid-card is-current">
-                  <span>Current bid</span>
-                  <strong>{formatPurse(activeLot.currentBid || activeLot.basePrice, currency, { compact: true })}</strong>
-                </div>
-                <div className="presenter-bid-card">
-                  <span>Base price</span>
-                  <strong>{formatPurse(activeLot.basePrice, currency, { compact: true })}</strong>
-                </div>
-                <div className="presenter-bid-card">
-                  <span>Increment</span>
-                  <strong>
-                    {activeLot.bidIncrement
-                      ? formatPurse(activeLot.bidIncrement, currency, { compact: true })
-                      : 'Set by host'}
-                  </strong>
-                </div>
-              </div>
-            </>
+            </article>
           ) : saleMoment ? (
             <ResultMoment moment={saleMoment} currency={currency} />
           ) : (
@@ -409,54 +431,89 @@ export default function AuctionPresenterPage() {
           )}
         </section>
 
+        <section className="presenter-bid-stage">
+          <div className="presenter-bid-hero">
+            <span className={`presenter-bid-state ${activeLot?.auctionStatus === 'paused' ? 'is-paused' : ''}`}>
+              <Flame size={17} />
+              {activeLot ? activeLot.auctionStatus === 'paused' ? 'Paused' : 'Bidding open' : saleMoment ? 'Result called' : 'Standby'}
+            </span>
+            <span className="presenter-panel-label">Current highest bid</span>
+            <strong className="presenter-bid-amount">
+              {activeLot
+                ? formatPurse(activeLot.currentBid || activeLot.basePrice, currency, { compact: true })
+                : saleMoment?.amount
+                  ? formatPurse(saleMoment.amount, currency, { compact: true })
+                  : '--'}
+            </strong>
+            <div className="presenter-bid-leader">
+              <TrendingUp size={18} />
+              <strong>{leader?.name || saleMoment?.franchiseName || 'Opening call'}</strong>
+              <span>{leader ? 'leading' : activeLot ? 'no bid yet' : 'waiting'}</span>
+            </div>
+            <p>
+              {activeLot
+                ? `Base ${formatPurse(activeLot.basePrice, currency, { compact: true })} · Increment ${
+                    activeLot.bidIncrement
+                      ? formatPurse(activeLot.bidIncrement, currency, { compact: true })
+                      : 'set by host'
+                  }`
+                : nextLot
+                  ? `Next up: ${nextLot.name}`
+                  : 'The auctioneer will bring the next player shortly.'}
+            </p>
+          </div>
+          <div className="presenter-countdown-card">
+            <span>
+              <Clock3 size={18} />
+              {activeLot ? 'Going once, going twice...' : 'Awaiting next call'}
+            </span>
+            <strong>{activeLot ? formatTimer(timerSeconds) : '--:--'}</strong>
+            <div className="presenter-countdown-track">
+              <span style={{ width: `${activeLot ? Math.max(0, Math.min(100, (timerSeconds / 60) * 100)) : 0}%` }} />
+            </div>
+          </div>
+        </section>
+
         <aside className="presenter-side">
-          <div className="presenter-timer">
-            <Clock3 size={24} />
-            <span>{activeLot ? `${timerSeconds}s` : '--'}</span>
-          </div>
-          <div className="presenter-leader">
-            <span className="presenter-panel-label">Leading team</span>
-            {leader ? (
-              <>
-                <Trophy size={28} />
-                <strong>{leader.name}</strong>
-                <span>{formatPurse((leader.wallet?.initial || 0) - (leader.wallet?.spent || 0), currency, { compact: true })} left</span>
-              </>
-            ) : (
-              <>
-                <Trophy size={28} />
-                <strong>Opening call</strong>
-                <span>No leading bid yet</span>
-              </>
-            )}
-          </div>
-          <div className="presenter-next-up">
-            <span className="presenter-panel-label">Next up</span>
-            {nextLot ? (
-              <>
-                <strong>{nextLot.name}</strong>
-                <span>
-                  {nextLot.style} · {formatPurse(nextLot.basePrice, currency, { compact: true })}
-                </span>
-              </>
-            ) : (
-              <>
-                <strong>Queue clear</strong>
-                <span>No queued players left</span>
-              </>
-            )}
+          <div className="presenter-war-card">
+            <span className="presenter-panel-label">
+              <TrendingUp size={16} />
+              Bid war · Spend
+            </span>
+            <div className="presenter-war-list">
+              {bidWarTeams.map((franchise) => {
+                const spent = franchise?.wallet?.spent || 0
+                const initial = franchise?.wallet?.initial || 0
+                const percent = initial > 0 ? Math.min(100, (spent / initial) * 100) : 0
+                return (
+                  <div className="presenter-war-row" key={franchise.id}>
+                    <div>
+                      <strong>{franchise.name}</strong>
+                      <span>{formatPurse(spent, currency, { compact: true })}</span>
+                    </div>
+                    <div className="presenter-war-track">
+                      <span style={{ width: `${percent}%`, background: franchise.colorHex || '#f5b94a' }} />
+                    </div>
+                  </div>
+                )
+              })}
+            </div>
           </div>
           <div className="presenter-feed">
-            <span className="presenter-panel-label">Latest calls</span>
-            {feed.length > 0 ? (
-              feed.slice(0, 5).map((item) => (
+            <span className="presenter-panel-label">
+              <Activity size={16} />
+              Bid history
+            </span>
+            {bidHistory.length > 0 ? (
+              bidHistory.map((item) => (
                 <div key={item.id} className={`presenter-feed-item is-${item.type}`}>
                   <strong>{item.franchiseName || item.actor}</strong>
                   <span>{describeFeedItem(item, currency)}</span>
+                  {item.amount ? <b>{formatPurse(item.amount, currency, { compact: true })}</b> : null}
                 </div>
               ))
             ) : (
-              <p>Waiting for the first call.</p>
+              <p>Waiting for the first bid.</p>
             )}
           </div>
         </aside>
@@ -486,6 +543,27 @@ export default function AuctionPresenterPage() {
       </section>
     </main>
   )
+}
+
+function getInitials(name = '') {
+  return name
+    .split(/\s+/)
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((part) => part[0])
+    .join('')
+    .toUpperCase() || '?'
+}
+
+function getLotNumber(lot) {
+  const raw = lot?.order ?? lot?.lotNumber ?? lot?.sequence
+  if (Number.isFinite(raw)) return String(raw).padStart(2, '0')
+  return '--'
+}
+
+function formatTimer(seconds) {
+  const safe = Math.max(0, Number(seconds) || 0)
+  return `00:${String(safe).padStart(2, '0')}`
 }
 
 function ResultMoment({ moment, currency }) {
