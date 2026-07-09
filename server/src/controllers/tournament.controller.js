@@ -82,6 +82,9 @@ const getTournament = async (req, res, next) => {
 
     return res.status(200).json({ tournament: tournament.toDetailJSON() });
   } catch (error) {
+    if (error?.statusCode) {
+      return res.status(error.statusCode).json({ message: error.message });
+    }
     if (error?.name === 'CastError') {
       return res.status(404).json({ message: 'Tournament not found' });
     }
@@ -253,6 +256,7 @@ const updateTournament = async (req, res, next) => {
         .json({ message: 'Only the host can edit this tournament' });
     }
 
+    const pursePerFranchiseProvided = req.body.pursePerFranchise !== undefined;
     const allowed = [
       'name',
       'description',
@@ -315,6 +319,26 @@ const updateTournament = async (req, res, next) => {
       }
     }
 
+    if (pursePerFranchiseProvided && !Array.isArray(req.body.franchises)) {
+      const nextPurse = Number(tournament.pursePerFranchise);
+      if (!Number.isFinite(nextPurse) || nextPurse < 0) {
+        return res.status(400).json({ message: 'pursePerFranchise must be a non-negative number' });
+      }
+
+      const overSpentFranchise = (tournament.franchises || []).find(
+        (franchise) => (franchise.wallet?.spent || 0) > nextPurse,
+      );
+      if (overSpentFranchise) {
+        return res.status(400).json({
+          message: `${overSpentFranchise.name} has already spent more than the new purse. Increase the purse or adjust that team first.`,
+        });
+      }
+
+      (tournament.franchises || []).forEach((franchise) => {
+        franchise.wallet.initial = Math.round(nextPurse);
+      });
+    }
+
     if (Array.isArray(req.body.franchises)) {
       const existingById = new Map(
         (tournament.franchises || []).map((franchise) => [
@@ -362,6 +386,19 @@ const updateTournament = async (req, res, next) => {
           const maxSize = Number(
             franchise.squad?.maxSize ?? franchise.maxSquadSize ?? existing?.squad?.maxSize ?? 11,
           )
+
+          if (
+            Number.isFinite(initialWallet) &&
+            Number.isFinite(spentWallet) &&
+            initialWallet >= 0 &&
+            spentWallet >= 0 &&
+            spentWallet > initialWallet
+          ) {
+            throw Object.assign(
+              new Error(`${franchise.name.trim()} has spent more than its wallet initial. Increase wallet initial before saving.`),
+              { statusCode: 400 },
+            );
+          }
 
           return {
             _id: existing?._id,

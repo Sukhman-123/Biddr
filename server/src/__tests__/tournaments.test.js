@@ -216,6 +216,72 @@ describe('GET /api/tournaments (visibility)', () => {
 })
 
 describe('PATCH /api/tournaments/:id', () => {
+  it('syncs franchise wallet initials when purse per franchise changes', async () => {
+    const token = await getToken(app)
+    const create = await request(app)
+      .post('/api/tournaments')
+      .set('Authorization', `Bearer ${token}`)
+      .send({
+        name: 'Purse Sync League',
+        shortCode: 'PSL',
+        currency: 'INR',
+        pursePerFranchise: 1000,
+        franchises: [{ name: 'A' }, { name: 'B' }],
+      })
+
+    const res = await request(app)
+      .patch(`/api/tournaments/${create.body.tournament.id}`)
+      .set('Authorization', `Bearer ${token}`)
+      .send({ pursePerFranchise: 2000 })
+
+    expect(res.status).toBe(200)
+    expect(res.body.tournament.pursePerFranchise).toBe(2000)
+    expect(res.body.tournament.franchises).toHaveLength(2)
+    expect(res.body.tournament.franchises.every((franchise) => franchise.wallet.initial === 2000)).toBe(true)
+  })
+
+  it('rejects purse changes below already spent team wallet', async () => {
+    const token = await getToken(app)
+    const create = await request(app)
+      .post('/api/tournaments')
+      .set('Authorization', `Bearer ${token}`)
+      .send({
+        name: 'Spent Purse League',
+        shortCode: 'SPL',
+        currency: 'INR',
+        pursePerFranchise: 1000,
+        franchises: [{ name: 'A' }, { name: 'B' }],
+      })
+    const tournament = create.body.tournament
+    const franchise = tournament.franchises[0]
+    const lot = await request(app)
+      .post(`/api/tournaments/${tournament.id}/lots`)
+      .set('Authorization', `Bearer ${token}`)
+      .send({
+        name: 'Sold Player',
+        style: 'Batsman',
+        country: 'India',
+        basePrice: 100,
+      })
+
+    await request(app)
+      .patch(`/api/lots/${lot.body.lot.id}`)
+      .set('Authorization', `Bearer ${token}`)
+      .send({
+        status: 'sold',
+        soldToFranchiseId: franchise.id,
+        soldPrice: 500,
+      })
+
+    const res = await request(app)
+      .patch(`/api/tournaments/${tournament.id}`)
+      .set('Authorization', `Bearer ${token}`)
+      .send({ pursePerFranchise: 250 })
+
+    expect(res.status).toBe(400)
+    expect(res.body.message).toMatch(/already spent more than the new purse/i)
+  })
+
   it('prevents removing a franchise that still has sold players assigned', async () => {
     const token = await getToken(app)
     const create = await request(app)
