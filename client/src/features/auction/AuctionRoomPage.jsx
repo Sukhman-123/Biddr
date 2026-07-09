@@ -61,6 +61,8 @@ export default function AuctionRoomPage() {
     queryKey: ['auction-room', tournamentId, lotId],
     queryFn: () => fetchRoomSnapshotRequest(tournamentId),
     enabled: Boolean(tournamentId),
+    refetchInterval: 5000,
+    refetchOnWindowFocus: true,
   })
 
   // List of queued lots — used to populate the "Activate" picker

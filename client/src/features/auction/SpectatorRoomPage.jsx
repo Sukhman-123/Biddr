@@ -25,6 +25,8 @@ export default function SpectatorRoomPage() {
     queryKey: ['auction-room', tournamentId],
     queryFn: () => fetchRoomSnapshotRequest(tournamentId),
     enabled: Boolean(tournamentId),
+    refetchInterval: 5000,
+    refetchOnWindowFocus: true,
   })
 
   // Local state for the spectator view

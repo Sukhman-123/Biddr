@@ -9,8 +9,8 @@ export default function TeamBudgetSidebar({ franchises, activeLot, currency = 'I
 
   // Sort franchises by remaining purse descending
   const sorted = [...franchises].sort((a, b) => {
-    const aRemaining = (a?.wallet?.initial || 0) - (a?.wallet?.spent || 0)
-    const bRemaining = (b?.wallet?.initial || 0) - (b?.wallet?.spent || 0)
+    const aRemaining = getRemainingPurse(a)
+    const bRemaining = getRemainingPurse(b)
     return bRemaining - aRemaining
   })
 
@@ -23,7 +23,7 @@ export default function TeamBudgetSidebar({ franchises, activeLot, currency = 'I
 
       <div className="budget-sidebar-list">
         {sorted.map((franchise, index) => {
-          const remaining = (franchise?.wallet?.initial || 0) - (franchise?.wallet?.spent || 0)
+          const remaining = getRemainingPurse(franchise)
           const squadSize = (franchise?.squad?.playerIds || []).length
           const maxSquad = franchise?.squad?.maxSize || 11
           const isLeading = activeLot?.currentBidderFranchiseId === franchise.id
@@ -86,4 +86,11 @@ export default function TeamBudgetSidebar({ franchises, activeLot, currency = 'I
       </div>
     </div>
   )
+}
+
+function getRemainingPurse(franchise) {
+  if (Number.isFinite(franchise?.wallet?.remaining)) {
+    return franchise.wallet.remaining
+  }
+  return (franchise?.wallet?.initial || 0) - (franchise?.wallet?.spent || 0)
 }

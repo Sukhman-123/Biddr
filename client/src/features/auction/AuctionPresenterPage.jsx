@@ -24,6 +24,8 @@ export default function AuctionPresenterPage() {
     queryKey: ['auction-room', tournamentId, 'presenter'],
     queryFn: () => fetchRoomSnapshotRequest(tournamentId),
     enabled: Boolean(tournamentId),
+    refetchInterval: 5000,
+    refetchOnWindowFocus: true,
   })
 
   const lotsQuery = useQuery({
@@ -31,6 +33,7 @@ export default function AuctionPresenterPage() {
     queryFn: () => listTournamentLotsRequest(tournamentId),
     enabled: Boolean(tournamentId),
     staleTime: 5_000,
+    refetchInterval: 5000,
   })
 
   useEffect(() => {
