@@ -116,7 +116,7 @@ body.auth-route-active {
   position: relative;
   overflow: hidden;
   height: 100%;
-  padding: clamp(28px, 4.5vw, 62px);
+  padding: clamp(24px, 4.2vw, 56px);
   border: 0;
   border-radius: 0;
   background:
@@ -170,8 +170,8 @@ body.auth-route-active {
 .auth-side-copy-wrap {
   position: relative;
   z-index: 1;
-  margin-top: clamp(18px, 3vw, 30px);
-  max-width: 460px;
+  margin-top: clamp(18px, 3vh, 30px);
+  max-width: 720px;
 }
 
 .auth-side-panel h1 {
@@ -180,19 +180,29 @@ body.auth-route-active {
   margin: 0;
   max-width: 12ch;
   color: var(--heading);
-  font-size: clamp(30px, 3.3vw, 46px);
-  line-height: 1;
-  letter-spacing: -0.045em;
+  font-size: clamp(46px, 6.4vw, 92px);
+  line-height: 0.96;
+  letter-spacing: -0.07em;
+}
+
+.auth-side-panel h1 span,
+.auth-side-panel h1 strong {
+  display: block;
+}
+
+.auth-side-panel h1 strong {
+  color: var(--gold);
+  font-weight: 900;
 }
 
 .auth-side-copy {
   position: relative;
   z-index: 1;
-  max-width: 23rem;
-  margin: 10px 0 0;
+  max-width: 42rem;
+  margin: 22px 0 0;
   color: var(--text-soft);
-  font-size: clamp(12px, 0.9vw, 14px);
-  line-height: 1.45;
+  font-size: clamp(16px, 1.7vw, 27px);
+  line-height: 1.55;
 }
 
 .auth-side-grid {
@@ -221,10 +231,10 @@ body.auth-route-active {
 .auth-orbit-card {
   position: relative;
   z-index: 1;
-  width: min(88%, 560px);
-  height: min(46vh, 360px);
-  min-height: 280px;
-  margin-top: clamp(20px, 4vh, 42px);
+  width: min(88%, 700px);
+  height: min(48vh, 420px);
+  min-height: 300px;
+  margin-top: clamp(14px, 2vh, 24px);
   max-width: none;
   border-radius: 0;
   background:
@@ -238,12 +248,39 @@ body.auth-route-active {
   position: absolute;
   left: 50%;
   top: 50%;
-  width: min(70vw, 430px);
-  height: min(70vw, 430px);
-  border: 1px dashed rgba(245, 185, 74, 0.24);
+  width: min(43vw, 430px);
+  height: min(43vw, 430px);
+  border: 2px dashed rgba(245, 185, 74, 0.28);
   border-radius: 50%;
   transform: translate(-50%, -50%);
   animation: authOrbitSpin 18s linear infinite;
+}
+
+.auth-orbit-ring--inner {
+  width: min(30vw, 305px);
+  height: min(30vw, 305px);
+  border-style: solid;
+  border-color: rgba(245, 185, 74, 0.17);
+  animation-duration: 24s;
+  animation-direction: reverse;
+}
+
+.auth-orbit-dot {
+  position: absolute;
+  left: calc(50% + min(21.5vw, 215px) - 10px);
+  top: calc(50% + min(9vw, 90px));
+  z-index: 2;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: var(--gold-bright);
+  box-shadow: 0 0 24px rgba(245, 185, 74, 0.85);
+  transform-origin: calc(-1 * min(21.5vw, 215px) + 10px) calc(-1 * min(9vw, 90px));
+  animation: authDotOrbit 8s linear infinite;
+}
+
+@keyframes authDotOrbit {
+  to { transform: rotate(360deg); }
 }
 
 .auth-orbit-card::before {
@@ -251,8 +288,8 @@ body.auth-route-active {
   position: absolute;
   left: 50%;
   top: 50%;
-  width: min(62vw, 372px);
-  height: min(62vw, 372px);
+  width: min(35vw, 352px);
+  height: min(35vw, 352px);
   border-radius: 50%;
   background: conic-gradient(from 0deg, transparent, rgba(245, 185, 74, 0.34), transparent 35%);
   opacity: 0.45;
@@ -270,9 +307,9 @@ body.auth-route-active {
   top: 50%;
   display: grid;
   place-items: center;
-  width: clamp(92px, 9vw, 126px);
-  height: clamp(92px, 9vw, 126px);
-  border-radius: 32px;
+  width: clamp(112px, 11vw, 168px);
+  height: clamp(112px, 11vw, 168px);
+  border-radius: 38px;
   color: #1a1306;
   background: linear-gradient(180deg, var(--gold-bright), var(--gold));
   box-shadow: 0 22px 54px rgba(245, 185, 74, 0.3);
@@ -301,14 +338,18 @@ body.auth-route-active {
   display: inline-flex;
   align-items: center;
   gap: 9px;
-  min-width: 176px;
-  padding: 13px 16px;
+  min-width: 188px;
+  padding: 14px 18px;
   border: 0;
   border-radius: 14px;
   color: #e4e6ee;
-  background: rgba(22, 26, 36, 0.9);
-  box-shadow: 0 16px 34px rgba(0, 0, 0, 0.28);
-  font-size: 13px;
+  background:
+    linear-gradient(180deg, rgba(245, 185, 74, 0.08), rgba(245, 185, 74, 0.02)),
+    rgba(22, 18, 12, 0.86);
+  box-shadow:
+    0 18px 38px rgba(0, 0, 0, 0.32),
+    inset 0 0 0 1px rgba(245, 185, 74, 0.16);
+  font-size: 15px;
   font-weight: 850;
 }
 
@@ -318,21 +359,45 @@ body.auth-route-active {
 }
 
 .auth-orbit-chip--one {
-  left: 1%;
+  left: 0;
   top: 12%;
   animation: authChipFloatOne 6s ease-in-out infinite;
 }
 
 .auth-orbit-chip--two {
-  right: -3%;
-  top: 43%;
+  right: -4%;
+  top: 28%;
   animation: authChipFloatTwo 7s ease-in-out infinite;
 }
 
 .auth-orbit-chip--three {
-  left: 13%;
-  bottom: 10%;
+  left: 8%;
+  bottom: 14%;
   animation: authChipFloatThree 6.5s ease-in-out infinite;
+}
+
+.auth-orbit-chip--four {
+  right: 6%;
+  bottom: 11%;
+  animation: authChipFloatOne 7.5s ease-in-out infinite reverse;
+}
+
+.auth-orbit-chip--five {
+  left: 17%;
+  top: 0;
+  animation: authChipFloatTwo 6.8s ease-in-out infinite reverse;
+}
+
+.auth-orbit-chip--six {
+  right: 18%;
+  top: 4%;
+  animation: authChipFloatThree 7.2s ease-in-out infinite reverse;
+}
+
+.auth-orbit-chip--seven {
+  left: 38%;
+  bottom: -1%;
+  animation: authChipFloatTwo 8s ease-in-out infinite;
 }
 
 @keyframes authChipFloatOne {
@@ -989,7 +1054,17 @@ body.auth-route-active {
 
   .auth-side-panel h1 {
     max-width: 13ch;
-    font-size: clamp(28px, 4.8vw, 44px);
+    font-size: clamp(42px, 5.6vw, 72px);
+  }
+
+  .auth-side-copy {
+    font-size: clamp(15px, 1.55vw, 21px);
+  }
+
+  .auth-orbit-chip {
+    min-width: 158px;
+    padding: 12px 14px;
+    font-size: 12px;
   }
 
   .auth-card {
@@ -1009,46 +1084,47 @@ body.auth-route-active {
   }
 
   .auth-side-copy-wrap {
-    margin-top: 14px;
-  }
-
-  .auth-side-panel h1 {
-    font-size: clamp(26px, 3vw, 38px);
-  }
-
-  .auth-side-copy {
-    margin-top: 8px;
-    font-size: 12.5px;
-  }
-
-  .auth-orbit-card {
-    height: min(44vh, 300px);
-    min-height: 230px;
     margin-top: 12px;
   }
 
+  .auth-side-panel h1 {
+    font-size: clamp(34px, 4.6vw, 58px);
+  }
+
+  .auth-side-copy {
+    margin-top: 10px;
+    font-size: clamp(13px, 1.25vw, 17px);
+    line-height: 1.4;
+  }
+
+  .auth-orbit-card {
+    height: min(42vh, 280px);
+    min-height: 214px;
+    margin-top: 10px;
+  }
+
   .auth-orbit-center {
-    width: 82px;
-    height: 82px;
-    border-radius: 26px;
+    width: 88px;
+    height: 88px;
+    border-radius: 27px;
   }
 
   .auth-orbit-chip {
-    min-width: 148px;
-    padding: 9px 12px;
-    font-size: 11px;
+    min-width: 138px;
+    padding: 8px 11px;
+    font-size: 10.5px;
   }
 
   .auth-orbit-chip--one {
-    top: 18px;
+    top: 12%;
   }
 
   .auth-orbit-chip--two {
-    top: 50px;
+    top: 30%;
   }
 
   .auth-orbit-chip--three {
-    bottom: 16px;
+    bottom: 11%;
   }
 
   .auth-card {

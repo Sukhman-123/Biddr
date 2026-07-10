@@ -1,7 +1,16 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Link, Navigate, useLocation, useNavigate } from 'react-router-dom'
 import { AnimatePresence, motion } from 'framer-motion'
-import { ArrowLeft, Gavel, MonitorUp, Wallet } from 'lucide-react'
+import {
+  ArrowLeft,
+  BadgeCheck,
+  Clock,
+  Gavel,
+  MonitorUp,
+  ShieldCheck,
+  Users,
+  Wallet,
+} from 'lucide-react'
 import { AUTH_MODES } from './auth.constants'
 import { getPasswordStrength } from './auth.utils'
 import { validateLogin, validateRegister } from './auth.validation'
@@ -189,14 +198,10 @@ function AuthPage() {
           <div className="auth-side-top">
             <AuthBrand size={34} />
           </div>
-          <div className="auth-side-copy-wrap">
-            <h1>Build the room. Run the bids.</h1>
-            <p className="auth-side-copy">
-              Auctioneer controls, purse-safe bidding, and presenter-ready rooms.
-            </p>
-          </div>
           <div className="auth-orbit-card" aria-hidden="true">
             <div className="auth-orbit-ring" />
+            <div className="auth-orbit-ring auth-orbit-ring--inner" />
+            <span className="auth-orbit-dot" />
             <div className="auth-orbit-center">
               <Gavel size={30} />
             </div>
@@ -212,6 +217,32 @@ function AuthPage() {
               <Wallet size={16} />
               Purse checks
             </span>
+            <span className="auth-orbit-chip auth-orbit-chip--four">
+              <ShieldCheck size={16} />
+              Role-safe rooms
+            </span>
+            <span className="auth-orbit-chip auth-orbit-chip--five">
+              <Users size={16} />
+              Team setup
+            </span>
+            <span className="auth-orbit-chip auth-orbit-chip--six">
+              <Clock size={16} />
+              Live pacing
+            </span>
+            <span className="auth-orbit-chip auth-orbit-chip--seven">
+              <BadgeCheck size={16} />
+              Fair bids
+            </span>
+          </div>
+          <div className="auth-side-copy-wrap">
+            <h1>
+              <span>Build the room.</span>
+              <strong>Run the bids.</strong>
+            </h1>
+            <p className="auth-side-copy">
+              Auctioneer controls, purse-safe bidding, and presenter-ready rooms
+              all wired for the biggest night of your tournament.
+            </p>
           </div>
         </motion.aside>
 
