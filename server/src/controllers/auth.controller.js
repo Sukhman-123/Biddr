@@ -240,11 +240,25 @@ const requestPasswordReset = async (req, res, next) => {
     const resetUrl = buildResetUrl(resetToken);
 
     try {
-      await sendPasswordResetEmail({
+      const emailResult = await sendPasswordResetEmail({
         to: user.email,
         fullName: user.fullName,
         resetUrl,
       });
+      if (emailResult?.skipped) {
+        if (process.env.NODE_ENV === 'production') {
+          console.warn('[auth] password reset email skipped:', {
+            email: user.email,
+            reason: emailResult.reason,
+          });
+        }
+      } else {
+        console.log('[auth] password reset email queued:', {
+          email: user.email,
+          providerId: emailResult?.id || '(unknown)',
+          from: process.env.RESEND_FROM_EMAIL || 'Biddr <onboarding@resend.dev>',
+        });
+      }
     } catch (emailError) {
       // Password reset responses stay generic to avoid account enumeration.
       // The provider failure is logged for operators, but never exposed to

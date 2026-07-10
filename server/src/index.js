@@ -96,6 +96,8 @@ const startServer = async () => {
         JWT_SECRET: !!process.env.JWT_SECRET,
         GOOGLE_CLIENT_ID: !!process.env.GOOGLE_CLIENT_ID,
         CLIENT_URL: process.env.CLIENT_URL || '(unset)',
+        RESEND_API_KEY: !!process.env.RESEND_API_KEY,
+        RESEND_FROM_EMAIL: process.env.RESEND_FROM_EMAIL || '(default)',
       })
         .map(([k, v]) => `${k}=${v === true ? 'yes' : v}`)
         .join(' '),

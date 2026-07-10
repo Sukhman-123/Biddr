@@ -30,6 +30,8 @@
     line('JWT_SECRET', process.env.JWT_SECRET),
     line('GOOGLE_CLIENT_ID', process.env.GOOGLE_CLIENT_ID),
     line('CLIENT_URL', process.env.CLIENT_URL),
+    line('RESEND_API_KEY', process.env.RESEND_API_KEY),
+    line('RESEND_FROM_EMAIL', process.env.RESEND_FROM_EMAIL),
   )
   console.log(
     '[boot]',
