@@ -3,6 +3,7 @@ const User = require('../models/User');
 const { ROLES } = require('../models/User');
 const { signToken } = require('../middleware/auth');
 const { verifyGoogleIdToken } = require('../services/googleAuth');
+const { sendPasswordResetEmail } = require('../services/email');
 
 const PHONE_RE = /^[+]?[\d\s-]{7,20}$/;
 
@@ -236,10 +237,17 @@ const requestPasswordReset = async (req, res, next) => {
     await user.save();
 
     const response = { ...genericResponse };
+    const resetUrl = buildResetUrl(resetToken);
+
+    await sendPasswordResetEmail({
+      to: user.email,
+      fullName: user.fullName,
+      resetUrl,
+    });
 
     if (process.env.NODE_ENV !== 'production') {
       response.resetToken = resetToken;
-      response.resetUrl = buildResetUrl(resetToken);
+      response.resetUrl = resetUrl;
     }
 
     return res.status(200).json(response);

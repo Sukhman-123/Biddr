@@ -205,6 +205,56 @@ describe('POST /api/auth/forgot-password and reset-password', () => {
     expect(res.body.resetUrl).toContain('/reset-password?token=')
   })
 
+  it('sends a password reset email through Resend when configured', async () => {
+    const originalApiKey = process.env.RESEND_API_KEY
+    const originalFrom = process.env.RESEND_FROM_EMAIL
+    const originalFetch = global.fetch
+    process.env.RESEND_API_KEY = 're_test_key'
+    process.env.RESEND_FROM_EMAIL = 'Biddr <noreply@example.com>'
+    global.fetch = jest.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({ id: 'email_test_123' }),
+    })
+
+    try {
+      const res = await request(app)
+        .post('/api/auth/forgot-password')
+        .send({ email: 'reset@example.com' })
+
+      expect(res.status).toBe(200)
+      expect(global.fetch).toHaveBeenCalledTimes(1)
+      expect(global.fetch).toHaveBeenCalledWith(
+        'https://api.resend.com/emails',
+        expect.objectContaining({
+          method: 'POST',
+          headers: expect.objectContaining({
+            Authorization: 'Bearer re_test_key',
+            'Content-Type': 'application/json',
+          }),
+        }),
+      )
+
+      const payload = JSON.parse(global.fetch.mock.calls[0][1].body)
+      expect(payload.from).toBe('Biddr <noreply@example.com>')
+      expect(payload.to).toEqual(['reset@example.com'])
+      expect(payload.subject).toMatch(/reset/i)
+      expect(payload.text).toContain('/reset-password?token=')
+      expect(payload.html).toContain('/reset-password?token=')
+    } finally {
+      if (originalApiKey === undefined) {
+        delete process.env.RESEND_API_KEY
+      } else {
+        process.env.RESEND_API_KEY = originalApiKey
+      }
+      if (originalFrom === undefined) {
+        delete process.env.RESEND_FROM_EMAIL
+      } else {
+        process.env.RESEND_FROM_EMAIL = originalFrom
+      }
+      global.fetch = originalFetch
+    }
+  })
+
   it('does not reveal unknown email addresses', async () => {
     const res = await request(app)
       .post('/api/auth/forgot-password')
