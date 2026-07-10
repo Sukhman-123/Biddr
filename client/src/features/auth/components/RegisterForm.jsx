@@ -32,54 +32,59 @@ function RegisterForm({
     >
       <FormError message={serverError} />
 
-      <div className="field-row field-row--two auth-register-pair">
-        <FormField
-          id="fullName"
-          label="Full Name"
-          autoComplete="name"
-          placeholder="Virat Kohli"
-          value={form.fullName}
-          onChange={onChange('fullName')}
-          error={errors.fullName}
-        />
-        <FormField
-          id="phone"
-          label="Phone"
-          autoComplete="tel"
-          inputMode="tel"
-          placeholder="+91 98765 43210"
-          value={form.phone}
-          onChange={onChange('phone')}
-          error={errors.phone}
-          icon={<Phone size={18} />}
-        />
-      </div>
+      <div className="auth-register-fields">
+        <div className="field-row">
+          <FormField
+            id="fullName"
+            label="Full Name"
+            autoComplete="name"
+            placeholder="Virat Kohli"
+            value={form.fullName}
+            onChange={onChange('fullName')}
+            error={errors.fullName}
+          />
+        </div>
 
-      <div className="field-row">
-        <FormField
-          id="email"
-          label="Email"
-          type="email"
-          autoComplete="email"
-          placeholder="you@example.com"
-          value={form.email}
-          onChange={onChange('email')}
-          error={errors.email}
-          icon={<Mail size={18} />}
-        />
-      </div>
+        <div className="field-row">
+          <FormField
+            id="phone"
+            label="Phone"
+            autoComplete="tel"
+            inputMode="tel"
+            placeholder="+91 98765 43210"
+            value={form.phone}
+            onChange={onChange('phone')}
+            error={errors.phone}
+            icon={<Phone size={18} />}
+          />
+        </div>
 
-      <div className="field-row">
-        <PasswordField
-          autoComplete="new-password"
-          placeholder="Create a strong password"
-          value={form.password}
-          showPassword={showPassword}
-          onChange={onChange('password')}
-          onToggleVisibility={onTogglePassword}
-          error={errors.password}
-        />
-        <PasswordStrength strength={passwordStrength} />
+        <div className="field-row">
+          <FormField
+            id="email"
+            label="Email"
+            type="email"
+            autoComplete="email"
+            placeholder="you@example.com"
+            value={form.email}
+            onChange={onChange('email')}
+            error={errors.email}
+            icon={<Mail size={18} />}
+          />
+        </div>
+
+        <div className="field-row">
+          <PasswordField
+            autoComplete="new-password"
+            placeholder="Create a strong password"
+            value={form.password}
+            showPassword={showPassword}
+            onChange={onChange('password')}
+            onToggleVisibility={onTogglePassword}
+            error={errors.password}
+          />
+          <PasswordStrength strength={passwordStrength} />
+        </div>
       </div>
 
       <motion.button
