@@ -293,12 +293,12 @@ function AuthPage() {
               </motion.div>
             )}
           </AnimatePresence>
-        </motion.section>
 
-        <Link to="/" className="auth-back-home">
-          <ArrowLeft size={14} />
-          Back to home
-        </Link>
+          <Link to="/" className="auth-back-home">
+            <ArrowLeft size={14} />
+            Back to home
+          </Link>
+        </motion.section>
       </main>
     </div>
   )
