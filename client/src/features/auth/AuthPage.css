@@ -1,7 +1,7 @@
 /* ====== Auth Stage ====== */
 .biddr-stage {
   position: relative;
-  min-height: 100svh;
+  height: 100svh;
   padding: 0;
   color: var(--text);
   background:
@@ -70,7 +70,7 @@
 .biddr-main {
   position: relative;
   z-index: 1;
-  min-height: 100svh;
+  height: 100svh;
   width: 100%;
   margin: 0 auto;
   display: grid;
@@ -107,8 +107,8 @@
 .auth-side-panel {
   position: relative;
   overflow: hidden;
-  min-height: 100svh;
-  padding: clamp(32px, 5vw, 72px);
+  height: 100svh;
+  padding: clamp(28px, 4.5vw, 62px);
   border: 0;
   border-radius: 0;
   background:
@@ -150,7 +150,7 @@
   z-index: 1;
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  justify-content: flex-start;
   gap: 16px;
   max-width: 620px;
 }
@@ -159,82 +159,36 @@
   filter: drop-shadow(0 14px 28px rgba(245, 185, 74, 0.15));
 }
 
-.auth-live-pill {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  padding: 9px 13px;
-  border-radius: 999px;
-  color: #ffccd0;
-  background: rgba(255, 83, 98, 0.1);
-  border: 1px solid rgba(255, 83, 98, 0.24);
-  font-size: 11px;
-  font-weight: 900;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-}
-
-.auth-live-pill::before {
-  content: '';
-  width: 8px;
-  height: 8px;
-  border-radius: 999px;
-  background: #ff5362;
-  box-shadow: 0 0 0 5px rgba(255, 83, 98, 0.12);
-}
-
 .auth-side-copy-wrap {
   position: relative;
   z-index: 1;
-  margin-top: clamp(24px, 4vw, 42px);
-  max-width: 560px;
-}
-
-.auth-side-eyebrow {
-  position: relative;
-  z-index: 1;
-  display: inline-flex;
-  width: fit-content;
-  padding: 8px 14px;
-  border-radius: 999px;
-  color: var(--gold-bright);
-  background: rgba(245, 185, 74, 0.12);
-  border: 1px solid rgba(245, 185, 74, 0.26);
-  font-size: 11px;
-  font-weight: 900;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
+  margin-top: clamp(18px, 3vw, 30px);
+  max-width: 460px;
 }
 
 .auth-side-panel h1 {
   position: relative;
   z-index: 1;
-  margin: 18px 0 0;
-  max-width: 13ch;
+  margin: 0;
+  max-width: 12ch;
   color: var(--heading);
-  font-size: clamp(36px, 4.1vw, 56px);
-  line-height: 0.98;
-  letter-spacing: -0.055em;
+  font-size: clamp(30px, 3.3vw, 46px);
+  line-height: 1;
+  letter-spacing: -0.045em;
 }
 
 .auth-side-copy {
   position: relative;
   z-index: 1;
-  max-width: 27rem;
-  margin: 14px 0 0;
+  max-width: 23rem;
+  margin: 10px 0 0;
   color: var(--text-soft);
-  font-size: clamp(13px, 0.95vw, 15px);
-  line-height: 1.5;
+  font-size: clamp(12px, 0.9vw, 14px);
+  line-height: 1.45;
 }
 
 .auth-side-grid {
-  position: relative;
-  z-index: 1;
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 12px;
-  margin-top: 14px;
-  max-width: 500px;
+  display: none;
 }
 
 .auth-side-grid span {
@@ -259,23 +213,25 @@
 .auth-orbit-card {
   position: relative;
   z-index: 1;
-  height: 170px;
-  margin-top: 22px;
-  max-width: 500px;
+  width: min(88%, 560px);
+  height: min(46vh, 360px);
+  min-height: 280px;
+  margin-top: clamp(20px, 4vh, 42px);
+  max-width: none;
   border-radius: 0;
   background:
-    radial-gradient(circle at 50% 48%, rgba(245, 185, 74, 0.14), transparent 34%),
-    rgba(6, 8, 13, 0.28);
+    radial-gradient(circle at 50% 52%, rgba(245, 185, 74, 0.2), transparent 31%),
+    radial-gradient(circle at 50% 52%, rgba(245, 185, 74, 0.07), transparent 58%);
   border: 0;
-  overflow: hidden;
+  overflow: visible;
 }
 
 .auth-orbit-ring {
   position: absolute;
   left: 50%;
   top: 50%;
-  width: 248px;
-  height: 248px;
+  width: min(70vw, 430px);
+  height: min(70vw, 430px);
   border: 1px dashed rgba(245, 185, 74, 0.24);
   border-radius: 50%;
   transform: translate(-50%, -50%);
@@ -287,8 +243,8 @@
   position: absolute;
   left: 50%;
   top: 50%;
-  width: 214px;
-  height: 214px;
+  width: min(62vw, 372px);
+  height: min(62vw, 372px);
   border-radius: 50%;
   background: conic-gradient(from 0deg, transparent, rgba(245, 185, 74, 0.34), transparent 35%);
   opacity: 0.45;
@@ -306,9 +262,9 @@
   top: 50%;
   display: grid;
   place-items: center;
-  width: 70px;
-  height: 70px;
-  border-radius: 22px;
+  width: clamp(92px, 9vw, 126px);
+  height: clamp(92px, 9vw, 126px);
+  border-radius: 32px;
   color: #1a1306;
   background: linear-gradient(180deg, var(--gold-bright), var(--gold));
   box-shadow: 0 22px 54px rgba(245, 185, 74, 0.3);
@@ -337,14 +293,14 @@
   display: inline-flex;
   align-items: center;
   gap: 9px;
-  min-width: 158px;
-  padding: 11px 13px;
+  min-width: 176px;
+  padding: 13px 16px;
   border: 0;
   border-radius: 14px;
   color: #e4e6ee;
   background: rgba(22, 26, 36, 0.9);
   box-shadow: 0 16px 34px rgba(0, 0, 0, 0.28);
-  font-size: 12px;
+  font-size: 13px;
   font-weight: 850;
 }
 
@@ -354,20 +310,20 @@
 }
 
 .auth-orbit-chip--one {
-  left: 22px;
-  top: 24px;
+  left: 1%;
+  top: 12%;
   animation: authChipFloatOne 6s ease-in-out infinite;
 }
 
 .auth-orbit-chip--two {
-  right: 22px;
-  top: 62px;
+  right: -3%;
+  top: 43%;
   animation: authChipFloatTwo 7s ease-in-out infinite;
 }
 
 .auth-orbit-chip--three {
-  left: 72px;
-  bottom: 22px;
+  left: 13%;
+  bottom: 10%;
   animation: authChipFloatThree 6.5s ease-in-out infinite;
 }
 
@@ -392,6 +348,7 @@
   overflow: hidden;
   justify-self: center;
   width: min(76%, 440px);
+  max-height: calc(100svh - 8px);
   padding: clamp(14px, 1.8vw, 24px);
   border: 0;
   border-radius: 0;
@@ -401,6 +358,8 @@
     transparent;
   box-shadow: none;
   backdrop-filter: none;
+  display: flex;
+  flex-direction: column;
 }
 
 .auth-card::before {
@@ -419,7 +378,7 @@
 }
 
 .auth-card-head {
-  margin-bottom: 12px;
+  margin-bottom: 10px;
   text-align: center;
 }
 
@@ -453,7 +412,7 @@
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 6px;
-  margin-bottom: 12px;
+  margin-bottom: 10px;
   padding: 4px;
   border: 1px solid rgba(255, 255, 255, 0.1);
   border-radius: 17px;
@@ -485,11 +444,11 @@
 .auth-form {
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 9px;
 }
 
 .auth-form--register {
-  gap: 8px;
+  gap: 7px;
 }
 
 .field-row,
@@ -971,7 +930,7 @@
   justify-content: center;
   gap: 6px;
   width: fit-content;
-  margin: 12px auto 0;
+  margin: 10px auto 0;
   padding: 8px 13px;
   border: 0;
   border-radius: 999px;
@@ -985,7 +944,7 @@
 }
 
 .auth-form--register + .auth-back-home {
-  margin-top: 8px;
+  margin-top: 6px;
 }
 
 .auth-back-home:hover {
@@ -1005,15 +964,7 @@
 
   .auth-side-panel h1 {
     max-width: 13ch;
-    font-size: clamp(38px, 7vw, 58px);
-  }
-
-  .auth-side-grid {
-    margin-top: 26px;
-  }
-
-  .auth-orbit-card {
-    height: 188px;
+    font-size: clamp(28px, 4.8vw, 44px);
   }
 
   .auth-card {
@@ -1023,8 +974,8 @@
 
 @media (min-width: 861px) and (max-height: 760px) {
   .auth-side-panel {
-    padding-top: 24px;
-    padding-bottom: 24px;
+    padding-top: 22px;
+    padding-bottom: 22px;
   }
 
   .auth-side-top {
@@ -1033,32 +984,33 @@
   }
 
   .auth-side-copy-wrap {
-    margin-top: 18px;
+    margin-top: 14px;
   }
 
   .auth-side-panel h1 {
-    font-size: clamp(30px, 3.5vw, 46px);
+    font-size: clamp(26px, 3vw, 38px);
   }
 
   .auth-side-copy {
-    margin-top: 10px;
+    margin-top: 8px;
     font-size: 12.5px;
   }
 
   .auth-orbit-card {
-    height: 138px;
-    margin-top: 16px;
+    height: min(44vh, 300px);
+    min-height: 230px;
+    margin-top: 12px;
   }
 
   .auth-orbit-center {
-    width: 58px;
-    height: 58px;
-    border-radius: 18px;
+    width: 82px;
+    height: 82px;
+    border-radius: 26px;
   }
 
   .auth-orbit-chip {
-    min-width: 138px;
-    padding: 9px 11px;
+    min-width: 148px;
+    padding: 9px 12px;
     font-size: 11px;
   }
 
@@ -1072,12 +1024,6 @@
 
   .auth-orbit-chip--three {
     bottom: 16px;
-  }
-
-  .auth-side-grid span {
-    min-height: 38px;
-    padding: 8px 10px;
-    font-size: 11px;
   }
 
   .auth-card {

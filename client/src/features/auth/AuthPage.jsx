@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react'
 import { Link, Navigate, useLocation, useNavigate } from 'react-router-dom'
 import { AnimatePresence, motion } from 'framer-motion'
-import { ArrowLeft, Gavel, MonitorUp, ShieldCheck, Wallet } from 'lucide-react'
+import { ArrowLeft, Gavel, MonitorUp, Wallet } from 'lucide-react'
 import { AUTH_MODES } from './auth.constants'
 import { getPasswordStrength } from './auth.utils'
 import { validateLogin, validateRegister } from './auth.validation'
@@ -181,14 +181,11 @@ function AuthPage() {
         >
           <div className="auth-side-top">
             <AuthBrand size={34} />
-            <span className="auth-live-pill">Live auction ready</span>
           </div>
           <div className="auth-side-copy-wrap">
-            <span className="auth-side-eyebrow">Auction room access</span>
-            <h1>Sign in and take your place at the floor.</h1>
+            <h1>Build the room. Run the bids.</h1>
             <p className="auth-side-copy">
-              Run physical or remote cricket auctions with auctioneer controls,
-              purse-safe bids, and a polished presenter screen.
+              Auctioneer controls, purse-safe bidding, and presenter-ready rooms.
             </p>
           </div>
           <div className="auth-orbit-card" aria-hidden="true">
@@ -207,16 +204,6 @@ function AuthPage() {
             <span className="auth-orbit-chip auth-orbit-chip--three">
               <Wallet size={16} />
               Purse checks
-            </span>
-          </div>
-          <div className="auth-side-grid">
-            <span>
-              <ShieldCheck size={15} />
-              Role-safe rooms
-            </span>
-            <span>
-              <Wallet size={15} />
-              Budget validation
             </span>
           </div>
         </motion.aside>
