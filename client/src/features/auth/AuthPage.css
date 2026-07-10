@@ -391,8 +391,8 @@
   position: relative;
   overflow: hidden;
   justify-self: center;
-  width: min(78%, 460px);
-  padding: clamp(18px, 2.2vw, 28px);
+  width: min(76%, 440px);
+  padding: clamp(14px, 1.8vw, 24px);
   border: 0;
   border-radius: 0;
   background:
@@ -419,7 +419,7 @@
 }
 
 .auth-card-head {
-  margin-bottom: 14px;
+  margin-bottom: 12px;
   text-align: center;
 }
 
@@ -444,7 +444,7 @@
   margin: 7px auto 0;
   max-width: 34rem;
   color: var(--text-soft);
-  font-size: 12.5px;
+  font-size: 12px;
   line-height: 1.4;
 }
 
@@ -453,7 +453,7 @@
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 6px;
-  margin-bottom: 14px;
+  margin-bottom: 12px;
   padding: 4px;
   border: 1px solid rgba(255, 255, 255, 0.1);
   border-radius: 17px;
@@ -461,7 +461,7 @@
 }
 
 .auth-tab {
-  min-height: 42px;
+  min-height: 40px;
   border: 0;
   border-radius: 12px;
   background: transparent;
@@ -488,6 +488,10 @@
   gap: 10px;
 }
 
+.auth-form--register {
+  gap: 8px;
+}
+
 .field-row,
 .field {
   display: flex;
@@ -498,7 +502,11 @@
 .field-row--two {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 12px;
+  gap: 10px;
+}
+
+.auth-register-pair {
+  align-items: start;
 }
 
 .field label {
@@ -514,7 +522,7 @@
   display: flex;
   align-items: center;
   overflow: hidden;
-  min-height: 44px;
+  min-height: 42px;
   border: 1px solid rgba(255, 255, 255, 0.11);
   border-radius: 12px;
   background: rgba(11, 12, 18, 0.78);
@@ -541,7 +549,7 @@
   color: var(--text);
   font: inherit;
   font-size: 14px;
-  padding: 11px 13px;
+  padding: 10px 12px;
 }
 
 .input-wrap input::placeholder {
@@ -566,7 +574,7 @@
   display: grid;
   place-items: center;
   width: 42px;
-  height: 42px;
+  height: 40px;
   border: 0;
   background: transparent;
   color: var(--muted);
@@ -629,11 +637,21 @@
   font-size: 11px;
 }
 
+.auth-form--register .strength-meter {
+  margin-top: 4px;
+}
+
+.auth-form--register .strength-hint {
+  margin-top: 3px;
+  font-size: 10.5px;
+  line-height: 1.25;
+}
+
 /* ====== CTA ====== */
 .cta-btn {
   position: relative;
   overflow: hidden;
-  min-height: 46px;
+  min-height: 44px;
   margin-top: 4px;
   padding: 0 20px;
   border: 0;
@@ -723,6 +741,10 @@
   text-transform: uppercase;
 }
 
+.auth-form--register .divider {
+  margin-top: 2px;
+}
+
 .divider::before,
 .divider::after {
   content: '';
@@ -781,13 +803,13 @@
   align-items: center;
   justify-content: center;
   gap: 10px;
-  padding: 12px 14px;
+  padding: 9px 12px;
   border: 1px solid var(--border);
   border-radius: 12px;
   background: var(--input-bg);
   color: var(--text);
   font: inherit;
-  font-size: 14px;
+  font-size: 12.5px;
   font-weight: 700;
   cursor: pointer;
   transition: background 160ms ease, border-color 160ms ease;
@@ -962,6 +984,10 @@
   transition: background 0.15s ease, color 0.15s ease;
 }
 
+.auth-form--register + .auth-back-home {
+  margin-top: 8px;
+}
+
 .auth-back-home:hover {
   background: rgba(255, 255, 255, 0.05);
   color: var(--gold, #f5b94a);
@@ -992,6 +1018,137 @@
 
   .auth-card {
     width: min(88%, 480px);
+  }
+}
+
+@media (min-width: 861px) and (max-height: 760px) {
+  .auth-side-panel {
+    padding-top: 24px;
+    padding-bottom: 24px;
+  }
+
+  .auth-side-top {
+    transform: scale(0.94);
+    transform-origin: left center;
+  }
+
+  .auth-side-copy-wrap {
+    margin-top: 18px;
+  }
+
+  .auth-side-panel h1 {
+    font-size: clamp(30px, 3.5vw, 46px);
+  }
+
+  .auth-side-copy {
+    margin-top: 10px;
+    font-size: 12.5px;
+  }
+
+  .auth-orbit-card {
+    height: 138px;
+    margin-top: 16px;
+  }
+
+  .auth-orbit-center {
+    width: 58px;
+    height: 58px;
+    border-radius: 18px;
+  }
+
+  .auth-orbit-chip {
+    min-width: 138px;
+    padding: 9px 11px;
+    font-size: 11px;
+  }
+
+  .auth-orbit-chip--one {
+    top: 18px;
+  }
+
+  .auth-orbit-chip--two {
+    top: 50px;
+  }
+
+  .auth-orbit-chip--three {
+    bottom: 16px;
+  }
+
+  .auth-side-grid span {
+    min-height: 38px;
+    padding: 8px 10px;
+    font-size: 11px;
+  }
+
+  .auth-card {
+    width: min(76%, 420px);
+    padding: 12px 20px;
+  }
+
+  .auth-card-head {
+    margin-bottom: 9px;
+  }
+
+  .auth-card-head h2 {
+    font-size: 23px;
+  }
+
+  .auth-card-head p {
+    display: none;
+  }
+
+  .auth-tabs {
+    margin-bottom: 9px;
+  }
+
+  .auth-form {
+    gap: 7px;
+  }
+
+  .field-row,
+  .field {
+    gap: 4px;
+  }
+
+  .input-wrap {
+    min-height: 38px;
+  }
+
+  .input-wrap input {
+    padding: 8px 11px;
+    font-size: 13px;
+  }
+
+  .input-action {
+    width: 38px;
+    height: 38px;
+  }
+
+  .cta-btn {
+    min-height: 40px;
+  }
+
+  .divider {
+    margin-top: 1px;
+  }
+
+  .google-button-slot {
+    min-height: 34px;
+  }
+
+  .alt-btn {
+    padding: 7px 10px;
+    min-height: 34px;
+  }
+
+  .switch-copy,
+  .legal-copy {
+    font-size: 10.5px;
+  }
+
+  .auth-back-home {
+    margin-top: 6px;
+    padding: 6px 10px;
   }
 }
 

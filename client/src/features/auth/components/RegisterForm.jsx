@@ -24,10 +24,15 @@ function RegisterForm({
   showPassword,
 }) {
   return (
-    <form id="auth-panel" className="auth-form" onSubmit={onSubmit} noValidate>
+    <form
+      id="auth-panel"
+      className="auth-form auth-form--register"
+      onSubmit={onSubmit}
+      noValidate
+    >
       <FormError message={serverError} />
 
-      <div className="field-row">
+      <div className="field-row field-row--two auth-register-pair">
         <FormField
           id="fullName"
           label="Full Name"
@@ -36,6 +41,17 @@ function RegisterForm({
           value={form.fullName}
           onChange={onChange('fullName')}
           error={errors.fullName}
+        />
+        <FormField
+          id="phone"
+          label="Phone"
+          autoComplete="tel"
+          inputMode="tel"
+          placeholder="+91 98765 43210"
+          value={form.phone}
+          onChange={onChange('phone')}
+          error={errors.phone}
+          icon={<Phone size={18} />}
         />
       </div>
 
@@ -50,20 +66,6 @@ function RegisterForm({
           onChange={onChange('email')}
           error={errors.email}
           icon={<Mail size={18} />}
-        />
-      </div>
-
-      <div className="field-row">
-        <FormField
-          id="phone"
-          label="Phone"
-          autoComplete="tel"
-          inputMode="tel"
-          placeholder="+91 98765 43210"
-          value={form.phone}
-          onChange={onChange('phone')}
-          error={errors.phone}
-          icon={<Phone size={18} />}
         />
       </div>
 
