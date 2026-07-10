@@ -33,7 +33,7 @@ function RegisterForm({
       <FormError message={serverError} />
 
       <div className="auth-register-fields">
-        <div className="field-row">
+        <div className="auth-register-row">
           <FormField
             id="fullName"
             label="Full Name"
@@ -43,9 +43,7 @@ function RegisterForm({
             onChange={onChange('fullName')}
             error={errors.fullName}
           />
-        </div>
 
-        <div className="field-row">
           <FormField
             id="phone"
             label="Phone"
