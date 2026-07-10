@@ -350,8 +350,8 @@ body.auth-route-active {
   display: inline-flex;
   align-items: center;
   gap: 9px;
-  min-width: 188px;
-  padding: 14px 18px;
+  min-width: 168px;
+  padding: 12px 15px;
   border: 0;
   border-radius: 14px;
   color: #e4e6ee;
@@ -361,7 +361,7 @@ body.auth-route-active {
   box-shadow:
     0 18px 38px rgba(0, 0, 0, 0.32),
     inset 0 0 0 1px rgba(245, 185, 74, 0.16);
-  font-size: 15px;
+  font-size: 13.5px;
   font-weight: 850;
 }
 
@@ -371,44 +371,44 @@ body.auth-route-active {
 }
 
 .auth-orbit-chip--one {
-  left: 0;
-  top: 12%;
+  left: -1%;
+  top: 31%;
   animation: authChipFloatOne 6s ease-in-out infinite;
 }
 
 .auth-orbit-chip--two {
-  right: -4%;
-  top: 28%;
+  right: -3%;
+  top: 34%;
   animation: authChipFloatTwo 7s ease-in-out infinite;
 }
 
 .auth-orbit-chip--three {
-  left: 8%;
-  bottom: 14%;
+  left: 7%;
+  bottom: 22%;
   animation: authChipFloatThree 6.5s ease-in-out infinite;
 }
 
 .auth-orbit-chip--four {
-  right: 6%;
-  bottom: 11%;
+  right: 8%;
+  bottom: 20%;
   animation: authChipFloatOne 7.5s ease-in-out infinite reverse;
 }
 
 .auth-orbit-chip--five {
-  left: 17%;
-  top: 0;
+  left: 16%;
+  top: 1%;
   animation: authChipFloatTwo 6.8s ease-in-out infinite reverse;
 }
 
 .auth-orbit-chip--six {
-  right: 18%;
-  top: 4%;
+  right: 15%;
+  top: 3%;
   animation: authChipFloatThree 7.2s ease-in-out infinite reverse;
 }
 
 .auth-orbit-chip--seven {
-  left: 38%;
-  bottom: -1%;
+  left: 36%;
+  bottom: -2%;
   animation: authChipFloatTwo 8s ease-in-out infinite;
 }
 
@@ -1076,7 +1076,7 @@ body.auth-route-active {
   .auth-orbit-chip {
     min-width: 158px;
     padding: 12px 14px;
-    font-size: 12px;
+    font-size: 11.5px;
   }
 
   .auth-card {
@@ -1122,21 +1122,21 @@ body.auth-route-active {
   }
 
   .auth-orbit-chip {
-    min-width: 138px;
-    padding: 8px 11px;
+    min-width: 126px;
+    padding: 8px 10px;
     font-size: 10.5px;
   }
 
   .auth-orbit-chip--one {
-    top: 12%;
+    top: 31%;
   }
 
   .auth-orbit-chip--two {
-    top: 30%;
+    top: 34%;
   }
 
   .auth-orbit-chip--three {
-    bottom: 11%;
+    bottom: 22%;
   }
 
   .auth-card {
