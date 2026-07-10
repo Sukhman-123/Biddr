@@ -12,6 +12,43 @@
   isolation: isolate;
 }
 
+.biddr-stage::before,
+.biddr-stage::after {
+  content: '';
+  position: fixed;
+  pointer-events: none;
+  z-index: 0;
+  border-radius: 999px;
+  filter: blur(2px);
+}
+
+.biddr-stage::before {
+  width: 36vw;
+  height: 36vw;
+  min-width: 360px;
+  min-height: 360px;
+  left: -10vw;
+  bottom: -18vw;
+  background: radial-gradient(circle, rgba(43, 217, 122, 0.13), transparent 66%);
+  animation: authOrbFloat 9s ease-in-out infinite;
+}
+
+.biddr-stage::after {
+  width: 42vw;
+  height: 42vw;
+  min-width: 420px;
+  min-height: 420px;
+  right: -12vw;
+  top: -18vw;
+  background: radial-gradient(circle, rgba(245, 185, 74, 0.16), transparent 68%);
+  animation: authOrbFloat 11s ease-in-out infinite reverse;
+}
+
+@keyframes authOrbFloat {
+  0%, 100% { transform: translate3d(0, 0, 0) scale(1); }
+  50% { transform: translate3d(18px, -12px, 0) scale(1.05); }
+}
+
 .biddr-grid {
   position: absolute;
   inset: 0;
@@ -85,10 +122,101 @@
   position: relative;
   z-index: 1;
   width: 100%;
-  display: flex;
-  flex-direction: column;
+  display: grid;
+  grid-template-columns: minmax(280px, 420px) minmax(360px, 460px);
+  justify-content: center;
   align-items: center;
-  gap: 18px;
+  gap: clamp(22px, 4vw, 64px);
+}
+
+.auth-side-panel {
+  position: relative;
+  overflow: hidden;
+  width: min(100%, 420px);
+  min-height: 460px;
+  padding: 30px;
+  border: 1px solid rgba(245, 185, 74, 0.2);
+  border-radius: 22px;
+  background:
+    radial-gradient(circle at 18% 18%, rgba(245, 185, 74, 0.22), transparent 32%),
+    linear-gradient(145deg, rgba(255, 255, 255, 0.06), rgba(255, 255, 255, 0.018)),
+    rgba(11, 14, 22, 0.78);
+  box-shadow:
+    0 30px 90px rgba(0, 0, 0, 0.42),
+    inset 0 1px 0 rgba(255, 255, 255, 0.08);
+  backdrop-filter: blur(18px);
+}
+
+.auth-side-panel::before {
+  content: '';
+  position: absolute;
+  inset: auto -20% -18% 12%;
+  height: 42%;
+  background: radial-gradient(circle, rgba(245, 185, 74, 0.24), transparent 62%);
+}
+
+.auth-side-panel::after {
+  content: '';
+  position: absolute;
+  inset: 18px;
+  border-radius: 18px;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  pointer-events: none;
+}
+
+.auth-side-eyebrow {
+  position: relative;
+  z-index: 1;
+  display: inline-flex;
+  width: fit-content;
+  padding: 8px 12px;
+  border-radius: 999px;
+  color: var(--gold-bright);
+  background: rgba(245, 185, 74, 0.12);
+  border: 1px solid rgba(245, 185, 74, 0.22);
+  font-size: 11px;
+  font-weight: 900;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.auth-side-panel h1 {
+  position: relative;
+  z-index: 1;
+  margin: 22px 0 0;
+  max-width: 9ch;
+  color: var(--heading);
+  font-size: clamp(42px, 4.4vw, 68px);
+  line-height: 0.92;
+  letter-spacing: -0.07em;
+}
+
+.auth-side-grid {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin-top: 38px;
+}
+
+.auth-side-grid span {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 48px;
+  padding: 10px 12px;
+  border-radius: 14px;
+  color: var(--text-soft);
+  background: rgba(255, 255, 255, 0.045);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.auth-side-grid svg {
+  color: var(--gold-bright);
+  flex-shrink: 0;
 }
 
 .auth-card {
@@ -102,6 +230,17 @@
     0 30px 80px rgba(0, 0, 0, 0.55),
     0 0 0 1px rgba(255, 255, 255, 0.02) inset;
   padding: 24px 24px 26px;
+  position: relative;
+  overflow: hidden;
+}
+
+.auth-card::before {
+  content: '';
+  position: absolute;
+  inset: -1px;
+  background: linear-gradient(120deg, transparent, rgba(245, 185, 74, 0.08), transparent);
+  opacity: 0.7;
+  pointer-events: none;
 }
 
 /* ====== Tabs ====== */
@@ -729,9 +868,29 @@
 }
 
 /* ====== Responsive ====== */
+@media (max-width: 980px) {
+  .biddr-main {
+    grid-template-columns: minmax(0, 460px);
+  }
+
+  .auth-side-panel {
+    min-height: auto;
+    padding: 22px;
+  }
+
+  .auth-side-panel h1 {
+    max-width: 14ch;
+    font-size: 38px;
+  }
+}
+
 @media (max-width: 520px) {
   .biddr-stage {
     padding: 32px 14px 40px;
+  }
+
+  .auth-side-panel {
+    display: none;
   }
 
   .auth-card {
@@ -780,6 +939,8 @@
 /* ---- Back to home ---- */
 
 .auth-back-home {
+  grid-column: 1 / -1;
+  justify-self: center;
   display: inline-flex;
   align-items: center;
   gap: 6px;

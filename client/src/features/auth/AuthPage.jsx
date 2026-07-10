@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react'
 import { Link, Navigate, useLocation, useNavigate } from 'react-router-dom'
 import { AnimatePresence, motion } from 'framer-motion'
-import { ArrowLeft } from 'lucide-react'
+import { ArrowLeft, Gavel, MonitorUp, ShieldCheck, Wallet } from 'lucide-react'
 import { AUTH_MODES } from './auth.constants'
 import { getPasswordStrength } from './auth.utils'
 import { validateLogin, validateRegister } from './auth.validation'
@@ -176,6 +176,35 @@ function AuthPage() {
       </header>
 
       <main className="biddr-main">
+        <motion.aside
+          className="auth-side-panel"
+          aria-label="Biddr auction highlights"
+          initial={{ opacity: 0, y: 18, filter: 'blur(8px)' }}
+          animate={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
+          transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
+        >
+          <span className="auth-side-eyebrow">Auction room access</span>
+          <h1>Sign in and take your place at the floor.</h1>
+          <div className="auth-side-grid">
+            <span>
+              <Gavel size={15} />
+              Auctioneer control
+            </span>
+            <span>
+              <MonitorUp size={15} />
+              Presenter view
+            </span>
+            <span>
+              <Wallet size={15} />
+              Purse checks
+            </span>
+            <span>
+              <ShieldCheck size={15} />
+              Role-safe rooms
+            </span>
+          </div>
+        </motion.aside>
+
         <motion.section
           className="auth-card"
           aria-label="Authentication"

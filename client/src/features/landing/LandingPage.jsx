@@ -7,6 +7,7 @@ import {
   Gavel,
   Mail,
   MessageSquare,
+  MonitorUp,
   Phone,
   Radio,
   Send,
@@ -23,73 +24,73 @@ import './LandingPage.css'
 const FEATURE_CARDS = [
   {
     icon: Gavel,
-    title: 'Auction floor control',
-    body: 'Keep the room moving with lot flow, timing, and clean status changes that feel built for live auction work.',
+    title: 'Auctioneer command desk',
+    body: 'Control physical and remote auctions from one operator screen: activate lots, record bids, pause, undo, sell, skip, and re-queue.',
   },
   {
-    icon: ShieldCheck,
-    title: 'Invite-first access',
-    body: 'Run a private hall or a broader league room with simple access controls and clear role boundaries.',
-  },
-  {
-    icon: Users,
-    title: 'Franchise coordination',
-    body: 'Bring captains, viewers, and auctioneers into one shared workspace without clutter or confusion.',
+    icon: MonitorUp,
+    title: 'Projector presenter view',
+    body: 'Give viewers a broadcast-style screen with current player, highest bid, bid history, team spend, and live result moments.',
   },
   {
     icon: Wallet,
-    title: 'Purse guardrails',
-    body: 'Support budget planning and auction rules with a layout that keeps the important controls front and center.',
+    title: 'Real purse guardrails',
+    body: 'Block impossible bids, protect team budgets, track squad sizes, and keep every section synced after admin updates.',
+  },
+  {
+    icon: ShieldCheck,
+    title: 'Setup without friction',
+    body: 'Use tournament defaults for bid increments, then override individual players only when the auctioneer needs a different call.',
   },
 ]
 
 const FLOW_STEPS = [
   {
     n: '01',
-    title: 'Shape the hall',
-    body: 'Set up a tournament space with the access model and room style you want.',
+    title: 'Configure the room',
+    body: 'Choose physical or remote mode, set defaults, build teams, and prepare the player pool.',
   },
   {
     n: '02',
-    title: 'Bring people in',
-    body: 'Share the room with the right franchises, observers, and auction staff.',
+    title: 'Open the floor',
+    body: 'The auctioneer activates lots manually and keeps full control of every live action.',
   },
   {
     n: '03',
-    title: 'Run the floor',
-    body: 'Keep the auction moving with live room updates, lot control, and clear state changes.',
+    title: 'Call the bids',
+    body: 'Record physical-room bids or let remote franchise owners raise paddles from their devices.',
   },
   {
     n: '04',
-    title: 'Stay aligned',
-    body: 'Let everyone follow the same room state without exposing anything you do not want visible.',
+    title: 'Show the spectacle',
+    body: 'Project the presenter view for viewers while the admin tools stay private to the auctioneer.',
   },
 ]
 
 // Numbers that show the platform's reach — placeholders, ready to be wired
 // to real metrics from the API.
 const STATS = [
-  { value: '1,300+', label: 'Organisers' },
-  { value: '5,000+', label: 'Players' },
-  { value: '530+', label: 'Auctions hosted' },
-  { value: '1,000+', label: 'Teams built' },
+  { value: '2', label: 'Auction modes' },
+  { value: '100%', label: 'Auctioneer control' },
+  { value: 'Live', label: 'Presenter view' },
+  { value: 'Real-time', label: 'Budget checks' },
 ]
 
-const LIVE_STATES = ['Live floor', 'Invite-only', 'Auctioneer ready', 'Room sync']
+const LIVE_STATES = ['Physical auction', 'Remote room', 'Presenter live', 'Budget safe']
 
-const SIGNAL_CARDS = ['Create hall', 'Invite teams', 'Control room', 'Keep sync']
+const SIGNAL_CARDS = ['Setup teams', 'Bring lot', 'Record bid', 'Hammer result']
 
 // Scoreboard marquee — a looping strip of room events. Purely decorative
 // placeholder copy; no real auction data is shown on the landing page.
 const TICKER_ITEMS = [
-  'LOT 07 — SOLD',
-  'LOT 12 — GOING, GOING…',
-  'LOT 19 — SOLD',
-  'PURSE UPDATED',
+  'PHYSICAL MODE READY',
+  'LOT ACTIVATED',
+  'BID RECORDED',
+  'PURSE CHECK PASSED',
+  'PRESENTER LIVE',
+  'PLAYER SOLD',
   'ROOM SYNCED',
-  'LOT 24 — ON THE CLOCK',
-  'NEW FRANCHISE JOINED',
-  'LOT 31 — SOLD',
+  'NEXT LOT QUEUED',
 ]
 
 const VARIANT_CLASS = {
@@ -472,11 +473,11 @@ function LandingPage() {
           <motion.div className="landing-hero-copy" variants={fadeUp}>
             <span className="landing-eyebrow">
               <Radio size={14} strokeWidth={2.4} />
-              Live — auction floor active
+              Physical + remote cricket auctions
             </span>
 
             <h1 className="landing-title">
-              {['Own', 'the', 'auction.', 'Run', 'the', 'room.'].map(
+              {['Run', 'the', 'auction.', 'Own', 'the', 'room.'].map(
                 (word, i) => (
                   <motion.span
                     key={i}
@@ -496,9 +497,9 @@ function LandingPage() {
             </h1>
 
             <p className="landing-subtitle">
-              Biddr turns tournament setup, invites, and live bidding into one
-              scoreboard-clear workspace — built for the people calling the
-              auction, not just watching it.
+              Biddr gives the auctioneer a command desk, gives viewers a
+              projector-ready presenter screen, and keeps teams, players,
+              purses, and bid rules synced from setup to final hammer.
             </p>
 
             <div className="landing-actions">
@@ -514,15 +515,15 @@ function LandingPage() {
             <ul className="landing-highlights" aria-label="Highlights">
               <li>
                 <Trophy size={14} />
-                Built for tournament floors
+                Projector-ready presenter view
               </li>
               <li>
                 <ShieldCheck size={14} />
-                Invite-only access, from lot one
+                Physical and remote auction modes
               </li>
               <li>
                 <Gavel size={14} />
-                Live room state, no refresh needed
+                Auctioneer has full room control
               </li>
             </ul>
 
@@ -562,18 +563,18 @@ function LandingPage() {
           >
             <div className="landing-console-shell">
               <div className="landing-console-top">
-                <span className="landing-console-badge">
-                  <span className="landing-console-dot" />
-                  On the clock
-                </span>
-                <span className="landing-console-meta">Room synced live</span>
+                  <span className="landing-console-badge">
+                    <span className="landing-console-dot" />
+                  Presenter live
+                  </span>
+                <span className="landing-console-meta">Auctioneer controlled</span>
               </div>
 
               <div className="landing-console-body">
                 <div className="landing-console-panel landing-console-panel--main">
                   <div className="landing-console-labels">
                     <span className="landing-tag">Lot ready</span>
-                    <span className="landing-tag">Timer armed</span>
+                    <span className="landing-tag">Purse guarded</span>
                   </div>
 
                   <div className="landing-console-frame">
@@ -581,14 +582,14 @@ function LandingPage() {
                     <FloodlitScoreboardScene reduceMotion={reduceMotion} />
                     <div className="landing-console-card">
                       <span className="landing-console-card-kicker">
-                        Player lot
+                        Broadcast view
                       </span>
                       <strong className="landing-console-card-title">
-                        Awaiting presentation
+                        Current highest bid
                       </strong>
                       <p className="landing-console-card-copy">
-                        The layout stays focused on the current floor state,
-                        without exposing any private auction details.
+                        Viewers see the live player, leading team, bid history,
+                        and result moments while admin controls stay private.
                       </p>
                     </div>
                   </div>
@@ -597,16 +598,16 @@ function LandingPage() {
                 <div className="landing-console-panel landing-console-panel--side">
                   <div className="landing-console-stack">
                     <motion.div className="landing-state-card" whileHover={cardHover}>
-                      <span className="landing-state-label">Access</span>
-                      <strong>Invite-only ready</strong>
+                      <span className="landing-state-label">Admin</span>
+                      <strong>Setup teams, players, and defaults</strong>
                     </motion.div>
                     <motion.div className="landing-state-card" whileHover={cardHover}>
-                      <span className="landing-state-label">Control</span>
-                      <strong>Auctioneer tools on deck</strong>
+                      <span className="landing-state-label">Floor</span>
+                      <strong>Sell, unsold, pause, undo, re-queue</strong>
                     </motion.div>
                     <motion.div className="landing-state-card" whileHover={cardHover}>
-                      <span className="landing-state-label">Flow</span>
-                      <strong>Live room updates</strong>
+                      <span className="landing-state-label">Viewer</span>
+                      <strong>Presenter screen for projector</strong>
                     </motion.div>
                   </div>
                 </div>
@@ -631,8 +632,8 @@ function LandingPage() {
 
         <section id="features" className="landing-section">
           <SectionHead
-            kicker="Matchday-grade tooling"
-            title="Everything the auctioneer's desk needs. Nothing the room doesn't."
+            kicker="Auction-room ready"
+            title="Built around the auctioneer, the presenter screen, and real-time rules."
           />
 
           <ul className="landing-feature-grid reveal-stagger">
@@ -655,8 +656,8 @@ function LandingPage() {
 
         <section id="flow" className="landing-section landing-section--flow">
           <SectionHead
-            kicker="From toss to hammer"
-            title="A room flow that stays clear from first setup to final call."
+            kicker="Setup to sold"
+            title="A clean flow for physical rooms, remote rooms, and everyone watching."
           />
 
           <div className="landing-flow reveal-stagger">
@@ -681,45 +682,46 @@ function LandingPage() {
 
         <section id="promise" className="landing-section landing-promise">
           <RevealDiv variant="up" className="landing-promise-copy">
-            <p className="landing-kicker">Off the ledger</p>
+            <p className="landing-kicker">Separate screens, clean roles</p>
             <h2 className="landing-section-title">
-              Show the electricity, not the private numbers.
+              Auctioneer controls privately. Viewers watch beautifully.
             </h2>
             <p className="landing-promise-text">
-              The landing page keeps the product story premium and energetic
-              while staying completely free of player names, amounts, or live
-              database content.
+              The auction room stays focused on conducting the auction. The
+              admin setup page handles teams, players, and defaults. The
+              presenter screen gives the audience a bold live view without
+              exposing controls.
             </p>
           </RevealDiv>
 
           <div className="landing-promise-grid reveal-stagger">
             <RevealDiv variant="pop" className="landing-promise-card">
               <ShieldCheck size={18} strokeWidth={2.2} />
-              <strong>Private by default</strong>
-              <span>Invite-first positioning from the first screen.</span>
+              <strong>Role-safe by design</strong>
+              <span>Auctioneer controls are never mixed into the viewer screen.</span>
             </RevealDiv>
             <RevealDiv variant="pop" className="landing-promise-card">
               <Users size={18} strokeWidth={2.2} />
-              <strong>Shared workflow</strong>
-              <span>Everything centered around the people running the room.</span>
+              <strong>Physical auction first</strong>
+              <span>Floor bids can be called and entered by the auctioneer.</span>
             </RevealDiv>
             <RevealDiv variant="pop" className="landing-promise-card">
               <Wallet size={18} strokeWidth={2.2} />
-              <strong>Budget-aware</strong>
-              <span>Supports purse thinking without showing amounts.</span>
+              <strong>Purse-aware flow</strong>
+              <span>Prevent overspend and keep team budgets consistent.</span>
             </RevealDiv>
             <RevealDiv variant="pop" className="landing-promise-card">
               <Gavel size={18} strokeWidth={2.2} />
-              <strong>Live-floor energy</strong>
-              <span>Motion and layout carry the auction feeling.</span>
+              <strong>Broadcast energy</strong>
+              <span>Presenter view feels like a live auction board.</span>
             </RevealDiv>
           </div>
         </section>
 
         <section id="stats" className="landing-stats">
           <SectionHead
-            kicker="On the scoreboard"
-            title="Trusted by organisers running rooms of every size."
+            kicker="What is ready"
+            title="The core auction experience is now built around real room needs."
           />
 
           <ul className="landing-stats-grid reveal-stagger">
@@ -743,7 +745,7 @@ function LandingPage() {
               </RevealDiv>
               <RevealDiv variant="up" as="p" className="landing-contact-text">
                 Questions, demos, or partnership ideas &mdash; drop us a line
-                and our team will get back to you quickly.
+                and we will help you shape the right auction setup.
               </RevealDiv>
 
               <ul className="landing-contact-list reveal-stagger">
@@ -902,8 +904,8 @@ function LandingPage() {
           <div>
             <h2 className="landing-cta-title">Ready to call your first lot?</h2>
             <p className="landing-cta-text">
-              Create your account and start shaping a cleaner, calmer cricket
-              auction experience.
+              Create your account, set up the room, open the presenter screen,
+              and let the auctioneer run the floor.
             </p>
           </div>
 
