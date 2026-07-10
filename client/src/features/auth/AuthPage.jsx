@@ -172,7 +172,7 @@ function AuthPage() {
       <div className="biddr-glow" aria-hidden="true" />
 
       <header className="biddr-header">
-        <AuthBrand />
+        <AuthBrand size={42} />
       </header>
 
       <main className="biddr-main">
