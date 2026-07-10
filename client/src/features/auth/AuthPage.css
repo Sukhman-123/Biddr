@@ -1,14 +1,21 @@
 /* ====== Auth Stage ====== */
+body.auth-route-active {
+  overflow: hidden;
+}
+
 .biddr-stage {
-  position: relative;
-  height: 100svh;
+  position: fixed;
+  inset: 0;
+  width: 100%;
+  height: 100dvh;
+  max-height: 100dvh;
   padding: 0;
   color: var(--text);
   background:
     radial-gradient(circle at 74% 18%, rgba(245, 185, 74, 0.16), transparent 24%),
     radial-gradient(circle at 20% 78%, rgba(245, 185, 74, 0.1), transparent 30%),
     linear-gradient(135deg, #05070b 0%, #07090f 46%, #11100d 100%);
-  overflow: hidden;
+  overflow: clip;
   isolation: isolate;
 }
 
@@ -70,7 +77,8 @@
 .biddr-main {
   position: relative;
   z-index: 1;
-  height: 100svh;
+  height: 100%;
+  max-height: 100dvh;
   width: 100%;
   margin: 0 auto;
   display: grid;
@@ -99,7 +107,7 @@
 
 .biddr-main--center {
   grid-template-columns: minmax(280px, 520px);
-  min-height: calc(100svh - 76px);
+  min-height: 100%;
   padding: 38px 18px;
 }
 
@@ -107,7 +115,7 @@
 .auth-side-panel {
   position: relative;
   overflow: hidden;
-  height: 100svh;
+  height: 100%;
   padding: clamp(28px, 4.5vw, 62px);
   border: 0;
   border-radius: 0;
@@ -348,7 +356,7 @@
   overflow: hidden;
   justify-self: center;
   width: min(76%, 440px);
-  max-height: calc(100svh - 8px);
+  max-height: calc(100dvh - 8px);
   padding: clamp(14px, 1.8vw, 24px);
   border: 0;
   border-radius: 0;
@@ -360,6 +368,23 @@
   backdrop-filter: none;
   display: flex;
   flex-direction: column;
+}
+
+.auth-card--register {
+  padding-top: 10px;
+  padding-bottom: 10px;
+}
+
+.auth-card--register .auth-card-head {
+  margin-bottom: 8px;
+}
+
+.auth-card--register .auth-card-head p {
+  display: none;
+}
+
+.auth-card--register .auth-tabs {
+  margin-bottom: 8px;
 }
 
 .auth-card::before {
@@ -448,7 +473,7 @@
 }
 
 .auth-form--register {
-  gap: 7px;
+  gap: 6px;
 }
 
 .field-row,
@@ -597,12 +622,12 @@
 }
 
 .auth-form--register .strength-meter {
-  margin-top: 4px;
+  margin-top: 3px;
 }
 
 .auth-form--register .strength-hint {
-  margin-top: 3px;
-  font-size: 10.5px;
+  margin-top: 2px;
+  font-size: 10px;
   line-height: 1.25;
 }
 
@@ -701,7 +726,7 @@
 }
 
 .auth-form--register .divider {
-  margin-top: 2px;
+  margin-top: 0;
 }
 
 .divider::before,
@@ -944,7 +969,7 @@
 }
 
 .auth-form--register + .auth-back-home {
-  margin-top: 6px;
+  margin-top: 4px;
 }
 
 .auth-back-home:hover {
@@ -1099,13 +1124,25 @@
 }
 
 @media (max-width: 860px) {
+  body.auth-route-active {
+    overflow: auto;
+  }
+
   .biddr-stage {
+    position: relative;
+    inset: auto;
+    height: auto;
+    max-height: none;
+    min-height: 100dvh;
     padding: 0;
     overflow: auto;
   }
 
   .biddr-main {
     grid-template-columns: 1fr;
+    height: auto;
+    max-height: none;
+    min-height: 100dvh;
   }
 
   .biddr-main:not(.biddr-main--center)::before {

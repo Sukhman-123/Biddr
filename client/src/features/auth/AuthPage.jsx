@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { Link, Navigate, useLocation, useNavigate } from 'react-router-dom'
 import { AnimatePresence, motion } from 'framer-motion'
 import { ArrowLeft, Gavel, MonitorUp, Wallet } from 'lucide-react'
@@ -50,6 +50,13 @@ function AuthPage() {
     () => getPasswordStrength(form.password),
     [form.password],
   )
+
+  useEffect(() => {
+    document.body.classList.add('auth-route-active')
+    return () => {
+      document.body.classList.remove('auth-route-active')
+    }
+  }, [])
 
   if (isLoading) {
     return (
@@ -209,7 +216,7 @@ function AuthPage() {
         </motion.aside>
 
         <motion.section
-          className="auth-card"
+          className={isRegister ? 'auth-card auth-card--register' : 'auth-card'}
           aria-label="Authentication"
           initial={{ opacity: 0, y: 16 }}
           animate={{ opacity: 1, y: 0 }}
