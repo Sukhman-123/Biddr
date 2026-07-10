@@ -8,6 +8,7 @@ import TournamentLobbyPage from './features/tournaments/TournamentLobbyPage'
 import CreateTournamentPage from './features/tournaments/CreateTournamentPage'
 import UserProfilePage from './features/profile/UserProfilePage'
 import LandingPage from './features/landing/LandingPage'
+import LegalPage from './features/legal/LegalPage'
 import AppShell from './components/AppShell'
 import AuctionRoomPage from './features/auction/AuctionRoomPage'
 import AuctionControlPage from './features/auction/AuctionControlPage'
@@ -41,6 +42,8 @@ function App() {
             <Route path="/register" element={<AuthPage />} />
             <Route path="/forgot-password" element={<AuthPage />} />
             <Route path="/reset-password" element={<AuthPage />} />
+            <Route path="/terms" element={<LegalPage type="terms" />} />
+            <Route path="/privacy" element={<LegalPage type="privacy" />} />
             <Route path="/home" element={<AuthGate><Shell><HomePage /></Shell></AuthGate>} />
             <Route path="/tournaments" element={<AuthGate><Shell><TournamentsPage /></Shell></AuthGate>} />
             <Route path="/tournaments/new" element={<AuthGate><Shell><CreateTournamentPage /></Shell></AuthGate>} />
