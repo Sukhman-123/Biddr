@@ -239,11 +239,21 @@ const requestPasswordReset = async (req, res, next) => {
     const response = { ...genericResponse };
     const resetUrl = buildResetUrl(resetToken);
 
-    await sendPasswordResetEmail({
-      to: user.email,
-      fullName: user.fullName,
-      resetUrl,
-    });
+    try {
+      await sendPasswordResetEmail({
+        to: user.email,
+        fullName: user.fullName,
+        resetUrl,
+      });
+    } catch (emailError) {
+      // Password reset responses stay generic to avoid account enumeration.
+      // The provider failure is logged for operators, but never exposed to
+      // the browser as a 500 on the forgot-password screen.
+      console.warn('[auth] password reset email failed:', {
+        email: user.email,
+        message: emailError?.message || String(emailError),
+      });
+    }
 
     if (process.env.NODE_ENV !== 'production') {
       response.resetToken = resetToken;

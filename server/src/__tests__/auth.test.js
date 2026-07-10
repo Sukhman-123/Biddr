@@ -255,6 +255,42 @@ describe('POST /api/auth/forgot-password and reset-password', () => {
     }
   })
 
+  it('does not fail the request when Resend rejects delivery', async () => {
+    const originalApiKey = process.env.RESEND_API_KEY
+    const originalFetch = global.fetch
+    const warnSpy = jest.spyOn(console, 'warn').mockImplementation(() => {})
+    process.env.RESEND_API_KEY = 're_test_key'
+    global.fetch = jest.fn().mockResolvedValue({
+      ok: false,
+      status: 403,
+      text: async () => 'Domain is not verified',
+    })
+
+    try {
+      const res = await request(app)
+        .post('/api/auth/forgot-password')
+        .send({ email: 'reset@example.com' })
+
+      expect(res.status).toBe(200)
+      expect(res.body.message).toMatch(/reset instructions/i)
+      expect(warnSpy).toHaveBeenCalledWith(
+        '[auth] password reset email failed:',
+        expect.objectContaining({
+          email: 'reset@example.com',
+          message: expect.stringContaining('Resend email failed'),
+        }),
+      )
+    } finally {
+      if (originalApiKey === undefined) {
+        delete process.env.RESEND_API_KEY
+      } else {
+        process.env.RESEND_API_KEY = originalApiKey
+      }
+      global.fetch = originalFetch
+      warnSpy.mockRestore()
+    }
+  })
+
   it('does not reveal unknown email addresses', async () => {
     const res = await request(app)
       .post('/api/auth/forgot-password')
