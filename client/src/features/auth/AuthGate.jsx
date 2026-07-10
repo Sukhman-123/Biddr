@@ -6,7 +6,7 @@ function Splash() {
     <div className="biddr-stage">
       <div className="biddr-grid" aria-hidden="true" />
       <div className="biddr-glow" aria-hidden="true" />
-      <main className="biddr-main">
+      <main className="biddr-main biddr-main--center">
         <div
           className="auth-card auth-card--splash"
           role="status"

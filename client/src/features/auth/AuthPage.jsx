@@ -59,7 +59,7 @@ function AuthPage() {
         <header className="biddr-header">
           <AuthBrand />
         </header>
-        <main className="biddr-main">
+        <main className="biddr-main biddr-main--center">
           <div
             className="auth-card auth-card--splash"
             role="status"
@@ -171,10 +171,6 @@ function AuthPage() {
       <div className="biddr-grid" aria-hidden="true" />
       <div className="biddr-glow" aria-hidden="true" />
 
-      <header className="biddr-header">
-        <AuthBrand size={42} />
-      </header>
-
       <main className="biddr-main">
         <motion.aside
           className="auth-side-panel"
@@ -183,24 +179,44 @@ function AuthPage() {
           animate={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
           transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
         >
-          <span className="auth-side-eyebrow">Auction room access</span>
-          <h1>Sign in and take your place at the floor.</h1>
-          <div className="auth-side-grid">
-            <span>
-              <Gavel size={15} />
+          <div className="auth-side-top">
+            <AuthBrand size={34} />
+            <span className="auth-live-pill">Live auction ready</span>
+          </div>
+          <div className="auth-side-copy-wrap">
+            <span className="auth-side-eyebrow">Auction room access</span>
+            <h1>Sign in and take your place at the floor.</h1>
+            <p className="auth-side-copy">
+              Run physical or remote cricket auctions with auctioneer controls,
+              purse-safe bids, and a polished presenter screen.
+            </p>
+          </div>
+          <div className="auth-orbit-card" aria-hidden="true">
+            <div className="auth-orbit-ring" />
+            <div className="auth-orbit-center">
+              <Gavel size={30} />
+            </div>
+            <span className="auth-orbit-chip auth-orbit-chip--one">
+              <Gavel size={16} />
               Auctioneer control
             </span>
-            <span>
-              <MonitorUp size={15} />
+            <span className="auth-orbit-chip auth-orbit-chip--two">
+              <MonitorUp size={16} />
               Presenter view
             </span>
-            <span>
-              <Wallet size={15} />
+            <span className="auth-orbit-chip auth-orbit-chip--three">
+              <Wallet size={16} />
               Purse checks
             </span>
+          </div>
+          <div className="auth-side-grid">
             <span>
               <ShieldCheck size={15} />
               Role-safe rooms
+            </span>
+            <span>
+              <Wallet size={15} />
+              Budget validation
             </span>
           </div>
         </motion.aside>
@@ -212,6 +228,19 @@ function AuthPage() {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
         >
+          <div className="auth-card-brand">
+            <AuthBrand size={36} />
+          </div>
+          <div className="auth-card-head">
+            <span>{isRegister ? 'Create your auction desk' : 'Welcome back'}</span>
+            <h2>{isRegister ? 'Start your tournament room' : 'Sign in to Biddr'}</h2>
+            <p>
+              {isRegister
+                ? 'Create an account to configure teams, players, and live auction controls.'
+                : 'Access your auction rooms, admin setup, and presenter screens.'}
+            </p>
+          </div>
+
           <AuthTabs activeMode={mode} onChange={switchMode} />
 
           <AnimatePresence mode="wait" initial={false}>
