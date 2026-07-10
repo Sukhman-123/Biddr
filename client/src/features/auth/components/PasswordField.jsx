@@ -4,6 +4,8 @@ import FormField from './FormField'
 function PasswordField({
   autoComplete,
   error,
+  id = 'password',
+  label = 'Password',
   onChange,
   onToggleVisibility,
   placeholder,
@@ -12,8 +14,8 @@ function PasswordField({
 }) {
   return (
     <FormField
-      id="password"
-      label="Password"
+      id={id}
+      label={label}
       type={showPassword ? 'text' : 'password'}
       autoComplete={autoComplete}
       placeholder={placeholder}

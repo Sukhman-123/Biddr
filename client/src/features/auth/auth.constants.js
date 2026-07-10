@@ -1,6 +1,8 @@
 export const AUTH_MODES = {
   LOGIN: 'login',
   REGISTER: 'register',
+  FORGOT_PASSWORD: 'forgot-password',
+  RESET_PASSWORD: 'reset-password',
 }
 
 export const PASSWORD_RULES = [

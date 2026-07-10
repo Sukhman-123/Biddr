@@ -1,5 +1,11 @@
 import { useEffect, useMemo, useState } from 'react'
-import { Link, Navigate, useLocation, useNavigate } from 'react-router-dom'
+import {
+  Link,
+  Navigate,
+  useLocation,
+  useNavigate,
+  useSearchParams,
+} from 'react-router-dom'
 import { AnimatePresence, motion } from 'framer-motion'
 import {
   ArrowLeft,
@@ -13,12 +19,20 @@ import {
 } from 'lucide-react'
 import { AUTH_MODES } from './auth.constants'
 import { getPasswordStrength } from './auth.utils'
-import { validateLogin, validateRegister } from './auth.validation'
+import {
+  validateForgotPassword,
+  validateLogin,
+  validateRegister,
+  validateResetPassword,
+} from './auth.validation'
+import { forgotPasswordRequest, resetPasswordRequest } from './auth.api'
 import { useAuth } from './useAuth'
 import AuthBrand from './components/AuthBrand'
 import AuthTabs from './components/AuthTabs'
+import ForgotPasswordForm from './components/ForgotPasswordForm'
 import LoginForm from './components/LoginForm'
 import RegisterForm from './components/RegisterForm'
+import ResetPasswordForm from './components/ResetPasswordForm'
 import './AuthPage.css'
 
 const initialForm = {
@@ -27,18 +41,54 @@ const initialForm = {
   phone: '',
   identifier: '',
   password: '',
+  confirmPassword: '',
 }
 
 const EMPTY_ERRORS = {}
 
-const modeFromPath = (pathname) =>
-  pathname === '/register' ? AUTH_MODES.REGISTER : AUTH_MODES.LOGIN
+const modeFromPath = (pathname) => {
+  if (pathname === '/register') return AUTH_MODES.REGISTER
+  if (pathname === '/forgot-password') return AUTH_MODES.FORGOT_PASSWORD
+  if (pathname === '/reset-password') return AUTH_MODES.RESET_PASSWORD
+  return AUTH_MODES.LOGIN
+}
+
+const pathFromMode = (mode) => {
+  if (mode === AUTH_MODES.REGISTER) return '/register'
+  if (mode === AUTH_MODES.FORGOT_PASSWORD) return '/forgot-password'
+  if (mode === AUTH_MODES.RESET_PASSWORD) return '/reset-password'
+  return '/login'
+}
+
+const cardCopyByMode = {
+  [AUTH_MODES.LOGIN]: {
+    eyebrow: 'Welcome back',
+    title: 'Sign in to Biddr',
+    copy: 'Access your auction rooms, admin setup, and presenter screens.',
+  },
+  [AUTH_MODES.REGISTER]: {
+    eyebrow: 'Create your auction desk',
+    title: 'Start your tournament room',
+    copy: 'Create an account to configure teams, players, and live auction controls.',
+  },
+  [AUTH_MODES.FORGOT_PASSWORD]: {
+    eyebrow: 'Password help',
+    title: 'Reset your password',
+    copy: 'Enter your account email and we will prepare a secure reset link.',
+  },
+  [AUTH_MODES.RESET_PASSWORD]: {
+    eyebrow: 'Secure reset',
+    title: 'Choose a new password',
+    copy: 'Create a fresh password to regain access to your auction rooms.',
+  },
+}
 
 function AuthPage() {
   const { isAuthenticated, isLoading, login, loginWithGoogle, register } =
     useAuth()
   const location = useLocation()
   const navigate = useNavigate()
+  const [searchParams] = useSearchParams()
   const nextPath = location.state?.next || '/home'
 
   // Mode is derived from the URL — no separate state needed. Clicking a tab
@@ -47,11 +97,18 @@ function AuthPage() {
   // the correct screen.
   const mode = modeFromPath(location.pathname)
   const isRegister = mode === AUTH_MODES.REGISTER
+  const isForgotPassword = mode === AUTH_MODES.FORGOT_PASSWORD
+  const isResetPassword = mode === AUTH_MODES.RESET_PASSWORD
+  const showAuthTabs = mode === AUTH_MODES.LOGIN || mode === AUTH_MODES.REGISTER
+  const resetToken = searchParams.get('token') || ''
+  const cardCopy = cardCopyByMode[mode] ?? cardCopyByMode[AUTH_MODES.LOGIN]
 
   const [showPassword, setShowPassword] = useState(false)
   const [form, setForm] = useState(initialForm)
   const [errors, setErrors] = useState(EMPTY_ERRORS)
   const [serverError, setServerError] = useState(null)
+  const [resetResult, setResetResult] = useState(null)
+  const [resetComplete, setResetComplete] = useState(false)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [isGoogleLoading, setIsGoogleLoading] = useState(false)
 
@@ -102,13 +159,14 @@ function AuthPage() {
 
   const switchMode = (nextMode) => {
     if (nextMode === mode) return
-    const target = nextMode === AUTH_MODES.REGISTER ? '/register' : '/login'
     // Reset transient UI on the next render (derives from URL change).
     setForm(initialForm)
     setErrors(EMPTY_ERRORS)
     setServerError(null)
+    setResetResult(null)
+    setResetComplete(false)
     setShowPassword(false)
-    navigate(target, { replace: true })
+    navigate(pathFromMode(nextMode), { replace: true })
   }
 
   const handleLogin = async (event) => {
@@ -154,6 +212,55 @@ function AuthPage() {
         phone: form.phone.trim(),
         password: form.password,
       })
+      setForm(initialForm)
+    } catch (err) {
+      setServerError(err.message)
+    } finally {
+      setIsSubmitting(false)
+    }
+  }
+
+  const handleForgotPassword = async (event) => {
+    event.preventDefault()
+    const nextErrors = validateForgotPassword(form)
+    if (Object.keys(nextErrors).length > 0) {
+      setErrors(nextErrors)
+      return
+    }
+    setErrors(EMPTY_ERRORS)
+    setServerError(null)
+    setResetResult(null)
+    setIsSubmitting(true)
+    try {
+      const data = await forgotPasswordRequest(form.email.trim().toLowerCase())
+      setResetResult(data)
+    } catch (err) {
+      setServerError(err.message)
+    } finally {
+      setIsSubmitting(false)
+    }
+  }
+
+  const handleResetPassword = async (event) => {
+    event.preventDefault()
+    if (!resetToken) {
+      setServerError('Reset link is missing a token. Request a new reset link.')
+      return
+    }
+    const nextErrors = validateResetPassword(form)
+    if (Object.keys(nextErrors).length > 0) {
+      setErrors(nextErrors)
+      return
+    }
+    setErrors(EMPTY_ERRORS)
+    setServerError(null)
+    setIsSubmitting(true)
+    try {
+      await resetPasswordRequest({
+        token: resetToken,
+        password: form.password,
+      })
+      setResetComplete(true)
       setForm(initialForm)
     } catch (err) {
       setServerError(err.message)
@@ -257,19 +364,56 @@ function AuthPage() {
             <AuthBrand size={36} />
           </div>
           <div className="auth-card-head">
-            <span>{isRegister ? 'Create your auction desk' : 'Welcome back'}</span>
-            <h2>{isRegister ? 'Start your tournament room' : 'Sign in to Biddr'}</h2>
-            <p>
-              {isRegister
-                ? 'Create an account to configure teams, players, and live auction controls.'
-                : 'Access your auction rooms, admin setup, and presenter screens.'}
-            </p>
+            <span>{cardCopy.eyebrow}</span>
+            <h2>{cardCopy.title}</h2>
+            <p>{cardCopy.copy}</p>
           </div>
 
-          <AuthTabs activeMode={mode} onChange={switchMode} />
+          {showAuthTabs ? <AuthTabs activeMode={mode} onChange={switchMode} /> : null}
 
           <AnimatePresence mode="wait" initial={false}>
-            {isRegister ? (
+            {isForgotPassword ? (
+              <motion.div
+                key="forgot-password"
+                initial={{ opacity: 0, x: 8 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -8 }}
+                transition={{ duration: 0.2, ease: 'easeOut' }}
+              >
+                <ForgotPasswordForm
+                  form={form}
+                  errors={errors}
+                  serverError={serverError}
+                  isSubmitting={isSubmitting}
+                  resetResult={resetResult}
+                  onChange={updateField}
+                  onModeChange={switchMode}
+                  onSubmit={handleForgotPassword}
+                />
+              </motion.div>
+            ) : isResetPassword ? (
+              <motion.div
+                key="reset-password"
+                initial={{ opacity: 0, x: 8 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -8 }}
+                transition={{ duration: 0.2, ease: 'easeOut' }}
+              >
+                <ResetPasswordForm
+                  form={form}
+                  passwordStrength={strength}
+                  showPassword={showPassword}
+                  errors={errors}
+                  serverError={serverError}
+                  resetComplete={resetComplete}
+                  isSubmitting={isSubmitting}
+                  onChange={updateField}
+                  onModeChange={switchMode}
+                  onSubmit={handleResetPassword}
+                  onTogglePassword={() => setShowPassword((value) => !value)}
+                />
+              </motion.div>
+            ) : isRegister ? (
               <motion.div
                 key="register"
                 initial={{ opacity: 0, x: 8 }}

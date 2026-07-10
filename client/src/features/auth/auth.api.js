@@ -48,6 +48,27 @@ export async function googleLoginRequest(idToken) {
   }
 }
 
+export async function forgotPasswordRequest(email) {
+  try {
+    const { data } = await api.post('/auth/forgot-password', { email })
+    return data
+  } catch (error) {
+    throw wrapError(error, 'Could not start password reset')
+  }
+}
+
+export async function resetPasswordRequest({ token, password }) {
+  try {
+    const { data } = await api.post('/auth/reset-password', {
+      token,
+      password,
+    })
+    return data
+  } catch (error) {
+    throw wrapError(error, 'Could not reset your password')
+  }
+}
+
 export async function fetchMeRequest() {
   try {
     const { data } = await api.get('/auth/me')

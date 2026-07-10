@@ -1,3 +1,4 @@
+const crypto = require('crypto');
 const User = require('../models/User');
 const { ROLES } = require('../models/User');
 const { signToken } = require('../middleware/auth');
@@ -32,6 +33,17 @@ const findByIdentifier = async (identifier) => {
     return User.findOne({ email: sanitizeEmail(trimmed) }).select('+password');
   }
   return User.findOne({ phone: sanitizePhone(trimmed) }).select('+password');
+};
+
+const hashResetToken = (token) =>
+  crypto.createHash('sha256').update(token).digest('hex');
+
+const buildResetUrl = (token) => {
+  const baseUrl = (process.env.CLIENT_URL || 'http://localhost:5173')
+    .split(',')
+    .map((value) => value.trim())
+    .filter(Boolean)[0];
+  return `${baseUrl}/reset-password?token=${encodeURIComponent(token)}`;
 };
 
 const updateMe = async (req, res, next) => {
@@ -196,6 +208,83 @@ const login = async (req, res, next) => {
   }
 };
 
+const requestPasswordReset = async (req, res, next) => {
+  try {
+    const { email } = req.body || {};
+    const normalizedEmail = sanitizeEmail(email);
+
+    if (!normalizedEmail || !isEmailIdentifier(normalizedEmail)) {
+      return res.status(400).json({ message: 'A valid email is required' });
+    }
+
+    const genericResponse = {
+      message:
+        'If that email is linked to a Biddr account, reset instructions are ready.',
+    };
+
+    const user = await User.findOne({ email: normalizedEmail }).select(
+      '+resetPasswordToken +resetPasswordExpires',
+    );
+
+    if (!user) {
+      return res.status(200).json(genericResponse);
+    }
+
+    const resetToken = crypto.randomBytes(32).toString('hex');
+    user.resetPasswordToken = hashResetToken(resetToken);
+    user.resetPasswordExpires = new Date(Date.now() + 15 * 60 * 1000);
+    await user.save();
+
+    const response = { ...genericResponse };
+
+    if (process.env.NODE_ENV !== 'production') {
+      response.resetToken = resetToken;
+      response.resetUrl = buildResetUrl(resetToken);
+    }
+
+    return res.status(200).json(response);
+  } catch (error) {
+    return next(error);
+  }
+};
+
+const resetPassword = async (req, res, next) => {
+  try {
+    const { token, password } = req.body || {};
+
+    if (!token || typeof token !== 'string') {
+      return res.status(400).json({ message: 'Reset token is required' });
+    }
+    if (!password || typeof password !== 'string' || password.length < 8) {
+      return res
+        .status(400)
+        .json({ message: 'Password must be at least 8 characters' });
+    }
+
+    const user = await User.findOne({
+      resetPasswordToken: hashResetToken(token),
+      resetPasswordExpires: { $gt: new Date() },
+    }).select('+password +resetPasswordToken +resetPasswordExpires');
+
+    if (!user) {
+      return res
+        .status(400)
+        .json({ message: 'Reset link is invalid or has expired' });
+    }
+
+    user.password = password;
+    user.resetPasswordToken = null;
+    user.resetPasswordExpires = null;
+    await user.save();
+
+    return res.status(200).json({
+      message: 'Password reset successfully. You can now sign in.',
+    });
+  } catch (error) {
+    return next(error);
+  }
+};
+
 const me = async (req, res, next) => {
   try {
     const fresh = await User.findById(req.user._id);
@@ -273,4 +362,13 @@ const loginWithGoogle = async (req, res, next) => {
   }
 };
 
-module.exports = { register, login, me, logout, loginWithGoogle, updateMe };
+module.exports = {
+  register,
+  login,
+  me,
+  logout,
+  loginWithGoogle,
+  updateMe,
+  requestPasswordReset,
+  resetPassword,
+};

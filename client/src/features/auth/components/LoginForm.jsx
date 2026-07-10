@@ -50,6 +50,16 @@ function LoginForm({
         />
       </div>
 
+      <div className="auth-form-actions">
+        <button
+          type="button"
+          className="link-btn"
+          onClick={() => onModeChange(AUTH_MODES.FORGOT_PASSWORD)}
+        >
+          Forgot password?
+        </button>
+      </div>
+
       <motion.button
         type="submit"
         className="cta-btn"

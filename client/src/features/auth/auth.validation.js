@@ -59,3 +59,34 @@ export function validateLogin(form) {
 
   return errors
 }
+
+export function validateForgotPassword(form) {
+  const errors = {}
+  const email = (form.email ?? '').trim()
+
+  if (!email) {
+    errors.email = 'Email is required'
+  } else if (!EMAIL_RE.test(email)) {
+    errors.email = 'Enter a valid email address'
+  }
+
+  return errors
+}
+
+export function validateResetPassword(form) {
+  const errors = {}
+
+  if (!form.password) {
+    errors.password = 'Password is required'
+  } else if (form.password.length < 8) {
+    errors.password = 'Use at least 8 characters'
+  }
+
+  if (!form.confirmPassword) {
+    errors.confirmPassword = 'Confirm your new password'
+  } else if (form.password !== form.confirmPassword) {
+    errors.confirmPassword = 'Passwords do not match'
+  }
+
+  return errors
+}
