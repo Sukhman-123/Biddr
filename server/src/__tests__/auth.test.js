@@ -230,6 +230,7 @@ describe('POST /api/auth/forgot-password and reset-password', () => {
           headers: expect.objectContaining({
             Authorization: 'Bearer re_test_key',
             'Content-Type': 'application/json',
+            'User-Agent': 'biddr-api/1.0',
           }),
         }),
       )
