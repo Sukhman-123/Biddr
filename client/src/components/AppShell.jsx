@@ -8,7 +8,6 @@ import './AppShell.css'
 const NAV_LINKS = [
   { to: '/home', label: 'Home', end: true },
   { to: '/tournaments', label: 'Tournaments' },
-  { to: '/squad', label: 'Squad' },
   { to: '/analytics', label: 'Analytics' },
 ]
 

@@ -55,7 +55,6 @@ function App() {
             <Route path="/tournaments/:id/presenter" element={<AuthGate><AuctionPresenterPage /></AuthGate>} />
             <Route path="/tournaments/:id/rooms/:lotId" element={<AuthGate><Shell><AuctionRoomPage /></Shell></AuthGate>} />
             <Route path="/profile" element={<AuthGate><Shell><UserProfilePage /></Shell></AuthGate>} />
-            <Route path="/squad" element={<AuthGate><Shell><ComingSoon label="Squad" /></Shell></AuthGate>} />
             <Route path="/analytics" element={<AuthGate><Shell><AnalyticsPage /></Shell></AuthGate>} />
             <Route path="*" element={<LandingPage />} />
           </Routes>

@@ -203,78 +203,6 @@ function TournamentLobbyPage() {
         Back to tournaments
       </Link>
 
-      {showInvites ? (
-        <section className="lobby-invites" aria-label="Manage invites">
-          <header className="lobby-invites-head">
-            <div className="lobby-invites-title">
-              <Lock size={14} />
-              <h2>Invite bidders</h2>
-              <span className="lobby-invites-count">
-                {invites.length} pending
-              </span>
-            </div>
-            <p>Private tournament — only invited bidders can see it.</p>
-          </header>
-          <form className="lobby-invites-form" onSubmit={sendInvite}>
-            <div className="lobby-invites-input">
-              <Mail size={14} />
-              <input
-                type="email"
-                placeholder="bidder@example.com"
-                value={inviteEmail}
-                onChange={(e) => setInviteEmail(e.target.value)}
-                disabled={inviteBusy}
-                autoComplete="off"
-              />
-            </div>
-            <button
-              type="submit"
-              className="lobby-invites-send"
-              disabled={inviteBusy || !inviteEmail.trim()}
-            >
-              <Send size={14} />
-              {inviteBusy ? 'Sending…' : 'Send invite'}
-            </button>
-          </form>
-          {inviteError ? (
-            <div className="lobby-invites-error">{inviteError}</div>
-          ) : null}
-          {invites.length > 0 ? (
-            <ul className="lobby-invites-list">
-              <AnimatePresence initial={false}>
-                {invites.map((invite) => (
-                  <motion.li
-                    key={invite._id}
-                    className="lobby-invites-row"
-                    initial={{ opacity: 0, x: -8 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    exit={{ opacity: 0, x: 8 }}
-                    transition={{ duration: 0.18 }}
-                  >
-                    <span className="lobby-invites-email">{invite.email}</span>
-                    <span className="lobby-invites-status">
-                      {invite.status === 'accepted' ? 'Accepted' : 'Pending'}
-                    </span>
-                    <button
-                      type="button"
-                      className="lobby-invites-revoke"
-                      onClick={() => onRevoke(invite._id)}
-                      disabled={inviteBusy}
-                      aria-label={`Revoke invite for ${invite.email}`}
-                    >
-                      <X size={12} />
-                      Revoke
-                    </button>
-                  </motion.li>
-                ))}
-              </AnimatePresence>
-            </ul>
-          ) : (
-            <p className="lobby-invites-empty">No invites yet.</p>
-          )}
-        </section>
-      ) : null}
-
       <section className="lobby-hero">
         <div className="lobby-hero-text">
           <span className="tournaments-eyebrow">
@@ -492,6 +420,21 @@ function TournamentLobbyPage() {
       </section>
 
       {isHost ? (
+        <AccessManagementSection
+          tournament={tournament}
+          invites={invites}
+          inviteEmail={inviteEmail}
+          inviteBusy={inviteBusy}
+          inviteError={inviteError}
+          onInviteEmailChange={setInviteEmail}
+          onSendInvite={sendInvite}
+          onRevoke={onRevoke}
+          currentUserId={user?.id}
+          isHost={isHost}
+        />
+      ) : null}
+
+      {isHost ? (
         <AuctionPoolSection
           tournamentId={tournament.id}
           currency={tournament.currency}
@@ -542,28 +485,6 @@ function TournamentLobbyPage() {
                 </li>
               ))}
             </ul>
-          )}
-
-          {/* Franchise Member Management - only for tournament host */}
-          {isHost && tournament.franchises.length > 0 && (
-            <div className="lobby-franchise-members">
-              <header className="lobby-col-header">
-                <h2>
-                  <Users size={16} />
-                  Franchise Owners
-                </h2>
-                <span>Assign who can bid</span>
-              </header>
-              <p className="lobby-franchise-members-desc">
-                Only franchise owners can raise the paddle during an auction.
-                Add team owners below.
-              </p>
-              <TournamentFranchises
-                tournamentId={tournament.id}
-                isHost={isHost}
-                currentUserId={user?.id}
-              />
-            </div>
           )}
         </div>
 
@@ -624,6 +545,182 @@ function TournamentLobbyPage() {
         }}
       />
     </main>
+  )
+}
+
+function AccessManagementSection({
+  tournament,
+  invites,
+  inviteEmail,
+  inviteBusy,
+  inviteError,
+  onInviteEmailChange,
+  onSendInvite,
+  onRevoke,
+  currentUserId,
+  isHost,
+}) {
+  const isInviteOnly = tournament.visibility === 'invite-only'
+  const franchiseOwnerCount = (tournament.franchises || []).reduce(
+    (count, franchise) =>
+      count + (franchise.members || []).filter((member) => member.role === 'owner').length,
+    0,
+  )
+  const assignedTeams = (tournament.franchises || []).filter((franchise) =>
+    (franchise.members || []).some((member) => member.role === 'owner'),
+  ).length
+  const pendingInvites = invites.filter((invite) => invite.status !== 'accepted').length
+  const acceptedInvites = invites.filter((invite) => invite.status === 'accepted').length
+
+  return (
+    <section className="lobby-access" aria-label="Invite and access management">
+      <div className="lobby-access-top">
+        <div>
+          <p className="lobby-access-eyebrow">
+            <ShieldCheck size={15} />
+            Invite & Access Management
+          </p>
+          <h2>Control who can enter this tournament.</h2>
+          <p>
+            Invite viewers for private tournaments, then assign franchise owners
+            to decide who can bid when the auction goes live.
+          </p>
+        </div>
+        <div className="lobby-access-mode">
+          {isInviteOnly ? <Lock size={17} /> : <Eye size={17} />}
+          <span>{isInviteOnly ? 'Invite-only tournament' : 'Public tournament'}</span>
+        </div>
+      </div>
+
+      <div className="lobby-access-stats">
+        <AccessStat label="Pending invites" value={isInviteOnly ? pendingInvites : 'Open'} />
+        <AccessStat label="Accepted invites" value={isInviteOnly ? acceptedInvites : 'Public'} />
+        <AccessStat label="Teams assigned" value={`${assignedTeams}/${tournament.franchises.length}`} />
+        <AccessStat label="Franchise owners" value={franchiseOwnerCount} />
+      </div>
+
+      <div className="lobby-access-grid">
+        <div className="lobby-access-card">
+          <header className="lobby-access-card-head">
+            <div>
+              <h3>{isInviteOnly ? 'Invite people' : 'Tournament visibility'}</h3>
+              <p>
+                {isInviteOnly
+                  ? 'Only invited users can open this tournament and its rooms.'
+                  : 'This tournament is public, so invite emails are not required for viewers.'}
+              </p>
+            </div>
+            <span className={clsx('lobby-access-badge', { 'is-open': !isInviteOnly })}>
+              {isInviteOnly ? 'Private' : 'Open'}
+            </span>
+          </header>
+
+          {isInviteOnly ? (
+            <>
+              <form className="lobby-invites-form" onSubmit={onSendInvite}>
+                <div className="lobby-invites-input">
+                  <Mail size={14} />
+                  <input
+                    type="email"
+                    placeholder="bidder@example.com"
+                    value={inviteEmail}
+                    onChange={(event) => onInviteEmailChange(event.target.value)}
+                    disabled={inviteBusy}
+                    autoComplete="off"
+                  />
+                </div>
+                <button
+                  type="submit"
+                  className="lobby-invites-send"
+                  disabled={inviteBusy || !inviteEmail.trim()}
+                >
+                  <Send size={14} />
+                  {inviteBusy ? 'Sending...' : 'Send invite'}
+                </button>
+              </form>
+              {inviteError ? (
+                <div className="lobby-invites-error">{inviteError}</div>
+              ) : null}
+              {invites.length > 0 ? (
+                <ul className="lobby-invites-list">
+                  <AnimatePresence initial={false}>
+                    {invites.map((invite) => (
+                      <motion.li
+                        key={invite._id}
+                        className="lobby-invites-row"
+                        initial={{ opacity: 0, x: -8 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        exit={{ opacity: 0, x: 8 }}
+                        transition={{ duration: 0.18 }}
+                      >
+                        <span className="lobby-invites-email">{invite.email}</span>
+                        <span className="lobby-invites-status">
+                          {invite.status === 'accepted' ? 'Accepted' : 'Pending'}
+                        </span>
+                        <button
+                          type="button"
+                          className="lobby-invites-revoke"
+                          onClick={() => onRevoke(invite._id)}
+                          disabled={inviteBusy}
+                          aria-label={`Revoke invite for ${invite.email}`}
+                        >
+                          <X size={12} />
+                          Revoke
+                        </button>
+                      </motion.li>
+                    ))}
+                  </AnimatePresence>
+                </ul>
+              ) : (
+                <p className="lobby-invites-empty">No invites yet.</p>
+              )}
+            </>
+          ) : (
+            <div className="lobby-access-open-note">
+              <Eye size={18} />
+              <span>
+                Anyone with access to Biddr can browse this tournament. Use
+                franchise owner assignment below to control who can bid.
+              </span>
+            </div>
+          )}
+        </div>
+
+        <div className="lobby-access-card">
+          <header className="lobby-access-card-head">
+            <div>
+              <h3>Franchise bidding access</h3>
+              <p>Assign owners to each franchise. Owners can raise paddles in remote auctions.</p>
+            </div>
+            <span className="lobby-access-badge">
+              {assignedTeams}/{tournament.franchises.length} ready
+            </span>
+          </header>
+
+          {tournament.franchises.length > 0 ? (
+            <TournamentFranchises
+              tournamentId={tournament.id}
+              isHost={isHost}
+              currentUserId={currentUserId}
+            />
+          ) : (
+            <div className="lobby-access-open-note">
+              <Users size={18} />
+              <span>Add franchises first, then assign team owners here.</span>
+            </div>
+          )}
+        </div>
+      </div>
+    </section>
+  )
+}
+
+function AccessStat({ label, value }) {
+  return (
+    <div className="lobby-access-stat">
+      <span>{label}</span>
+      <strong>{value}</strong>
+    </div>
   )
 }
 
