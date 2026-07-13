@@ -391,9 +391,11 @@ function TournamentLobbyPage() {
               const viewerUrl = `/tournaments/${id}/watch`
               return (
                 <div className="lobby-live-actions">
-                  <Link to={isHost ? roomUrl : viewerUrl} className="cta-btn">
-                    <span className="cta-btn-content">
+                  <Link to={isHost ? roomUrl : viewerUrl} className="lobby-room-action is-primary">
+                    <span className="lobby-room-action-icon">
                       {isHost ? <Gavel size={16} /> : <Laptop2 size={16} />}
+                    </span>
+                    <span>
                       {isHost
                         ? liveLot
                           ? `Enter the room — ${liveLot.name}`
@@ -404,14 +406,14 @@ function TournamentLobbyPage() {
                   {isHost ? (
                     <Link
                       to={`/tournaments/${id}/presenter`}
-                      className="cta-btn is-secondary"
+                      className="lobby-room-action is-secondary"
                       target="_blank"
                       rel="noreferrer"
                     >
-                      <span className="cta-btn-content">
+                      <span className="lobby-room-action-icon">
                         <Laptop2 size={16} />
-                        Presenter view
                       </span>
+                      <span>Presenter view</span>
                     </Link>
                   ) : null}
                 </div>
@@ -422,12 +424,14 @@ function TournamentLobbyPage() {
                 return (
                   <button
                     type="button"
-                    className="cta-btn"
+                    className="lobby-room-action is-primary"
                     disabled
                     title="The auction starts on the configured start date"
                   >
-                    <span className="cta-btn-content">
+                    <span className="lobby-room-action-icon">
                       <Gavel size={16} />
+                    </span>
+                    <span>
                       Starts on{' '}
                       {new Date(tournament.startDate).toLocaleDateString([], {
                         day: 'numeric',
@@ -441,14 +445,14 @@ function TournamentLobbyPage() {
               return (
                 <button
                   type="button"
-                  className="cta-btn"
+                  className="lobby-room-action is-primary"
                   onClick={() => setStartOpen(true)}
                   data-testid="start-auction-button"
                 >
-                  <span className="cta-btn-content">
+                  <span className="lobby-room-action-icon">
                     <Gavel size={16} />
-                    Start the auction
                   </span>
+                  <span>Start the auction</span>
                 </button>
               )
             }
@@ -456,14 +460,14 @@ function TournamentLobbyPage() {
               return (
                 <button
                   type="button"
-                  className="cta-btn"
+                  className="lobby-room-action is-primary"
                   disabled
                   title="The host will start the auction when the date arrives"
                 >
-                  <span className="cta-btn-content">
+                  <span className="lobby-room-action-icon">
                     <Gavel size={16} />
-                    Notify me when live
                   </span>
+                  <span>Notify me when live</span>
                 </button>
               )
             }
@@ -471,14 +475,14 @@ function TournamentLobbyPage() {
               return (
                 <button
                   type="button"
-                  className="cta-btn"
+                  className="lobby-room-action is-primary"
                   disabled
                   title="Recap is coming next phase"
                 >
-                  <span className="cta-btn-content">
+                  <span className="lobby-room-action-icon">
                     <Gavel size={16} />
-                    View recap
                   </span>
+                  <span>View recap</span>
                 </button>
               )
             }
