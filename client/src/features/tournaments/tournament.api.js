@@ -22,6 +22,15 @@ export async function getTournamentRequest(id) {
   }
 }
 
+export async function listTournamentsRequest(params = {}) {
+  try {
+    const { data } = await api.get('/tournaments', { params })
+    return Array.isArray(data?.tournaments) ? data.tournaments : []
+  } catch (error) {
+    throw wrapError(error, 'Could not fetch tournaments')
+  }
+}
+
 export async function createTournamentRequest(payload) {
   try {
     const { data } = await api.post('/tournaments', payload)
@@ -134,6 +143,29 @@ export async function deleteLotRequest(lotId) {
     return Boolean(data?.deleted)
   } catch (error) {
     throw wrapError(error, 'Could not remove the player')
+  }
+}
+
+export async function downloadTournamentExportRequest(id, kind) {
+  try {
+    const { data, headers } = await api.get(
+      `/tournaments/${id}/exports/${kind}.csv`,
+      { responseType: 'blob' },
+    )
+    const disp = headers?.['content-disposition'] || ''
+    const match = disp.match(/filename="?([^";]+)"?/i)
+    const filename = match?.[1] || `biddr-${kind}.csv`
+    const blob = new Blob([data], { type: 'text/csv;charset=utf-8' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = filename
+    document.body.appendChild(a)
+    a.click()
+    document.body.removeChild(a)
+    URL.revokeObjectURL(url)
+  } catch (error) {
+    throw wrapError(error, 'Could not download the export')
   }
 }
 

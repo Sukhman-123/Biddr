@@ -24,6 +24,7 @@ const {
   activateLot,
   getRoomSnapshot,
 } = require('../controllers/auctionRoom.controller');
+const { exportTournamentCsv } = require('../controllers/export.controller');
 const { auth } = require('../middleware/auth');
 
 const router = express.Router();
@@ -53,6 +54,7 @@ router.post('/', createTournament);
 router.patch('/:id', updateTournament);
 router.post('/:id/start', startAuction);
 router.post('/:id/end', endAuction);
+router.get('/:id/exports/:kind.csv', exportTournamentCsv);
 router.get('/:id/invites', listInvites);
 router.post('/:id/invites', createInvite);
 router.delete('/:id/invites/:inviteId', revokeInvite);

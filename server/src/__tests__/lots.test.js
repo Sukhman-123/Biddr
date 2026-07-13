@@ -90,6 +90,60 @@ describe('GET /api/tournaments/:id/lots', () => {
   })
 })
 
+describe('GET /api/tournaments/:id/exports/:kind.csv', () => {
+  it('lets the host download player result exports', async () => {
+    const token = await getOwnerToken()
+    const create = await createTournament(token)
+    const id = create.body.tournament.id
+    const franchise = create.body.tournament.franchises[0]
+
+    const lot = await request(app)
+      .post(`/api/tournaments/${id}/lots`)
+      .set('Authorization', `Bearer ${token}`)
+      .send({
+        name: 'Jasprit Bumrah',
+        style: 'Bowler',
+        country: 'India',
+        basePrice: 1500000,
+        set: 'Marquee',
+      })
+
+    await request(app)
+      .patch(`/api/lots/${lot.body.lot.id}`)
+      .set('Authorization', `Bearer ${token}`)
+      .send({
+        status: 'sold',
+        soldToFranchiseId: franchise.id,
+        soldPrice: 2500000,
+      })
+
+    const res = await request(app)
+      .get(`/api/tournaments/${id}/exports/players.csv`)
+      .set('Authorization', `Bearer ${token}`)
+
+    expect(res.status).toBe(200)
+    expect(res.headers['content-type']).toMatch(/text\/csv/)
+    expect(res.headers['content-disposition']).toMatch(/ptl-players\.csv/)
+    expect(res.text).toContain('Player,Role,Country,Set,Status')
+    expect(res.text).toContain('Jasprit Bumrah,Bowler,India,Marquee,sold')
+    expect(res.text).toContain(franchise.name)
+  })
+
+  it('forbids non-host export downloads', async () => {
+    const token = await getOwnerToken()
+    const otherToken = await getOtherToken()
+    const create = await createTournament(token)
+    const id = create.body.tournament.id
+
+    const res = await request(app)
+      .get(`/api/tournaments/${id}/exports/summary.csv`)
+      .set('Authorization', `Bearer ${otherToken}`)
+
+    expect(res.status).toBe(403)
+    expect(res.body.message).toMatch(/host/i)
+  })
+})
+
 describe('POST /api/tournaments/:id/lots', () => {
   it('lets the host create a lot', async () => {
     const token = await getOwnerToken()

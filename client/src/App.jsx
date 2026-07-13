@@ -9,6 +9,7 @@ import CreateTournamentPage from './features/tournaments/CreateTournamentPage'
 import UserProfilePage from './features/profile/UserProfilePage'
 import LandingPage from './features/landing/LandingPage'
 import LegalPage from './features/legal/LegalPage'
+import AnalyticsPage from './features/analytics/AnalyticsPage'
 import AppShell from './components/AppShell'
 import AuctionRoomPage from './features/auction/AuctionRoomPage'
 import AuctionControlPage from './features/auction/AuctionControlPage'
@@ -55,7 +56,7 @@ function App() {
             <Route path="/tournaments/:id/rooms/:lotId" element={<AuthGate><Shell><AuctionRoomPage /></Shell></AuthGate>} />
             <Route path="/profile" element={<AuthGate><Shell><UserProfilePage /></Shell></AuthGate>} />
             <Route path="/squad" element={<AuthGate><Shell><ComingSoon label="Squad" /></Shell></AuthGate>} />
-            <Route path="/analytics" element={<AuthGate><Shell><ComingSoon label="Analytics" /></Shell></AuthGate>} />
+            <Route path="/analytics" element={<AuthGate><Shell><AnalyticsPage /></Shell></AuthGate>} />
             <Route path="*" element={<LandingPage />} />
           </Routes>
         </motion.div>
