@@ -825,6 +825,7 @@
 .lobby-invites-form {
   display: flex;
   gap: 8px;
+  min-width: 0;
 }
 
 .lobby-invites-input {
@@ -951,6 +952,16 @@
   .lobby-invites-form {
     flex-direction: column;
   }
+
+  .lobby-invites-row {
+    grid-template-columns: 1fr;
+    gap: 8px;
+  }
+
+  .lobby-invites-status,
+  .lobby-invites-revoke {
+    width: fit-content;
+  }
 }
 
 @media (max-width: 900px) {
@@ -974,6 +985,14 @@
   .lobby-access-stats,
   .lobby-access-grid {
     grid-template-columns: 1fr;
+  }
+
+  .lobby-access-card {
+    padding: 14px;
+  }
+
+  .lobby-access h2 {
+    font-size: 26px;
   }
 }
 

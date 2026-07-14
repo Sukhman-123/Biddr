@@ -547,6 +547,8 @@
   }
   .hall-search {
     max-width: none;
+    width: 100%;
+    min-width: 0;
   }
   .hall-tabs {
     overflow-x: auto;
@@ -578,7 +580,8 @@
     font-size: 18px;
   }
   .t-card-stats {
-    grid-template-columns: 1fr 1fr 1fr;
+    display: grid;
+    grid-template-columns: 1fr;
   }
   .t-card-footer {
     flex-direction: column;

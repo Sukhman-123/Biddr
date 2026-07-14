@@ -15,7 +15,7 @@
 .addlot-modal {
   width: 100%;
   max-width: 520px;
-  max-height: calc(100vh - 48px);
+  max-height: calc(100svh - 48px);
   overflow-y: auto;
   background: linear-gradient(180deg, #0f1422 0%, #0a0d16 100%);
   border: 1px solid var(--border);
@@ -175,7 +175,26 @@
 }
 
 @media (max-width: 480px) {
+  .addlot-backdrop {
+    align-items: flex-start;
+    padding: 12px;
+  }
+
+  .addlot-modal {
+    max-height: calc(100svh - 24px);
+    padding: 18px;
+    border-radius: 16px;
+  }
+
   .addlot-row {
     grid-template-columns: 1fr;
+  }
+
+  .addlot-foot {
+    flex-direction: column-reverse;
+  }
+
+  .addlot-btn {
+    width: 100%;
   }
 }

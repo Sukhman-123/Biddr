@@ -171,3 +171,35 @@
     flex: 1 1 150px;
   }
 }
+
+@media (max-width: 520px) {
+  .room-topbar {
+    gap: 10px;
+    padding: 12px;
+    border-radius: 14px;
+  }
+
+  .room-topbar-back,
+  .room-topbar-end,
+  .room-topbar-aux,
+  .room-topbar-conn {
+    min-height: 40px;
+    padding: 8px 10px;
+    font-size: 12px;
+  }
+
+  .room-topbar-back {
+    flex: 1 1 120px;
+    justify-content: center;
+  }
+
+  .room-topbar-conn {
+    flex: 1 1 120px;
+    justify-content: center;
+  }
+
+  .room-topbar-title {
+    white-space: normal;
+    font-size: 15px;
+  }
+}

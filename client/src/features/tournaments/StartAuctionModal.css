@@ -8,6 +8,7 @@
   align-items: center;
   justify-content: center;
   padding: 24px;
+  overflow-y: auto;
 }
 
 .start-auction-card {
@@ -17,6 +18,8 @@
   padding: 28px 28px 24px;
   max-width: 460px;
   width: 100%;
+  max-height: calc(100svh - 48px);
+  overflow-y: auto;
   box-shadow: 0 24px 64px -16px rgba(0, 0, 0, 0.6);
   position: relative;
   display: flex;
@@ -121,4 +124,26 @@
 .start-auction-secondary:hover {
   background: rgba(255, 255, 255, 0.04) !important;
   color: var(--text, #e6e6ec) !important;
+}
+
+@media (max-width: 480px) {
+  .start-auction-backdrop {
+    align-items: flex-start;
+    padding: 12px;
+  }
+
+  .start-auction-card {
+    max-height: calc(100svh - 24px);
+    padding: 24px 18px 20px;
+    border-radius: 16px;
+  }
+
+  .start-auction-actions {
+    flex-direction: column-reverse;
+  }
+
+  .start-auction-actions .cta-btn,
+  .start-auction-secondary {
+    width: 100%;
+  }
 }

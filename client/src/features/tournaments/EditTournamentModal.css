@@ -9,12 +9,13 @@
   align-items: center;
   justify-content: center;
   padding: 24px;
+  overflow-y: auto;
 }
 
 .edit-modal {
   width: 100%;
   max-width: 800px;
-  max-height: 90vh;
+  max-height: calc(100svh - 48px);
   overflow-y: auto;
   background: linear-gradient(180deg, #0f1422 0%, #0a0d16 100%);
   border: 1px solid var(--border);
@@ -339,9 +340,22 @@
 }
 
 @media (max-width: 640px) {
-  .edit-modal {
-    padding: 20px;
+  .edit-modal-backdrop {
+    align-items: flex-start;
+    padding: 12px;
   }
+
+  .edit-modal {
+    max-height: calc(100svh - 24px);
+    padding: 20px;
+    border-radius: 16px;
+  }
+
+  .edit-modal-head {
+    gap: 12px;
+    margin-bottom: 18px;
+  }
+
   .edit-modal-grid {
     grid-template-columns: 1fr;
   }
@@ -350,5 +364,28 @@
   }
   .edit-color-row {
     grid-template-columns: repeat(2, 1fr);
+  }
+
+  .edit-modal-foot {
+    flex-direction: column-reverse;
+  }
+
+  .edit-btn {
+    width: 100%;
+  }
+}
+
+@media (max-width: 420px) {
+  .edit-modal {
+    padding: 16px;
+  }
+
+  .edit-cover-preview {
+    height: 118px;
+  }
+
+  .edit-presets,
+  .edit-color-row {
+    grid-template-columns: 1fr;
   }
 }

@@ -330,6 +330,12 @@
 }
 
 @media (max-width: 640px) {
+  .bid-controls-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 4px;
+  }
+
   .bid-controls-brief {
     grid-template-columns: 1fr;
   }
@@ -342,8 +348,26 @@
     justify-content: center;
   }
 
+  .bid-controls-input-group,
+  .bid-controls-actions {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .bid-controls-custom-btn,
+  .bid-controls-confirm,
+  .bid-controls-cancel {
+    width: 100%;
+    justify-content: center;
+  }
+
   .bid-controls-status {
     flex-direction: column;
     gap: 8px;
+  }
+
+  .bid-controls-quick-bid {
+    width: 100%;
+    justify-content: center;
   }
 }

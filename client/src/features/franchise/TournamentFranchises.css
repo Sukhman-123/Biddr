@@ -1,5 +1,6 @@
 .tournament-franchises {
   padding: 24px;
+  min-width: 0;
 }
 
 .tournament-franchises-header {
@@ -43,6 +44,7 @@
   cursor: pointer;
   text-align: left;
   transition: background 0.15s ease;
+  min-width: 0;
 }
 
 .tournament-franchise-header:hover {
@@ -94,10 +96,41 @@
 
 .tournament-franchise-content {
   padding: 0 16px 16px;
+  min-width: 0;
 }
 
 .tournament-franchises-loading {
   padding: 40px;
   text-align: center;
   color: var(--text-muted, #8a8a9a);
+}
+
+@media (max-width: 560px) {
+  .tournament-franchises {
+    padding: 14px;
+  }
+
+  .tournament-franchise-header {
+    padding: 12px;
+    gap: 10px;
+  }
+
+  .tournament-franchise-badge {
+    width: 34px;
+    height: 34px;
+    border-radius: 9px;
+    font-size: 15px;
+  }
+
+  .tournament-franchise-name {
+    font-size: 14px;
+  }
+
+  .tournament-franchise-meta {
+    font-size: 11px;
+  }
+
+  .tournament-franchise-content {
+    padding: 0 10px 12px;
+  }
 }

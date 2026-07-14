@@ -78,6 +78,7 @@
   display: flex;
   flex-direction: column;
   gap: 16px;
+  min-width: 0;
 }
 
 .create-server-error {
@@ -97,6 +98,7 @@
   display: flex;
   flex-direction: column;
   gap: 16px;
+  min-width: 0;
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
 }
@@ -263,6 +265,8 @@
   border: 1px solid var(--border);
   background: rgba(8, 11, 18, 0.55);
   align-self: flex-start;
+  max-width: 100%;
+  overflow-x: auto;
 }
 
 .create-toggle-btn {
@@ -334,6 +338,7 @@
   border-radius: 12px;
   border: 1px solid rgba(255, 255, 255, 0.06);
   background: rgba(255, 255, 255, 0.02);
+  min-width: 0;
 }
 
 .create-franchise-index {
@@ -347,6 +352,7 @@
   display: grid;
   grid-template-columns: 1.4fr 1fr;
   gap: 8px;
+  min-width: 0;
 }
 
 .create-franchise-fields input {
@@ -455,6 +461,7 @@
   gap: 8px;
   font-size: 12px;
   color: var(--muted);
+  min-width: 0;
 }
 
 .create-check {
@@ -592,6 +599,21 @@
   .create-title {
     font-size: 24px;
   }
+
+  .create-toggle {
+    align-self: stretch;
+  }
+
+  .create-toggle-btn {
+    flex: 1;
+    justify-content: center;
+    padding-inline: 10px;
+  }
+
+  .create-footer-summary {
+    align-items: flex-start;
+    line-height: 1.45;
+  }
 }
 
 /* ---- Look & feel / cover gradient ---- */
@@ -601,6 +623,7 @@
   grid-template-columns: 1.1fr 1fr;
   gap: 16px;
   align-items: stretch;
+  min-width: 0;
 }
 
 .create-cover-preview {
@@ -749,5 +772,23 @@
   }
   .create-presets {
     grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+@media (max-width: 420px) {
+  .create-presets,
+  .create-color-row {
+    grid-template-columns: 1fr;
+  }
+
+  .create-preset {
+    flex-direction: row;
+    align-items: center;
+  }
+
+  .create-preset-swatch {
+    width: 58px;
+    height: 30px;
+    flex-shrink: 0;
   }
 }

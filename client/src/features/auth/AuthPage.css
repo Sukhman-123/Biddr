@@ -445,6 +445,7 @@ body.auth-route-active {
   backdrop-filter: none;
   display: flex;
   flex-direction: column;
+  min-width: 0;
 }
 
 .auth-card--register {
@@ -1399,6 +1400,7 @@ body.auth-route-active {
   .auth-card {
     width: min(100%, 520px);
     padding: 24px 28px 32px;
+    margin: 0 auto;
   }
 
   .auth-card--register {
@@ -1473,6 +1475,53 @@ body.auth-route-active {
     min-height: 52px;
     border-radius: 13px;
     font-size: 12px;
+  }
+}
+
+@media (max-width: 420px) {
+  .biddr-stage {
+    padding: 12px 10px 28px;
+  }
+
+  .auth-card {
+    padding: 20px 12px 28px;
+  }
+
+  .auth-card-head h2 {
+    font-size: 24px;
+  }
+
+  .auth-card-head p {
+    font-size: 11.5px;
+  }
+
+  .auth-tab {
+    min-height: 44px;
+    letter-spacing: 0.08em;
+  }
+
+  .input-icon,
+  .input-action {
+    width: 38px;
+  }
+
+  .alt-row {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-height: 700px) and (max-width: 860px) {
+  .auth-side-panel {
+    display: none;
+  }
+
+  .biddr-main {
+    align-items: start;
+  }
+
+  .auth-card {
+    padding-top: 18px;
+    padding-bottom: 22px;
   }
 }
 

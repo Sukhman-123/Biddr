@@ -2214,3 +2214,57 @@
   transition: width 80ms linear;
   pointer-events: none;
 }
+
+@media (max-width: 1080px) {
+  .landing-contact-wrap {
+    grid-template-columns: 1fr;
+    gap: 28px;
+    padding: 34px;
+  }
+}
+
+@media (max-width: 720px) {
+  .landing-stats,
+  .landing-contact {
+    width: min(100%, calc(100% - 28px));
+    padding-top: 48px;
+  }
+
+  .landing-contact-wrap {
+    padding: 24px;
+    border-radius: 18px;
+  }
+}
+
+@media (max-width: 520px) {
+  .landing-actions,
+  .landing-btn,
+  .landing-nav-cta {
+    width: 100%;
+  }
+
+  .landing-actions {
+    align-items: stretch;
+  }
+
+  .landing-feature-grid,
+  .landing-flow,
+  .landing-promise-grid,
+  .landing-stats-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .landing-console-panel--side {
+    display: none;
+  }
+}
+
+@media (max-width: 420px) {
+  .landing-contact {
+    width: calc(100% - 24px);
+  }
+
+  .landing-contact-wrap {
+    padding: 18px;
+  }
+}

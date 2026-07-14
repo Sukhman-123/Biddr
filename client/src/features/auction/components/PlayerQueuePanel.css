@@ -359,8 +359,14 @@
     width: 100%;
   }
 
-  .queue-search {
+  .queue-search,
+  .queue-filter {
     flex: 1;
+    min-width: 0;
+  }
+
+  .queue-filter-select {
+    width: 100%;
   }
 
   .queue-spotlight,
@@ -380,5 +386,26 @@
 
   .queue-activate-btn {
     justify-content: center;
+  }
+}
+
+@media (max-width: 420px) {
+  .player-queue {
+    padding: 12px;
+    border-radius: 18px;
+  }
+
+  .queue-controls {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .queue-card-top {
+    flex-direction: column;
+  }
+
+  .queue-item-badges,
+  .queue-item-right {
+    width: 100%;
   }
 }

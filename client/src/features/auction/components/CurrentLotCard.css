@@ -231,10 +231,34 @@
 }
 
 @media (max-width: 640px) {
+  .current-lot-card {
+    padding: 18px;
+    border-radius: 16px;
+  }
+
   .current-lot-head { flex-direction: column; align-items: flex-start; }
   .current-lot-pic { width: 64px; height: 64px; }
   .current-lot-name { font-size: 22px; }
   .current-lot-price-row { grid-template-columns: 1fr; }
   .paddle-bar { flex-direction: column; gap: 12px; align-items: stretch; }
   .paddle-bar-info { justify-content: center; text-align: center; }
+}
+
+@media (max-width: 420px) {
+  .current-lot-card {
+    padding: 14px;
+    min-height: 220px;
+  }
+
+  .current-lot-active {
+    gap: 16px;
+  }
+
+  .current-lot-price-cell {
+    padding: 12px;
+  }
+
+  .current-lot-price-value.is-big {
+    font-size: 22px;
+  }
 }

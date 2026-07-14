@@ -176,6 +176,7 @@
   display: grid;
   grid-template-columns: repeat(4, 1fr);
   gap: 12px;
+  min-width: 0;
 }
 
 .profile-stat-card {
@@ -221,6 +222,7 @@
   grid-template-columns: 1fr 320px;
   gap: 22px;
   align-items: start;
+  min-width: 0;
 }
 
 .profile-section {
@@ -233,6 +235,7 @@
   display: flex;
   flex-direction: column;
   gap: 16px;
+  min-width: 0;
 }
 
 .profile-section-head {
@@ -429,6 +432,7 @@
   color: var(--muted);
   background: rgba(255, 255, 255, 0.04);
   white-space: nowrap;
+  flex-shrink: 0;
 }
 
 .profile-hosted-status.is-live {
@@ -531,6 +535,7 @@
   gap: 12px;
   padding: 8px 0;
   border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+  min-width: 0;
 }
 
 .profile-pref-row:last-of-type {
@@ -787,14 +792,45 @@
   .profile-hosted-link {
     padding: 12px 14px;
     gap: 8px;
+    flex-wrap: wrap;
   }
   .profile-hosted-code {
     display: none;
+  }
+
+  .profile-hosted-status {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .profile-timeline-item {
+    grid-template-columns: 16px minmax(0, 1fr);
+  }
+
+  .profile-timeline-time {
+    grid-column: 2;
+    white-space: normal;
+  }
+
+  .profile-pref-row,
+  .profile-about-list li {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .profile-about-value {
+    text-align: left;
+    overflow-wrap: anywhere;
   }
 }
 
 @media (max-width: 380px) {
   .profile-cover {
     height: 100px;
+  }
+
+  .profile-stats,
+  .profile-badge-grid {
+    grid-template-columns: 1fr;
   }
 }

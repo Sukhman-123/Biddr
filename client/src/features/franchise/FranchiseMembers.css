@@ -3,6 +3,7 @@
   border: 1px solid var(--border-subtle, rgba(255, 255, 255, 0.06));
   border-radius: 12px;
   padding: 16px;
+  min-width: 0;
 }
 
 .franchise-members-header {
@@ -228,4 +229,34 @@
 .franchise-members-cancel:hover {
   background: var(--bg-hover, rgba(255, 255, 255, 0.05));
   color: var(--text-primary, #f0f0f5);
+}
+
+@media (max-width: 640px) {
+  .franchise-members {
+    padding: 12px;
+  }
+
+  .franchise-members-header,
+  .franchise-member {
+    align-items: flex-start;
+    gap: 10px;
+  }
+
+  .franchise-member {
+    flex-direction: column;
+  }
+
+  .franchise-member-actions {
+    width: 100%;
+    justify-content: flex-end;
+  }
+
+  .franchise-members-add-form {
+    grid-template-columns: 1fr;
+  }
+
+  .franchise-members-submit,
+  .franchise-members-cancel {
+    width: 100%;
+  }
 }

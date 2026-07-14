@@ -64,15 +64,4 @@ function App() {
   )
 }
 
-function ComingSoon({ label }) {
-  return (
-    <main className="tournaments-main">
-      <div className="tournaments-empty">
-        <h2>{label} coming soon</h2>
-        <p>We're focused on Tournaments for now. Check back next phase.</p>
-      </div>
-    </main>
-  )
-}
-
 export default App

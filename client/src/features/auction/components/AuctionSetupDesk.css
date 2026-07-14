@@ -63,6 +63,7 @@
   border-radius: 14px;
   background: rgba(255, 255, 255, 0.04);
   border: 1px solid rgba(255, 255, 255, 0.07);
+  width: 100%;
 }
 
 .setup-tab {
@@ -264,6 +265,7 @@
   border: 1px solid rgba(255, 255, 255, 0.07);
   border-radius: 14px;
   overflow: hidden;
+  min-width: 0;
 }
 
 .setup-list-panel {
@@ -419,6 +421,7 @@
   background: rgba(255, 255, 255, 0.035);
   border: 1px solid rgba(255, 255, 255, 0.08);
   color: #9aa0b2;
+  max-width: 100%;
 }
 
 .setup-filter-group button {
@@ -501,5 +504,55 @@
 
   .setup-filter-group {
     overflow-x: auto;
+  }
+}
+
+@media (max-width: 560px) {
+  .setup-shell,
+  .setup-workspace {
+    padding: 12px;
+    border-radius: 12px;
+  }
+
+  .setup-tab {
+    min-height: 40px;
+    font-size: 12px;
+  }
+
+  .setup-desk-stats article {
+    padding: 10px;
+  }
+
+  .setup-desk-stats strong {
+    font-size: 20px;
+  }
+
+  .setup-editor-panel {
+    padding: 12px;
+  }
+
+  .setup-list-panel {
+    max-height: 240px;
+  }
+
+  .setup-card-actions,
+  .setup-save-btn,
+  .setup-ghost-btn,
+  .setup-members-toggle {
+    width: 100%;
+  }
+
+  .setup-icon-btn {
+    flex: 1;
+    width: auto;
+  }
+
+  .setup-filter-group {
+    justify-content: flex-start;
+    width: 100%;
+  }
+
+  .setup-filter-group button {
+    flex: 1 0 auto;
   }
 }

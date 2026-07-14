@@ -1,7 +1,7 @@
 .legal-page {
   position: relative;
   min-height: 100svh;
-  overflow: hidden;
+  overflow-x: hidden;
   color: var(--text);
   background:
     radial-gradient(circle at 82% 16%, rgba(245, 185, 74, 0.16), transparent 28%),
@@ -187,5 +187,22 @@
 
   .legal-section {
     min-height: auto;
+  }
+}
+
+@media (max-width: 420px) {
+  .legal-shell {
+    width: min(100% - 20px, 620px);
+    padding: 20px 0 32px;
+  }
+
+  .legal-card,
+  .legal-section,
+  .legal-note {
+    border-radius: 16px;
+  }
+
+  .legal-section {
+    padding: 16px;
   }
 }
