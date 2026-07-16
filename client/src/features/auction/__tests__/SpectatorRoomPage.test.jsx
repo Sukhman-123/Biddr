@@ -208,4 +208,28 @@ describe('SpectatorRoomPage', () => {
 
     unmount()
   })
+
+  it('surfaces a room join access error from the socket ack', () => {
+    socket.emit.mockImplementationOnce((event, payload, ack) => {
+      if (event === 'room:join') {
+        ack?.({ ok: false, status: 403, message: 'No access to this room' })
+      }
+    })
+
+    const { unmount } = render(
+      <MemoryRouter initialEntries={['/tournaments/t1/watch']}>
+        <Routes>
+          <Route path="/tournaments/:id/watch" element={<SpectatorRoomPage />} />
+        </Routes>
+      </MemoryRouter>,
+    )
+
+    expect(screen.getByText(/access issue/i)).toBeInTheDocument()
+    expect(screen.getByText(/access issue/i)).toHaveAttribute(
+      'title',
+      'No access to this room',
+    )
+
+    unmount()
+  })
 })

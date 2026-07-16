@@ -20,6 +20,7 @@ afterAll(async () => {
 
 beforeEach(async () => {
   await clearDatabase()
+  if (app.locals?.mockIo) app.locals.mockIo.reset()
 })
 
 async function getOwnerToken(email = 'host@example.com', fullName = 'Host') {
@@ -247,6 +248,13 @@ describe('POST /api/tournaments/:id/lots/bulk', () => {
     expect(res.body.errors).toHaveLength(1)
     expect(res.body.errors[0].row).toBe(5)
     expect(res.body.errors[0].message).toMatch(/name is required/i)
+    expect(
+      app.locals.mockIo.emits.some(
+        (event) =>
+          event.event === 'auction:setup-updated' &&
+          event.payload?.reason === 'lots-bulk-uploaded',
+      ),
+    ).toBe(true)
 
     const list = await request(app)
       .get(`/api/tournaments/${id}/lots`)

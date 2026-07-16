@@ -1,6 +1,10 @@
-import { describe, it, expect, vi } from 'vitest'
-import { render, screen, fireEvent } from '@testing-library/react'
+import { beforeEach, describe, it, expect, vi } from 'vitest'
+import { render, screen, fireEvent, waitFor } from '@testing-library/react'
 import HostControls from '../components/HostControls'
+
+beforeEach(() => {
+  window.scrollTo = vi.fn()
+})
 
 // =============================================================
 // HostControls — the only UI on the auction page that mutates
@@ -53,6 +57,32 @@ describe('HostControls — idle mode (no active lot)', () => {
   it('disables the Activate button while busy', () => {
     render(<HostControls mode="idle" queuedLots={queuedLots} busy={true} onActivate={vi.fn()} />)
     expect(screen.getByRole('button', { name: /activate a lot/i })).toBeDisabled()
+  })
+
+  it('keeps the selected lot valid when the queue refreshes', async () => {
+    const onActivate = vi.fn()
+    const { rerender } = render(
+      <HostControls mode="idle" queuedLots={queuedLots} busy={false} onActivate={onActivate} />,
+    )
+
+    fireEvent.click(screen.getByRole('button', { name: /activate a lot/i }))
+    fireEvent.click(screen.getByText('Bumrah'))
+
+    rerender(
+      <HostControls
+        mode="idle"
+        queuedLots={[queuedLots[0]]}
+        busy={false}
+        onActivate={onActivate}
+      />,
+    )
+
+    await waitFor(() => {
+      expect(screen.queryByText('Bumrah')).toBeNull()
+    })
+
+    fireEvent.click(screen.getByRole('button', { name: /bring to the floor/i }))
+    expect(onActivate).toHaveBeenCalledWith('l1')
   })
 })
 

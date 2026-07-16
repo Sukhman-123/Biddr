@@ -306,6 +306,10 @@ const bulkUploadLots = async (req, res, next) => {
       inserted = result.length;
     }
 
+    if (inserted > 0) {
+      broadcastSetupUpdated(req, tournament, 'lots-bulk-uploaded');
+    }
+
     return res.status(201).json({ created: inserted, errors });
   } catch (error) {
     return next(error);

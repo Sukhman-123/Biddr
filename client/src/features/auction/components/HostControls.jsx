@@ -85,13 +85,15 @@ export default function HostControls({
 function IdlePicker({ queuedLots, busy, currency, canUndo, onActivate, onUndo }) {
   const [open, setOpen] = useState(false)
   const [pick, setPick] = useState(queuedLots?.[0]?.id || '')
+  const safeQueuedLots = queuedLots || []
 
-  // Keep the picked lot in sync if the queued list refreshes.
-  if (pick && !queuedLots?.some((l) => l.id === pick)) {
-    setPick(queuedLots?.[0]?.id || '')
-  }
+  useEffect(() => {
+    const nextPick = safeQueuedLots[0]?.id || ''
+    if (!pick || safeQueuedLots.some((l) => l.id === pick)) return
+    setPick(nextPick)
+  }, [pick, safeQueuedLots])
 
-  if ((!queuedLots || queuedLots.length === 0) && !canUndo) {
+  if (safeQueuedLots.length === 0 && !canUndo) {
     return null
   }
 
@@ -131,7 +133,7 @@ function IdlePicker({ queuedLots, busy, currency, canUndo, onActivate, onUndo })
           </button>
         ) : null}
         <span className="host-controls-hint">
-          {queuedLots.length} queued · you choose the order
+          {safeQueuedLots.length} queued · you choose the order
         </span>
       </div>
 
@@ -145,7 +147,7 @@ function IdlePicker({ queuedLots, busy, currency, canUndo, onActivate, onUndo })
             transition={{ duration: 0.22, ease: [0.22, 1, 0.36, 1] }}
           >
             <ul className="host-picker-list" role="listbox" aria-label="Pick a queued lot">
-              {queuedLots.map((l) => (
+              {safeQueuedLots.map((l) => (
                 <li
                   key={l.id}
                   className={`host-picker-item ${pick === l.id ? 'is-picked' : ''}`}

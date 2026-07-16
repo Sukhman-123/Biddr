@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useParams, Link } from 'react-router-dom'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { motion, useReducedMotion } from 'framer-motion'
@@ -18,6 +18,7 @@ export default function SpectatorRoomPage() {
   const { socket, connected } = useSocket()
   const queryClient = useQueryClient()
   const reduceMotion = useReducedMotion()
+  const joinedRef = useRef(false)
 
   // Server-side snapshot — drives the initial render. After mount,
   // the socket is the source of truth and we patch state from broadcasts.
@@ -33,6 +34,7 @@ export default function SpectatorRoomPage() {
   const [activeLot, setActiveLot] = useState(null)
   const [feed, setFeed] = useState([])
   const [timerSeconds, setTimerSeconds] = useState(0)
+  const [roomJoinError, setRoomJoinError] = useState(null)
 
   // Seed local state from the snapshot whenever it loads.
   useEffect(() => {
@@ -62,11 +64,21 @@ export default function SpectatorRoomPage() {
 
   // Socket connection and event handling
   useEffect(() => {
-    if (!socket) return
+    if (!socket || !tournamentId) return
 
     const handleConnect = () => {
-      console.log('[Spectator] Connected to room')
-      socket.emit('room:join', { tournamentId })
+      if (joinedRef.current) return
+      socket.emit('room:join', { tournamentId }, (ack) => {
+        if (ack?.ok) {
+          joinedRef.current = true
+          setRoomJoinError(null)
+          return
+        }
+        if (ack && ack.ok === false) {
+          joinedRef.current = false
+          setRoomJoinError(ack.message || 'Could not join the live room')
+        }
+      })
     }
 
     if (connected) {
@@ -74,7 +86,7 @@ export default function SpectatorRoomPage() {
     }
 
     const handleDisconnect = () => {
-      console.log('[Spectator] Disconnected from room')
+      joinedRef.current = false
     }
 
     const handleLotActivated = ({ lot, at }) => {
@@ -217,7 +229,10 @@ export default function SpectatorRoomPage() {
     socket.on('auction:setup-updated', handleSetupUpdated)
 
     return () => {
-      socket.emit('room:leave', { tournamentId })
+      if (joinedRef.current) {
+        socket.emit('room:leave', { tournamentId })
+        joinedRef.current = false
+      }
       socket.off('connect', handleConnect)
       socket.off('disconnect', handleDisconnect)
       socket.off('lot:activated', handleLotActivated)
@@ -233,6 +248,7 @@ export default function SpectatorRoomPage() {
   }, [socket, connected, tournamentId, queryClient])
 
   const tournament = snapshotQuery.data?.tournament
+  const isRoomLive = connected && !roomJoinError
 
   return (
     <main className="auction-room-main">
@@ -251,8 +267,11 @@ export default function SpectatorRoomPage() {
           <span>Back to lobby</span>
         </Link>
         <div className="auction-room-status">
-          <span className={connected ? 'status-online' : 'status-offline'}>
-            {connected ? 'Live' : 'Disconnected'}
+          <span
+            className={isRoomLive ? 'status-online' : 'status-offline'}
+            title={roomJoinError || undefined}
+          >
+            {roomJoinError ? 'Access issue' : connected ? 'Live' : 'Disconnected'}
           </span>
           <span className="spectator-badge">
             Viewing as spectator
