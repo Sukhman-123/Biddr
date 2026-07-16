@@ -29,10 +29,35 @@ const { push, pop, peek, clear, depth } = require('../services/undoService');
 const isHost = (tournament, user) =>
   user && tournament.ownerId.toString() === user._id.toString();
 
+const FLOOR_STATUSES = ['active', 'paused'];
+
 const broadcast = (req, tournamentId, event, payload) => {
   const io = req.app?.get?.('io');
   if (io) {
     io.to(`tournament:${tournamentId}`).emit(event, payload);
+  }
+};
+
+const isFloorConflictError = (error) =>
+  error?.code === 11000 &&
+  (error?.keyPattern?.tournamentId || error?.message?.includes('one_floor_lot_per_tournament'));
+
+const buildFloorOccupiedError = () =>
+  new HttpError(409, 'Resolve the current lot before bringing another lot to the floor');
+
+const assertFloorIsEmpty = async (tournamentId, excludeLotId = null) => {
+  const query = {
+    tournamentId,
+    auctionStatus: { $in: FLOOR_STATUSES },
+  };
+
+  if (excludeLotId) {
+    query._id = { $ne: excludeLotId };
+  }
+
+  const existingFloorLot = await Lot.exists(query);
+  if (existingFloorLot) {
+    throw buildFloorOccupiedError();
   }
 };
 
@@ -71,6 +96,8 @@ const activateLot = async (req, res, next) => {
       );
     }
 
+    await assertFloorIsEmpty(tournament._id, lot._id);
+
     lot.auctionStatus = 'active';
     lot.bidIncrement = effectiveBidIncrement;
     lot.currentBid = lot.basePrice;
@@ -87,6 +114,9 @@ const activateLot = async (req, res, next) => {
   } catch (error) {
     if (error instanceof HttpError) {
       return res.status(error.status).json({ message: error.message });
+    }
+    if (isFloorConflictError(error)) {
+      return res.status(409).json({ message: buildFloorOccupiedError().message });
     }
     return next(error);
   }
@@ -522,8 +552,17 @@ const undoLastAction = async (req, res, next) => {
     if (!tournament) throw new HttpError(404, 'Tournament not found');
     if (!isHost(tournament, req.user)) throw new HttpError(403, 'Only the auctioneer can undo actions');
 
-    const action = pop(tournament._id.toString());
+    const tournamentId = tournament._id.toString()
+    const action = peek(tournamentId);
     if (!action) throw new HttpError(400, 'No actions to undo');
+
+    const restoredAuctionStatus =
+      action.previousLot?.auctionStatus || action.previousBid?.auctionStatus;
+    if (FLOOR_STATUSES.includes(restoredAuctionStatus)) {
+      await assertFloorIsEmpty(tournament._id, lot._id);
+    }
+
+    pop(tournamentId);
 
     let revertedLot = null;
     switch (action.type) {
@@ -551,8 +590,6 @@ const undoLastAction = async (req, res, next) => {
         throw new HttpError(400, `Cannot undo: ${action.type}`);
     }
 
-    const tournamentId = tournament._id.toString()
-
     broadcast(req, tournamentId, 'lot:undone', {
       action: { ...action, reverted: true },
       tournamentId,
@@ -568,6 +605,9 @@ const undoLastAction = async (req, res, next) => {
     });
   } catch (error) {
     if (error instanceof HttpError) return res.status(error.status).json({ message: error.message });
+    if (isFloorConflictError(error)) {
+      return res.status(409).json({ message: buildFloorOccupiedError().message });
+    }
     return next(error);
   }
 };

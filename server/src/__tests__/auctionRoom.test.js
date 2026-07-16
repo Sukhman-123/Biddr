@@ -259,6 +259,32 @@ describe('POST /api/tournaments/:id/lots/:lotId/activate', () => {
     expect(second.status).toBe(400)
   })
 
+  it('rejects activating another lot while one lot is already on the floor', async () => {
+    const { token, tournamentId, lotId } = await freshHostAndLot()
+    const secondLot = await createLot(token, tournamentId, {
+      name: 'Jasprit Bumrah',
+      style: 'Bowler',
+      bidIncrement: 500000,
+    })
+
+    const first = await request(app)
+      .post(`/api/tournaments/${tournamentId}/lots/${lotId}/activate`)
+      .set('Authorization', `Bearer ${token}`)
+    expect(first.status).toBe(200)
+
+    const second = await request(app)
+      .post(`/api/tournaments/${tournamentId}/lots/${secondLot.body.lot.id}/activate`)
+      .set('Authorization', `Bearer ${token}`)
+
+    expect(second.status).toBe(409)
+    expect(second.body.message).toMatch(/current lot/i)
+
+    const room = await request(app)
+      .get(`/api/tournaments/${tournamentId}/room`)
+      .set('Authorization', `Bearer ${token}`)
+    expect(room.body.activeLot.id).toBe(lotId)
+  })
+
   it('returns 403 when the caller is host of one tournament but the route is for another', async () => {
     const hostToken = await getToken('host@example.com', 'Host')
     const otherToken = await getToken('other@example.com', 'Other')

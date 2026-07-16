@@ -145,6 +145,16 @@ lotSchema.index({ tournamentId: 1, status: 1 });
 lotSchema.index({ tournamentId: 1, set: 1 });
 // Fast lookup of "is there an active lot in this tournament right now?"
 lotSchema.index({ tournamentId: 1, auctionStatus: 1 });
+// Hard safety net for physical/host-controlled auctions: only one lot can
+// be on the floor for a tournament, whether actively bidding or paused.
+lotSchema.index(
+  { tournamentId: 1 },
+  {
+    unique: true,
+    partialFilterExpression: { auctionStatus: { $in: ['active', 'paused'] } },
+    name: 'one_floor_lot_per_tournament',
+  },
+);
 
 lotSchema.methods.toJSON = function toJSON() {
   const obj = this.toObject({ versionKey: false });
