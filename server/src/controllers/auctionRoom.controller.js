@@ -633,6 +633,7 @@ const deactivateLot = async (req, res, next) => {
     lot.currentBidderFranchiseId = null;
     lot.currentBidByUserId = null;
     lot.currentBidAt = null;
+    lot.bidHistory = [];
     lot.status = 'queued';
     await lot.save();
 

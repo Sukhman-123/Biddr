@@ -473,6 +473,51 @@ describe('POST /api/lots/:lotId/pass', () => {
 // =============================================================
 
 describe('Room lifecycle — total host control', () => {
+  it('clears floor bids when a lot is skipped and re-queued', async () => {
+    const token = await getToken('host@example.com', 'Host')
+    const create = await createTournament(token, { auctionMode: 'physical' })
+    const id = create.body.tournament.id
+    const [franchise] = create.body.tournament.franchises
+    const lotRes = await createLot(token, id, {
+      bidIncrement: 500000,
+      basePrice: 2000000,
+    })
+    const lotId = lotRes.body.lot.id
+
+    const activated = await request(app)
+      .post(`/api/tournaments/${id}/lots/${lotId}/activate`)
+      .set('Authorization', `Bearer ${token}`)
+    expect(activated.status).toBe(200)
+
+    const bid = await request(app)
+      .post(`/api/lots/${lotId}/place-bid`)
+      .set('Authorization', `Bearer ${token}`)
+      .send({ franchiseId: franchise.id, amount: 2500000 })
+    expect(bid.status).toBe(200)
+
+    const beforeSkip = await request(app)
+      .get(`/api/tournaments/${id}/room`)
+      .set('Authorization', `Bearer ${token}`)
+    expect(beforeSkip.body.recentBids).toHaveLength(1)
+
+    const skipped = await request(app)
+      .post(`/api/lots/${lotId}/deactivate`)
+      .set('Authorization', `Bearer ${token}`)
+    expect(skipped.status).toBe(200)
+    expect(skipped.body.lot.auctionStatus).toBe('idle')
+
+    const reactivated = await request(app)
+      .post(`/api/tournaments/${id}/lots/${lotId}/activate`)
+      .set('Authorization', `Bearer ${token}`)
+    expect(reactivated.status).toBe(200)
+
+    const room = await request(app)
+      .get(`/api/tournaments/${id}/room`)
+      .set('Authorization', `Bearer ${token}`)
+    expect(room.body.activeLot.id).toBe(lotId)
+    expect(room.body.recentBids).toEqual([])
+  })
+
   it('after hammer, the room is empty (no auto-advance)', async () => {
     const token = await getToken('host@example.com', 'Host')
     const create = await createTournament(token)
