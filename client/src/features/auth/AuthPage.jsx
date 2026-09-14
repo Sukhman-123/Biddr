@@ -31,6 +31,7 @@ import AuthBrand from './components/AuthBrand'
 import AuthTabs from './components/AuthTabs'
 import ForgotPasswordForm from './components/ForgotPasswordForm'
 import LoginForm from './components/LoginForm'
+import LoginLayout from './components/LoginLayout'
 import RegisterForm from './components/RegisterForm'
 import ResetPasswordForm from './components/ResetPasswordForm'
 import './AuthPage.css'
@@ -119,12 +120,13 @@ function AuthPage() {
 
   useEffect(() => {
     document.body.classList.add('auth-route-active')
+    document.body.classList.toggle('auth-login-route', mode === AUTH_MODES.LOGIN)
     return () => {
-      document.body.classList.remove('auth-route-active')
+      document.body.classList.remove('auth-route-active', 'auth-login-route')
     }
-  }, [])
+  }, [mode])
 
-  if (isLoading) {
+  if (isLoading && !isSubmitting && !isGoogleLoading) {
     return (
       <div className="biddr-stage">
         <div className="biddr-grid" aria-hidden="true" />
@@ -166,14 +168,16 @@ function AuthPage() {
     setResetResult(null)
     setResetComplete(false)
     setShowPassword(false)
-    navigate(pathFromMode(nextMode), { replace: true })
+    navigate(pathFromMode(nextMode), { replace: true, state: { next: nextPath } })
   }
 
   const handleLogin = async (event) => {
     event.preventDefault()
+    if (isSubmitting || isGoogleLoading) return
     const nextErrors = validateLogin(form)
     if (Object.keys(nextErrors).length > 0) {
       setErrors(nextErrors)
+      event.currentTarget.elements.namedItem(Object.keys(nextErrors)[0])?.focus()
       return
     }
     setErrors(EMPTY_ERRORS)
@@ -287,6 +291,27 @@ function AuthPage() {
   const handleGoogleError = (error) => {
     if (!error) return
     setServerError(error.message || 'Google sign-in failed')
+  }
+
+  if (mode === AUTH_MODES.LOGIN) {
+    return (
+      <LoginLayout>
+        <LoginForm
+          form={form}
+          showPassword={showPassword}
+          errors={errors}
+          serverError={serverError}
+          isSubmitting={isSubmitting}
+          isGoogleLoading={isGoogleLoading}
+          onChange={updateField}
+          onModeChange={switchMode}
+          onSubmit={handleLogin}
+          onTogglePassword={() => setShowPassword((value) => !value)}
+          onGoogleCredential={handleGoogleCredential}
+          onGoogleError={handleGoogleError}
+        />
+      </LoginLayout>
+    )
   }
 
   return (
@@ -413,7 +438,7 @@ function AuthPage() {
                   onTogglePassword={() => setShowPassword((value) => !value)}
                 />
               </motion.div>
-            ) : isRegister ? (
+            ) : (
               <motion.div
                 key="register"
                 initial={{ opacity: 0, x: 8 }}
@@ -432,29 +457,6 @@ function AuthPage() {
                   onChange={updateField}
                   onModeChange={switchMode}
                   onSubmit={handleRegister}
-                  onTogglePassword={() => setShowPassword((value) => !value)}
-                  onGoogleCredential={handleGoogleCredential}
-                  onGoogleError={handleGoogleError}
-                />
-              </motion.div>
-            ) : (
-              <motion.div
-                key="login"
-                initial={{ opacity: 0, x: -8 }}
-                animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0, x: 8 }}
-                transition={{ duration: 0.2, ease: 'easeOut' }}
-              >
-                <LoginForm
-                  form={form}
-                  showPassword={showPassword}
-                  errors={errors}
-                  serverError={serverError}
-                  isSubmitting={isSubmitting}
-                  isGoogleLoading={isGoogleLoading}
-                  onChange={updateField}
-                  onModeChange={switchMode}
-                  onSubmit={handleLogin}
                   onTogglePassword={() => setShowPassword((value) => !value)}
                   onGoogleCredential={handleGoogleCredential}
                   onGoogleError={handleGoogleError}

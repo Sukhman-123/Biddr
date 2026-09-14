@@ -1,5 +1,4 @@
-import { Mail } from 'lucide-react'
-import { motion } from 'framer-motion'
+import { ArrowRight, LoaderCircle, Mail } from 'lucide-react'
 import { AUTH_MODES } from '../auth.constants'
 import AuthLegal from './AuthLegal'
 import FormError from './FormError'
@@ -21,8 +20,10 @@ function LoginForm({
   showPassword,
   form,
 }) {
+  const busy = isSubmitting || isGoogleLoading
+
   return (
-    <form id="auth-panel" className="auth-form" onSubmit={onSubmit} noValidate>
+    <form id="auth-panel" className="auth-form login-form" onSubmit={onSubmit} aria-busy={busy} noValidate>
       <FormError message={serverError} />
 
       <div className="field-row">
@@ -30,7 +31,10 @@ function LoginForm({
           id="identifier"
           label="Email or phone"
           autoComplete="username"
-          placeholder="you@example.com or +91 98765 43210"
+          autoCapitalize="none"
+          spellCheck={false}
+          readOnly={busy}
+          placeholder="Email address or phone number"
           value={form.identifier}
           onChange={onChange('identifier')}
           error={errors.identifier}
@@ -41,7 +45,8 @@ function LoginForm({
       <div className="field-row">
         <PasswordField
           autoComplete="current-password"
-          placeholder="Your password"
+          placeholder="Enter your password"
+          readOnly={busy}
           value={form.password}
           showPassword={showPassword}
           onChange={onChange('password')}
@@ -54,29 +59,30 @@ function LoginForm({
         <button
           type="button"
           className="link-btn"
+          disabled={busy}
           onClick={() => onModeChange(AUTH_MODES.FORGOT_PASSWORD)}
         >
           Forgot password?
         </button>
       </div>
 
-      <motion.button
+      <button
         type="submit"
         className="cta-btn"
-        disabled={isSubmitting || isGoogleLoading}
-        aria-busy={isSubmitting || undefined}
-        whileHover={isSubmitting || isGoogleLoading ? undefined : { y: -1 }}
-        whileTap={isSubmitting || isGoogleLoading ? undefined : { y: 0, scale: 0.99 }}
-        transition={{ type: 'spring', stiffness: 400, damping: 28 }}
+        disabled={busy}
       >
-        <span className="cta-btn-shine" aria-hidden="true" />
         <span className="cta-btn-content">
-          {isSubmitting ? 'Signing you in…' : 'Enter Auction Room'}
+          {busy ? <LoaderCircle className="login-spinner" size={18} aria-hidden="true" /> : null}
+          {isSubmitting ? 'Signing in…' : isGoogleLoading ? 'Connecting to Google…' : 'Sign in'}
+          {!busy ? <ArrowRight size={18} aria-hidden="true" /> : null}
         </span>
-      </motion.button>
+      </button>
+      <span className="login-status" role="status">
+        {isSubmitting ? 'Signing in. Your auction room will open shortly.' : ''}
+      </span>
 
       <SocialAuthButtons
-        isGoogleLoading={isGoogleLoading}
+        isGoogleLoading={busy}
         onGoogleCredential={onGoogleCredential}
         onGoogleError={onGoogleError}
       />
@@ -86,6 +92,7 @@ function LoginForm({
         <button
           type="button"
           className="link-btn"
+          disabled={busy}
           onClick={() => onModeChange(AUTH_MODES.REGISTER)}
         >
           Create an account

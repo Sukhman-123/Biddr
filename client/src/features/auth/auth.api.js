@@ -34,7 +34,12 @@ export async function loginRequest({ identifier, password }) {
     if (data?.token) tokenStorage.set(data.token)
     return data
   } catch (error) {
-    throw wrapError(error, 'Invalid email/phone or password')
+    const fallback = !error.response
+      ? 'Could not connect. Check your connection and try again.'
+      : error.response.status >= 500
+        ? 'Sign-in is temporarily unavailable. Please try again shortly.'
+        : 'Email, phone, or password is incorrect. Please try again.'
+    throw wrapError(error, fallback)
   }
 }
 

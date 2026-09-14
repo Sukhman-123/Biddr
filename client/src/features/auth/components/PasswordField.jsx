@@ -9,6 +9,7 @@ function PasswordField({
   onChange,
   onToggleVisibility,
   placeholder,
+  readOnly = false,
   showPassword,
   value,
 }) {
@@ -19,6 +20,7 @@ function PasswordField({
       type={showPassword ? 'text' : 'password'}
       autoComplete={autoComplete}
       placeholder={placeholder}
+      readOnly={readOnly}
       value={value}
       onChange={onChange}
       error={error}

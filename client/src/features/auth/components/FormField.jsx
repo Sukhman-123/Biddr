@@ -1,5 +1,6 @@
 function FormField({
   autoComplete,
+  autoCapitalize,
   children,
   error,
   icon,
@@ -9,6 +10,8 @@ function FormField({
   name = id,
   onChange,
   placeholder,
+  readOnly = false,
+  spellCheck,
   type = 'text',
   value,
 }) {
@@ -33,6 +36,9 @@ function FormField({
           type={type}
           inputMode={inputMode}
           autoComplete={autoComplete}
+          autoCapitalize={autoCapitalize}
+          spellCheck={spellCheck}
+          readOnly={readOnly}
           placeholder={placeholder}
           value={value}
           onChange={onChange}
