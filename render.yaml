@@ -33,6 +33,14 @@ services:
         sync: false
       - key: CLIENT_URL
         sync: false
+      - key: RESEND_API_KEY
+        sync: false
+      - key: RESEND_FROM_EMAIL
+        sync: false
+      - key: SUPPORT_EMAIL
+        sync: false
+      - key: CONTACT_EMAIL
+        sync: false
     buildCommand: npm install
     startCommand: npm start
     healthCheckPath: /api/health

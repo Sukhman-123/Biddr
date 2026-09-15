@@ -1,4 +1,4 @@
-import mongoose from 'mongoose'
+const mongoose = require('mongoose');
 
 const contactSchema = new mongoose.Schema(
   {
@@ -14,6 +14,7 @@ const contactSchema = new mongoose.Schema(
       required: [true, 'Email is required'],
       trim: true,
       lowercase: true,
+      maxLength: [254, 'Email must be under 255 characters'],
       match: [/^\S+@\S+\.\S+$/, 'Please provide a valid email address'],
     },
     mobile: {
@@ -21,6 +22,7 @@ const contactSchema = new mongoose.Schema(
       required: [true, 'Mobile number is required'],
       trim: true,
       minLength: [7, 'Mobile number must be at least 7 digits'],
+      maxLength: [30, 'Mobile number must be under 30 characters'],
     },
     place: {
       type: String,
@@ -41,10 +43,16 @@ const contactSchema = new mongoose.Schema(
       enum: ['new', 'read', 'replied'],
       default: 'new',
     },
+    notificationStatus: {
+      type: String,
+      enum: ['pending', 'sent', 'skipped', 'failed'],
+      default: 'pending',
+    },
+    notificationAttemptedAt: Date,
   },
   { timestamps: true },
-)
+);
 
-const Contact = mongoose.model('Contact', contactSchema)
+const Contact = mongoose.model('Contact', contactSchema);
 
-export default Contact
+module.exports = Contact;

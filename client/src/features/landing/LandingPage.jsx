@@ -259,8 +259,8 @@ function LandingPage() {
     [reduceMotion],
   )
 
-  // Local contact form state — submits to the backend if /api/contact exists,
-  // otherwise just acknowledges receipt so the UX still works in dev.
+  // Local contact form state. A success message is shown only after the API
+  // confirms that the submission has been stored.
   const [contact, setContact] = useState({
     name: '',
     email: '',
@@ -269,6 +269,7 @@ function LandingPage() {
     message: '',
   })
   const [contactStatus, setContactStatus] = useState('idle')
+  const [contactFeedback, setContactFeedback] = useState('')
 
   // Mobile menu state. Toggled by the hamburger button on narrow viewports.
   const [menuOpen, setMenuOpen] = useState(false)
@@ -276,6 +277,8 @@ function LandingPage() {
   const onContactChange = useCallback((event) => {
     const { name, value } = event.target
     setContact((prev) => ({ ...prev, [name]: value }))
+    setContactStatus('idle')
+    setContactFeedback('')
   }, [])
 
   const onContactSubmit = useCallback(
@@ -298,22 +301,37 @@ function LandingPage() {
         trimmed.message.length >= 4
       if (!valid) {
         setContactStatus('error')
+        setContactFeedback('Please fill every field with a valid value.')
         return
       }
       setContactStatus('sending')
+      setContactFeedback('Sending your message…')
       try {
         const res = await fetch('/api/contact', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(trimmed),
         })
-        if (!res.ok) throw new Error('bad status')
-        setContactStatus('sent')
+        const payload = await res.json().catch(() => ({}))
+        if (!res.ok) {
+          setContactStatus('error')
+          setContactFeedback(
+            payload?.message || 'We could not send your message. Please try again shortly.',
+          )
+          return
+        }
+
+        const deliveryDelayed = payload?.data?.notificationStatus === 'failed'
+        setContactStatus(deliveryDelayed ? 'warning' : 'sent')
+        setContactFeedback(
+          payload?.message || 'Thanks — your message has been received.',
+        )
         setContact({ name: '', email: '', mobile: '', place: '', message: '' })
-      } catch (_err) { // eslint-disable-line no-unused-vars
-        // Backend endpoint isn't wired yet — acknowledge locally so the UX works.
-        setContactStatus('sent')
-        setContact({ name: '', email: '', mobile: '', place: '', message: '' })
+      } catch {
+        setContactStatus('error')
+        setContactFeedback(
+          'We could not reach the contact service. Check your connection and try again.',
+        )
       }
     },
     [contact],
@@ -772,7 +790,12 @@ function LandingPage() {
               </ul>
             </RevealDiv>
 
-            <form className="landing-contact-form" onSubmit={onContactSubmit} noValidate>
+            <form
+              className="landing-contact-form"
+              onSubmit={onContactSubmit}
+              aria-busy={contactStatus === 'sending'}
+              noValidate
+            >
               <div className="landing-contact-form-head">
                 <span className="landing-contact-form-eyebrow">
                   <Radio size={12} strokeWidth={2.6} />
@@ -794,6 +817,8 @@ function LandingPage() {
                       onChange={onContactChange}
                       placeholder="Your name"
                       autoComplete="name"
+                      maxLength={100}
+                      disabled={contactStatus === 'sending'}
                       required
                     />
                   </span>
@@ -810,6 +835,8 @@ function LandingPage() {
                       onChange={onContactChange}
                       placeholder="you@example.com"
                       autoComplete="email"
+                      maxLength={254}
+                      disabled={contactStatus === 'sending'}
                       required
                     />
                   </span>
@@ -826,6 +853,8 @@ function LandingPage() {
                       onChange={onContactChange}
                       placeholder="98xxx xxxxx"
                       autoComplete="tel"
+                      maxLength={30}
+                      disabled={contactStatus === 'sending'}
                       required
                     />
                   </span>
@@ -842,6 +871,8 @@ function LandingPage() {
                       onChange={onContactChange}
                       placeholder="City, region, or full address"
                       autoComplete="street-address"
+                      maxLength={200}
+                      disabled={contactStatus === 'sending'}
                       required
                     />
                   </span>
@@ -859,6 +890,8 @@ function LandingPage() {
                     placeholder="Tell us about your tournament..."
                     autoComplete="off"
                     rows={4}
+                    maxLength={2000}
+                    disabled={contactStatus === 'sending'}
                     required
                   />
                 </span>
@@ -883,8 +916,21 @@ function LandingPage() {
                   variant="fade"
                   className="landing-contact-status landing-contact-status--ok"
                   threshold={0.01}
+                  role="status"
+                  aria-live="polite"
                 >
-                  Thanks &mdash; we will get back to you shortly.
+                  {contactFeedback}
+                </RevealDiv>
+              ) : null}
+              {contactStatus === 'warning' ? (
+                <RevealDiv
+                  variant="fade"
+                  className="landing-contact-status landing-contact-status--warn"
+                  threshold={0.01}
+                  role="status"
+                  aria-live="polite"
+                >
+                  {contactFeedback}
                 </RevealDiv>
               ) : null}
               {contactStatus === 'error' ? (
@@ -892,8 +938,9 @@ function LandingPage() {
                   variant="fade"
                   className="landing-contact-status landing-contact-status--err"
                   threshold={0.01}
+                  role="alert"
                 >
-                  Please fill every field with a valid value.
+                  {contactFeedback}
                 </RevealDiv>
               ) : null}
             </form>

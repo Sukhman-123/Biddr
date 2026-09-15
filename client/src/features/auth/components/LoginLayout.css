@@ -134,7 +134,7 @@ body.auth-route-active.auth-login-route {
 .login-page--register .divider { margin-top: 0; }
 .login-page--register .switch-copy { margin-top: 0; }
 
-.recovery-heading-icon { display: grid; place-items: center; width: 54px; height: 54px; margin-bottom: 26px; border: 1px solid #eac16e30; border-radius: 15px; color: #eac16e; background: #eac16e0a; }
+.recovery-heading-icon { display: none; place-items: center; width: 54px; height: 54px; margin-bottom: 26px; border: 1px solid #eac16e30; border-radius: 15px; color: #eac16e; background: #eac16e0a; }
 .login-page .recovery-return { display: flex; align-items: center; justify-content: center; gap: 8px; min-height: 44px; align-self: center; }
 .recovery-help { color: #a0a39f; font-size: 12px; line-height: 1.8; text-align: center; }
 .recovery-confirmation { border: 1px solid #eac16e24; border-radius: 12px; background: #eac16e06; padding: 22px; color: #b5b8b1; font-size: 13px; line-height: 1.85; }

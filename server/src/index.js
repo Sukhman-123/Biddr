@@ -11,6 +11,7 @@ const authRoutes = require('./routes/auth.routes');
 const tournamentRoutes = require('./routes/tournament.routes');
 const lotRoutes = require('./routes/lot.routes');
 const userRoutes = require('./routes/user.routes');
+const contactRoutes = require('./routes/contact.routes');
 const errorHandler = require('./middleware/error');
 
 // Load env from the conventional `server/config.env` first (local dev),
@@ -61,6 +62,7 @@ app.use('/api/tournaments', tournamentRoutes);
 app.use('/api/lots', lotRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/franchises', require('./routes/franchise.routes'));
+app.use('/api/contact', contactRoutes);
 
 app.use((req, res) => {
   res.status(404).json({ message: 'Route not found' });

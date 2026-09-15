@@ -14,6 +14,9 @@ const getSender = () =>
 const getSupportEmail = () =>
   process.env.SUPPORT_EMAIL || 'support@biddr.app';
 
+const getContactEmail = () =>
+  process.env.CONTACT_EMAIL || getSupportEmail();
+
 const buildPasswordResetEmail = ({ fullName, resetUrl }) => {
   const safeName = escapeHtml(fullName || 'there');
   const safeResetUrl = escapeHtml(resetUrl);
@@ -126,8 +129,79 @@ const sendPasswordResetEmail = async ({ to, fullName, resetUrl }) => {
   });
 };
 
+const buildContactNotificationEmail = ({
+  name,
+  email,
+  mobile,
+  place,
+  message,
+  createdAt,
+}) => {
+  const safeName = escapeHtml(name);
+  const safeEmail = escapeHtml(email);
+  const safeMobile = escapeHtml(mobile);
+  const safePlace = escapeHtml(place);
+  const safeMessage = escapeHtml(message).replace(/\r?\n/g, '<br>');
+  const receivedAt = createdAt
+    ? new Date(createdAt).toLocaleString('en-IN', { timeZone: 'Asia/Kolkata' })
+    : new Date().toLocaleString('en-IN', { timeZone: 'Asia/Kolkata' });
+  const safeReceivedAt = escapeHtml(receivedAt);
+
+  const text = [
+    'New Biddr contact enquiry',
+    '',
+    `Name: ${name}`,
+    `Email: ${email}`,
+    `Mobile: ${mobile}`,
+    `Place: ${place}`,
+    `Received: ${receivedAt} IST`,
+    '',
+    'Message:',
+    message,
+  ].join('\n');
+
+  const html = `
+    <div style="margin:0;padding:24px;background:#05070b;font-family:Inter,Arial,sans-serif;color:#e6e6ec;">
+      <div style="max-width:640px;margin:0 auto;background:#111217;border:1px solid rgba(255,255,255,0.12);border-radius:20px;overflow:hidden;">
+        <div style="padding:26px 28px 18px;">
+          <p style="margin:0 0 8px;color:#ffd24a;font-size:12px;font-weight:800;letter-spacing:0.16em;text-transform:uppercase;">Biddr contact enquiry</p>
+          <h1 style="margin:0;color:#f4f4f6;font-size:26px;line-height:1.2;">New message from ${safeName}</h1>
+        </div>
+        <div style="padding:0 28px 22px;color:#b6b6c0;font-size:14px;line-height:1.7;">
+          <p style="margin:0;"><strong style="color:#f4f4f6;">Email:</strong> ${safeEmail}</p>
+          <p style="margin:0;"><strong style="color:#f4f4f6;">Mobile:</strong> ${safeMobile}</p>
+          <p style="margin:0;"><strong style="color:#f4f4f6;">Place:</strong> ${safePlace}</p>
+          <p style="margin:0;"><strong style="color:#f4f4f6;">Received:</strong> ${safeReceivedAt} IST</p>
+        </div>
+        <div style="margin:0 28px 28px;padding:18px;background:rgba(255,255,255,0.045);border-radius:14px;color:#e6e6ec;font-size:15px;line-height:1.7;">
+          ${safeMessage}
+        </div>
+      </div>
+    </div>
+  `;
+
+  return { html, text };
+};
+
+const sendContactNotificationEmail = async (contact) => {
+  const { html, text } = buildContactNotificationEmail(contact);
+  const subjectName = String(contact.name || 'Website visitor')
+    .replace(/\s+/g, ' ')
+    .trim()
+    .slice(0, 80);
+
+  return sendEmail({
+    to: getContactEmail(),
+    subject: `New Biddr enquiry from ${subjectName}`,
+    html,
+    text,
+  });
+};
+
 module.exports = {
+  buildContactNotificationEmail,
   buildPasswordResetEmail,
   sendEmail,
+  sendContactNotificationEmail,
   sendPasswordResetEmail,
 };

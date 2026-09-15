@@ -1971,6 +1971,10 @@
   color: #3fa873;
 }
 
+.landing-contact-status--warn {
+  color: #d8a84f;
+}
+
 .landing-contact-status--err {
   color: #d97a68;
 }

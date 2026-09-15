@@ -1,9 +1,9 @@
-import { Router } from 'express'
-import { submitContact } from '../controllers/contact.controller.js'
+const express = require('express');
+const { submitContact } = require('../controllers/contact.controller');
 
-const router = Router()
+const router = express.Router();
 
 // POST /api/contact — public endpoint, no auth required
-router.post('/', submitContact)
+router.post('/', submitContact);
 
-export default router
+module.exports = router;
