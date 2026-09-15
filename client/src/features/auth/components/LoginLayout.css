@@ -120,6 +120,15 @@ body.auth-route-active.auth-login-route {
 .login-page .legal-copy a { color: #b4b7b2; text-underline-offset: 3px; }
 .login-panel-foot { position: absolute; bottom: 30px; color: #868a86; font-size: 11px; text-align: center; }
 
+.recovery-heading-icon { display: grid; place-items: center; width: 54px; height: 54px; margin-bottom: 26px; border: 1px solid #eac16e30; border-radius: 15px; color: #eac16e; background: #eac16e0a; }
+.login-page .recovery-return { display: flex; align-items: center; justify-content: center; gap: 8px; min-height: 44px; align-self: center; }
+.recovery-help { color: #a0a39f; font-size: 12px; line-height: 1.8; text-align: center; }
+.recovery-confirmation { border: 1px solid #eac16e24; border-radius: 12px; background: #eac16e06; padding: 22px; color: #b5b8b1; font-size: 13px; line-height: 1.85; }
+.recovery-confirmation:focus { outline: 2px solid #eac16e60; outline-offset: 4px; }
+.recovery-confirmation strong { display: block; margin: 7px 0; color: #f0d69f; font-size: 15px; font-weight: 550; overflow-wrap: anywhere; }
+.recovery-dev-link { color: #969a94; font-size: 11px; line-height: 1.8; text-align: center; overflow-wrap: anywhere; }
+.recovery-dev-link a { color: #d1af6b; text-underline-offset: 3px; }
+
 @media (max-width: 1050px) {
   .login-story { padding: 48px 32px 80px; }
   .login-form-panel { padding: 48px 32px 80px; }

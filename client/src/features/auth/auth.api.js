@@ -58,7 +58,12 @@ export async function forgotPasswordRequest(email) {
     const { data } = await api.post('/auth/forgot-password', { email })
     return data
   } catch (error) {
-    throw wrapError(error, 'Could not start password reset')
+    throw wrapError(
+      error,
+      !error.response
+        ? 'Could not connect. Check your connection and try again.'
+        : 'Could not request a reset link. Please try again shortly.',
+    )
   }
 }
 

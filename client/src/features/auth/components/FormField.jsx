@@ -6,6 +6,7 @@ function FormField({
   icon,
   id,
   inputMode,
+  inputRef,
   label,
   name = id,
   onChange,
@@ -31,6 +32,7 @@ function FormField({
           </span>
         )}
         <input
+          ref={inputRef}
           id={id}
           name={name}
           type={type}

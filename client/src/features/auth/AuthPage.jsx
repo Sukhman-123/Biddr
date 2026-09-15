@@ -12,6 +12,8 @@ import {
   BadgeCheck,
   Clock,
   Gavel,
+  KeyRound,
+  MailCheck,
   MonitorUp,
   ShieldCheck,
   Users,
@@ -120,7 +122,10 @@ function AuthPage() {
 
   useEffect(() => {
     document.body.classList.add('auth-route-active')
-    document.body.classList.toggle('auth-login-route', mode === AUTH_MODES.LOGIN)
+    document.body.classList.toggle(
+      'auth-login-route',
+      mode === AUTH_MODES.LOGIN || mode === AUTH_MODES.FORGOT_PASSWORD,
+    )
     return () => {
       document.body.classList.remove('auth-route-active', 'auth-login-route')
     }
@@ -226,9 +231,11 @@ function AuthPage() {
 
   const handleForgotPassword = async (event) => {
     event.preventDefault()
+    if (isSubmitting) return
     const nextErrors = validateForgotPassword(form)
     if (Object.keys(nextErrors).length > 0) {
       setErrors(nextErrors)
+      event.currentTarget.elements.namedItem('email')?.focus()
       return
     }
     setErrors(EMPTY_ERRORS)
@@ -309,6 +316,36 @@ function AuthPage() {
           onTogglePassword={() => setShowPassword((value) => !value)}
           onGoogleCredential={handleGoogleCredential}
           onGoogleError={handleGoogleError}
+        />
+      </LoginLayout>
+    )
+  }
+
+  if (isForgotPassword) {
+    return (
+      <LoginLayout
+        eyebrow="ACCOUNT RECOVERY"
+        title={resetResult ? 'Check your inbox.' : 'Forgot password?'}
+        description={
+          resetResult
+            ? 'Your next step is in your email.'
+            : 'It happens. Enter your account email to request a reset link.'
+        }
+        icon={resetResult ? <MailCheck size={25} /> : <KeyRound size={25} />}
+      >
+        <ForgotPasswordForm
+          form={form}
+          errors={errors}
+          serverError={serverError}
+          isSubmitting={isSubmitting}
+          resetResult={resetResult}
+          onChange={updateField}
+          onModeChange={switchMode}
+          onSubmit={handleForgotPassword}
+          onEditEmail={() => {
+            setResetResult(null)
+            setServerError(null)
+          }}
         />
       </LoginLayout>
     )
@@ -397,26 +434,7 @@ function AuthPage() {
           {showAuthTabs ? <AuthTabs activeMode={mode} onChange={switchMode} /> : null}
 
           <AnimatePresence mode="wait" initial={false}>
-            {isForgotPassword ? (
-              <motion.div
-                key="forgot-password"
-                initial={{ opacity: 0, x: 8 }}
-                animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0, x: -8 }}
-                transition={{ duration: 0.2, ease: 'easeOut' }}
-              >
-                <ForgotPasswordForm
-                  form={form}
-                  errors={errors}
-                  serverError={serverError}
-                  isSubmitting={isSubmitting}
-                  resetResult={resetResult}
-                  onChange={updateField}
-                  onModeChange={switchMode}
-                  onSubmit={handleForgotPassword}
-                />
-              </motion.div>
-            ) : isResetPassword ? (
+            {isResetPassword ? (
               <motion.div
                 key="reset-password"
                 initial={{ opacity: 0, x: 8 }}

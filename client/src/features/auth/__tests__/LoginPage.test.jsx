@@ -5,7 +5,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 import AuthPage from '../AuthPage'
 import { AuthProvider } from '../AuthContext'
 import { tokenStorage } from '../../../lib/api'
-import { loginRequest } from '../auth.api'
+import { forgotPasswordRequest, loginRequest } from '../auth.api'
 
 vi.mock('../auth.api', () => ({
   fetchMeRequest: vi.fn(),
@@ -33,6 +33,19 @@ function renderLogin() {
           <Route path="/register" element={<Destination />} />
           <Route path="/forgot-password" element={<Destination />} />
           <Route path="/tournaments/invited-room" element={<p>Your invited auction</p>} />
+        </Routes>
+      </AuthProvider>
+    </MemoryRouter>,
+  )
+}
+
+function renderForgotPassword() {
+  return render(
+    <MemoryRouter initialEntries={[{ pathname: '/forgot-password', state: { next: '/tournaments/invited-room' } }]}>
+      <AuthProvider>
+        <Routes>
+          <Route path="/forgot-password" element={<AuthPage />} />
+          <Route path="/login" element={<Destination />} />
         </Routes>
       </AuthProvider>
     </MemoryRouter>,
@@ -96,5 +109,67 @@ describe('Login page', () => {
     expect(password).toHaveAttribute('type', 'text')
     expect(screen.getByRole('button', { name: 'Hide password' })).toHaveAttribute('aria-pressed', 'true')
     expect(screen.queryByText(/Google/i)).not.toBeInTheDocument()
+  })
+
+  it('focuses an invalid recovery email', async () => {
+    const user = userEvent.setup()
+    renderForgotPassword()
+    await user.click(await screen.findByRole('button', { name: 'Send reset link' }))
+    const email = screen.getByLabelText('Account email')
+    expect(email).toHaveFocus()
+    expect(email).toHaveAccessibleDescription('Email is required')
+    expect(forgotPasswordRequest).not.toHaveBeenCalled()
+  })
+
+  it('keeps recovery context visible while requesting and shows a safe confirmation', async () => {
+    let finishRequest
+    forgotPasswordRequest.mockImplementationOnce(
+      () => new Promise((resolve) => { finishRequest = resolve }),
+    )
+    const user = userEvent.setup()
+    renderForgotPassword()
+    const email = await screen.findByLabelText('Account email')
+    await user.type(email, 'Owner@Example.com')
+    await user.click(screen.getByRole('button', { name: 'Send reset link' }))
+
+    expect(screen.getByRole('button', { name: 'Requesting reset link…' })).toBeDisabled()
+    expect(email).toHaveValue('Owner@Example.com')
+    expect(email).toHaveAttribute('readonly')
+    expect(forgotPasswordRequest).toHaveBeenCalledWith('owner@example.com')
+
+    await act(async () => finishRequest({
+      message: 'If that email is linked to a Biddr account, reset instructions are ready.',
+      resetUrl: '/reset-password?token=local-test-token',
+    }))
+
+    const confirmation = await screen.findByRole('status')
+    expect(confirmation).toHaveTextContent('owner@example.com')
+    expect(confirmation).toHaveFocus()
+    expect(screen.getByRole('button', { name: 'Back to sign in' })).toBeEnabled()
+
+    await user.click(screen.getByRole('button', { name: 'Try again or use another email' }))
+    expect(await screen.findByLabelText('Account email')).toHaveFocus()
+  })
+
+  it('preserves the destination when returning from recovery', async () => {
+    const user = userEvent.setup()
+    renderForgotPassword()
+    await user.click(await screen.findByRole('button', { name: 'Back to sign in' }))
+    expect(await screen.findByText('Return destination: /tournaments/invited-room')).toBeInTheDocument()
+  })
+
+  it('keeps the email available when requesting a reset link fails', async () => {
+    forgotPasswordRequest.mockRejectedValueOnce(new Error('Could not connect. Check your connection and try again.'))
+    const user = userEvent.setup()
+    renderForgotPassword()
+    const email = await screen.findByLabelText('Account email')
+    await user.type(email, 'owner@example.com')
+    await user.click(screen.getByRole('button', { name: 'Send reset link' }))
+
+    expect(await screen.findByRole('alert')).toHaveTextContent(
+      'Could not connect. Check your connection and try again.',
+    )
+    expect(email).toHaveValue('owner@example.com')
+    expect(screen.getByRole('button', { name: 'Send reset link' })).toBeEnabled()
   })
 })

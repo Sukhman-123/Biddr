@@ -3,7 +3,13 @@ import { Link } from 'react-router-dom'
 import AuthBrand from './AuthBrand'
 import './LoginLayout.css'
 
-export default function LoginLayout({ children }) {
+export default function LoginLayout({
+  children,
+  eyebrow = 'WELCOME BACK',
+  title = 'Sign in to Biddr.',
+  description = 'Your next auction is waiting for you.',
+  icon,
+}) {
   return (
     <div className="login-page">
       <header className="login-header">
@@ -59,9 +65,10 @@ export default function LoginLayout({ children }) {
         <section className="login-form-panel" aria-labelledby="login-title">
           <div className="login-form-container">
             <div className="login-heading">
-              <span className="login-eyebrow">WELCOME BACK</span>
-              <h1 id="login-title">Sign in to Biddr.</h1>
-              <p>Your next auction is waiting for you.</p>
+              {icon ? <div className="recovery-heading-icon" aria-hidden="true">{icon}</div> : null}
+              <span className="login-eyebrow">{eyebrow}</span>
+              <h1 id="login-title">{title}</h1>
+              <p>{description}</p>
             </div>
             {children}
           </div>
