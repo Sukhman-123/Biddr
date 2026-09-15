@@ -29,6 +29,12 @@ const { push, pop, peek, clear, depth } = require('../services/undoService');
 const isHost = (tournament, user) =>
   user && tournament.ownerId.toString() === user._id.toString();
 
+const assertAuctionNotCompleted = (tournament) => {
+  if (tournament.status === 'completed') {
+    throw new HttpError(409, 'This auction has ended. No further room actions are allowed');
+  }
+};
+
 const FLOOR_STATUSES = ['active', 'paused'];
 
 const broadcast = (req, tournamentId, event, payload) => {
@@ -76,6 +82,7 @@ const activateLot = async (req, res, next) => {
     if (!isHost(tournament, req.user)) {
       throw new HttpError(403, 'Only the auctioneer can activate lots');
     }
+    assertAuctionNotCompleted(tournament);
 
     const lot = await Lot.findOne({ _id: lotId, tournamentId: tournament._id });
     if (!lot) {
@@ -146,6 +153,7 @@ const hammerLot = async (req, res, next) => {
     if (!isHost(tournament, req.user)) {
       throw new HttpError(403, 'Only the auctioneer can hammer lots');
     }
+    assertAuctionNotCompleted(tournament);
     if (lot.auctionStatus !== 'active') {
       throw new HttpError(
         400,
@@ -277,6 +285,7 @@ const placeBid = async (req, res, next) => {
     if (tournament.auctionMode === 'remote') {
       await assertCanSeeTournament(tournament._id.toString(), req.user);
     }
+    assertAuctionNotCompleted(tournament);
 
     if (lot.auctionStatus !== 'active') {
       throw new HttpError(400, `Lot is not active (auctionStatus: ${lot.auctionStatus})`);
@@ -385,6 +394,7 @@ const pauseLot = async (req, res, next) => {
     if (!isHost(tournament, req.user)) {
       throw new HttpError(403, 'Only the auctioneer can pause auctions');
     }
+    assertAuctionNotCompleted(tournament);
 
     if (lot.auctionStatus !== 'active') {
       throw new HttpError(
@@ -430,6 +440,7 @@ const resumeLot = async (req, res, next) => {
     if (!isHost(tournament, req.user)) {
       throw new HttpError(403, 'Only the auctioneer can resume auctions');
     }
+    assertAuctionNotCompleted(tournament);
 
     if (lot.auctionStatus !== 'paused') {
       throw new HttpError(
@@ -477,6 +488,7 @@ const passLot = async (req, res, next) => {
     if (!isHost(tournament, req.user)) {
       throw new HttpError(403, 'Only the auctioneer can pass lots');
     }
+    assertAuctionNotCompleted(tournament);
     if (lot.auctionStatus === 'unsold' || lot.status === 'unsold') {
       throw new HttpError(400, 'Lot is already passed');
     }
@@ -551,6 +563,7 @@ const undoLastAction = async (req, res, next) => {
     const tournament = await Tournament.findById(lot.tournamentId);
     if (!tournament) throw new HttpError(404, 'Tournament not found');
     if (!isHost(tournament, req.user)) throw new HttpError(403, 'Only the auctioneer can undo actions');
+    assertAuctionNotCompleted(tournament);
 
     const tournamentId = tournament._id.toString()
     const action = peek(tournamentId);
@@ -623,6 +636,7 @@ const deactivateLot = async (req, res, next) => {
     const tournament = await Tournament.findById(lot.tournamentId);
     if (!tournament) throw new HttpError(404, 'Tournament not found');
     if (!isHost(tournament, req.user)) throw new HttpError(403, 'Only the auctioneer can skip lots');
+    assertAuctionNotCompleted(tournament);
 
     if (lot.auctionStatus === 'idle') {
       throw new HttpError(400, 'Lot is already idle');

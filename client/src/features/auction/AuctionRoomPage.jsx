@@ -26,6 +26,7 @@ import PaddlesRail from './components/PaddlesRail'
 import BidFeed from './components/BidFeed'
 import TeamBudgetSidebar from './components/TeamBudgetSidebar'
 import PlayerQueuePanel from './components/PlayerQueuePanel'
+import AuctionEndedPanel from './components/AuctionEndedPanel'
 import EndAuctionModal from '../tournaments/EndAuctionModal'
 import './AuctionRoomPage.css'
 
@@ -118,6 +119,8 @@ export default function AuctionRoomPage() {
   // Seed local state from the snapshot whenever it loads.
   useEffect(() => {
     if (snapshotQuery.data) {
+      // Socket state is reseeded after polling or reconnects.
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setActiveLot(snapshotQuery.data.activeLot)
       setFeed(mapRecentBidsToFeed(snapshotQuery.data.recentBids, snapshotQuery.data.activeLot))
       setUndoAvailable(Boolean(snapshotQuery.data.undoAvailable))
@@ -311,6 +314,15 @@ export default function AuctionRoomPage() {
       refreshRoomQueries({ includeTournament: true, updatedTournament })
     }
 
+    const onAuctionEnded = ({ tournament: updatedTournament }) => {
+      setActiveLot(null)
+      setUndoAvailable(false)
+      lastUndoLotIdRef.current = null
+      setEndOpen(false)
+      refreshRoomQueries({ includeTournament: true, updatedTournament })
+      toast.info('The auction room has closed')
+    }
+
     if (socket.connected) onConnect()
     socket.on('connect', onConnect)
     socket.on('lot:activated', onLotActivated)
@@ -322,6 +334,7 @@ export default function AuctionRoomPage() {
     socket.on('lot:undone', onLotUndone)
     socket.on('lot:deactivated', onLotDeactivated)
     socket.on('auction:setup-updated', onSetupUpdated)
+    socket.on('auction:ended', onAuctionEnded)
 
     return () => {
       socket.off('connect', onConnect)
@@ -334,6 +347,7 @@ export default function AuctionRoomPage() {
       socket.off('lot:undone', onLotUndone)
       socket.off('lot:deactivated', onLotDeactivated)
       socket.off('auction:setup-updated', onSetupUpdated)
+      socket.off('auction:ended', onAuctionEnded)
       if (joinedRef.current) {
         socket.emit('room:leave', { tournamentId })
         joinedRef.current = false
@@ -359,7 +373,11 @@ export default function AuctionRoomPage() {
   // from 60s. The server owns the truth; this is just for UX.
   const [timerSeconds, setTimerSeconds] = useState(0)
   useEffect(() => {
-    if (!activeLot?.currentBidAt) { setTimerSeconds(0); return }
+    if (!activeLot?.currentBidAt) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setTimerSeconds(0)
+      return
+    }
     const started = new Date(activeLot.currentBidAt).getTime()
     const tick = () => {
       const elapsed = Math.floor((Date.now() - started) / 1000)
@@ -513,12 +531,8 @@ export default function AuctionRoomPage() {
     setEndBusy(true)
     setEndError(null)
     try {
-      await endAuctionRequest(tournamentId)
-      await Promise.all([
-        queryClient.invalidateQueries({ queryKey: ['tournament', tournamentId] }),
-        queryClient.invalidateQueries({ queryKey: ['auction-room', tournamentId] }),
-        queryClient.invalidateQueries({ queryKey: ['auction-room-probe', tournamentId] }),
-      ])
+      const updatedTournament = await endAuctionRequest(tournamentId)
+      await refreshRoomQueries({ includeTournament: true, updatedTournament })
       toast.success('Auction completed')
       navigate(`/tournaments/${tournamentId}`)
     } catch (err) {
@@ -526,7 +540,7 @@ export default function AuctionRoomPage() {
     } finally {
       setEndBusy(false)
     }
-  }, [isHost, endBusy, tournamentId, queryClient, toast, navigate])
+  }, [isHost, endBusy, tournamentId, refreshRoomQueries, toast, navigate])
 
   const onPlaceBid = useCallback(async (franchiseId, amount) => {
     if (!isHost || !activeLot) return
@@ -588,6 +602,14 @@ export default function AuctionRoomPage() {
     )
   }
 
+  if (tournament?.status === 'completed') {
+    return (
+      <main className="auction-room-main">
+        <AuctionEndedPanel tournament={tournament} />
+      </main>
+    )
+  }
+
   return (
     <main className="auction-room-main">
       <TopBar
@@ -612,12 +634,7 @@ export default function AuctionRoomPage() {
             : undefined
         }
         showEndAuction={isHost && tournament?.status === 'live'}
-        endDisabled={Boolean(activeLot) || endBusy}
-        endDisabledReason={
-          activeLot
-            ? 'Resolve the current lot before ending the auction'
-            : undefined
-        }
+        endDisabled={endBusy}
         onEndAuction={() => {
           setEndError(null)
           setEndOpen(true)
@@ -698,6 +715,9 @@ export default function AuctionRoomPage() {
         tournament={tournament}
         busy={endBusy}
         errorMessage={endError}
+        blockedReason={
+          activeLot ? 'Resolve the current lot before ending the auction.' : null
+        }
         onConfirm={onEndAuction}
         onCancel={() => !endBusy && setEndOpen(false)}
       />

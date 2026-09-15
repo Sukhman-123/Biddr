@@ -930,3 +930,112 @@
     padding-block: 8px;
   }
 }
+.presenter-stage--ended {
+  display: grid;
+  place-items: center;
+  min-height: 100svh;
+  padding: clamp(24px, 5vw, 72px);
+  background:
+    radial-gradient(circle at 50% 20%, rgba(245, 185, 74, 0.17), transparent 36%),
+    #07080c;
+}
+
+.presenter-ended {
+  width: min(820px, 100%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 14px;
+  padding: clamp(38px, 7vw, 72px);
+  border: 1px solid rgba(245, 185, 74, 0.24);
+  border-radius: 30px;
+  background: rgba(16, 17, 22, 0.94);
+  box-shadow: 0 34px 100px rgba(0, 0, 0, 0.4);
+}
+
+.presenter-ended-mark {
+  width: 96px;
+  height: 96px;
+  display: grid;
+  place-items: center;
+  color: #f5b94a;
+  border: 1px solid rgba(245, 185, 74, 0.3);
+  border-radius: 30px;
+  background: rgba(245, 185, 74, 0.1);
+}
+
+.presenter-ended-eyebrow {
+  color: #f5b94a;
+  font-size: 12px;
+  font-weight: 900;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+}
+
+.presenter-ended h1,
+.presenter-ended h2,
+.presenter-ended p {
+  margin: 0;
+}
+
+.presenter-ended h1 {
+  color: #f5f5f6;
+  font-size: clamp(25px, 4vw, 44px);
+}
+
+.presenter-ended h2 {
+  color: #f5b94a;
+  font-size: clamp(38px, 7vw, 76px);
+  line-height: 1;
+  text-transform: uppercase;
+}
+
+.presenter-ended p {
+  color: #aeb1bb;
+  font-size: clamp(15px, 2vw, 19px);
+}
+
+.presenter-ended-stats {
+  width: 100%;
+  margin-top: 16px;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+}
+
+.presenter-ended-stats span {
+  padding: 18px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  color: #9397a3;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.035);
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.presenter-ended-stats strong {
+  color: #f5f5f6;
+  font-size: 27px;
+  letter-spacing: normal;
+}
+
+.presenter-ended-link {
+  margin-top: 14px;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: #f5b94a;
+  text-decoration: none;
+  font-weight: 800;
+}
+
+@media (max-width: 620px) {
+  .presenter-ended-stats {
+    grid-template-columns: 1fr;
+  }
+}

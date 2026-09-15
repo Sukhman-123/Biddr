@@ -40,6 +40,14 @@ const PHOTO_RE = /^https?:\/\//i;
 const isOwner = (tournament, user) =>
   user && tournament.ownerId.toString() === user._id.toString();
 
+const rejectCompletedTournament = (tournament, res) => {
+  if (tournament.status !== 'completed') return false;
+  res.status(409).json({
+    message: 'This auction has ended. Its player pool is now locked',
+  });
+  return true;
+};
+
 const broadcastSetupUpdated = (req, tournament, reason = 'lots') => {
   const io = req.app.get('io');
   if (!io || !tournament?._id) return;
@@ -60,6 +68,7 @@ const ensureHost = async (req, res, paramsKey = 'id') => {
     res.status(403).json({ message: 'Only the host can manage the auction pool' });
     return null;
   }
+  if (rejectCompletedTournament(tournament, res)) return null;
   return tournament;
 };
 
@@ -78,6 +87,7 @@ const ensureHostForLot = async (req, res) => {
     res.status(403).json({ message: 'Only the host can manage lots' });
     return null;
   }
+  if (rejectCompletedTournament(tournament, res)) return null;
   return { lot, tournament };
 };
 

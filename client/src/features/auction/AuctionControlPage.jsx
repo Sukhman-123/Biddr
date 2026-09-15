@@ -15,6 +15,7 @@ import {
 } from '../tournaments/tournament.api'
 import TopBar from './components/TopBar'
 import AuctionSetupDesk from './components/AuctionSetupDesk'
+import AuctionEndedPanel from './components/AuctionEndedPanel'
 import EndAuctionModal from '../tournaments/EndAuctionModal'
 import './AuctionRoomPage.css'
 
@@ -283,6 +284,14 @@ export default function AuctionControlPage() {
             <span className="cta-btn-content"><ArrowLeft size={16} />Back to lobby</span>
           </Link>
         </div>
+      </main>
+    )
+  }
+
+  if (tournament?.status === 'completed') {
+    return (
+      <main className="auction-room-main">
+        <AuctionEndedPanel tournament={tournament} />
       </main>
     )
   }

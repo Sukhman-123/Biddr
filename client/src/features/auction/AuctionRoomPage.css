@@ -66,6 +66,68 @@
   border: 1px solid var(--border, rgba(255, 255, 255, 0.08));
 }
 
+.auction-ended-panel {
+  width: min(620px, 100%);
+  margin: clamp(48px, 9vh, 100px) auto 0;
+  padding: clamp(30px, 5vw, 52px);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 14px;
+  border: 1px solid rgba(245, 185, 74, 0.22);
+  border-radius: 24px;
+  background:
+    radial-gradient(circle at 50% 0%, rgba(245, 185, 74, 0.14), transparent 48%),
+    var(--surface, rgba(22, 22, 26, 0.9));
+  box-shadow: 0 28px 70px rgba(0, 0, 0, 0.26);
+}
+
+.auction-ended-icon {
+  width: 66px;
+  height: 66px;
+  display: grid;
+  place-items: center;
+  color: var(--gold, #f5b94a);
+  border: 1px solid rgba(245, 185, 74, 0.28);
+  border-radius: 20px;
+  background: rgba(245, 185, 74, 0.09);
+}
+
+.auction-ended-eyebrow {
+  color: var(--gold, #f5b94a);
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+}
+
+.auction-ended-panel h1,
+.auction-ended-panel p {
+  margin: 0;
+}
+
+.auction-ended-panel h1 {
+  color: var(--heading, #f4f4f6);
+  font-size: clamp(28px, 5vw, 42px);
+}
+
+.auction-ended-panel p {
+  max-width: 480px;
+  color: var(--text-soft, #b6b6c0);
+  line-height: 1.7;
+}
+
+.auction-ended-time {
+  color: var(--muted, #8a8a94);
+  font-size: 12px;
+}
+
+.auction-ended-action {
+  margin-top: 8px;
+  text-decoration: none;
+}
+
 @keyframes skelShimmer {
   0%   { background-position: 200% 0; }
   100% { background-position: -200% 0; }

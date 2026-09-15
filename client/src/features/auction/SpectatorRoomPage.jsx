@@ -10,6 +10,7 @@ import CurrentLotCard from './components/CurrentLotCard'
 import PaddlesRail from './components/PaddlesRail'
 import TeamBudgetSidebar from './components/TeamBudgetSidebar'
 import BidFeed from './components/BidFeed'
+import AuctionEndedPanel from './components/AuctionEndedPanel'
 import './AuctionRoomPage.css'
 
 export default function SpectatorRoomPage() {
@@ -39,6 +40,8 @@ export default function SpectatorRoomPage() {
   // Seed local state from the snapshot whenever it loads.
   useEffect(() => {
     if (snapshotQuery.data) {
+      // Socket state is reseeded after polling or reconnects.
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setActiveLot(snapshotQuery.data.activeLot)
       setFeed(mapRecentBidsToFeed(snapshotQuery.data.recentBids, snapshotQuery.data.activeLot))
     }
@@ -46,6 +49,7 @@ export default function SpectatorRoomPage() {
 
   useEffect(() => {
     if (!activeLot?.currentBidAt) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setTimerSeconds(0)
       return
     }
@@ -215,6 +219,15 @@ export default function SpectatorRoomPage() {
       queryClient.invalidateQueries({ queryKey: ['auction-room-probe', tournamentId] })
     }
 
+    const handleAuctionEnded = ({ tournament: updatedTournament }) => {
+      setActiveLot(null)
+      queryClient.setQueryData(['auction-room', tournamentId], (current) =>
+        current
+          ? { ...current, tournament: updatedTournament, activeLot: null }
+          : current,
+      )
+    }
+
     // Socket events
     socket.on('connect', handleConnect)
     socket.on('disconnect', handleDisconnect)
@@ -227,6 +240,7 @@ export default function SpectatorRoomPage() {
     socket.on('lot:undone', handleLotUndone)
     socket.on('lot:deactivated', handleLotDeactivated)
     socket.on('auction:setup-updated', handleSetupUpdated)
+    socket.on('auction:ended', handleAuctionEnded)
 
     return () => {
       if (joinedRef.current) {
@@ -244,11 +258,20 @@ export default function SpectatorRoomPage() {
       socket.off('lot:undone', handleLotUndone)
       socket.off('lot:deactivated', handleLotDeactivated)
       socket.off('auction:setup-updated', handleSetupUpdated)
+      socket.off('auction:ended', handleAuctionEnded)
     }
   }, [socket, connected, tournamentId, queryClient])
 
   const tournament = snapshotQuery.data?.tournament
   const isRoomLive = connected && !roomJoinError
+
+  if (tournament?.status === 'completed') {
+    return (
+      <main className="auction-room-main">
+        <AuctionEndedPanel tournament={tournament} />
+      </main>
+    )
+  }
 
   return (
     <main className="auction-room-main">

@@ -38,6 +38,8 @@ export default function AuctionPresenterPage() {
 
   useEffect(() => {
     if (!snapshotQuery.data) return
+    // The socket-driven local view is reseeded after polling or reconnects.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setActiveLot(snapshotQuery.data.activeLot)
     setFeed(mapRecentBidsToFeed(snapshotQuery.data.recentBids, snapshotQuery.data.activeLot))
   }, [snapshotQuery.data])
@@ -59,6 +61,7 @@ export default function AuctionPresenterPage() {
 
   useEffect(() => {
     if (!activeLot?.currentBidAt) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setTimerSeconds(0)
       return
     }
@@ -242,6 +245,19 @@ export default function AuctionPresenterPage() {
       queryClient.invalidateQueries({ queryKey: ['auction-lots', tournamentId, 'presenter'] })
     }
 
+    const onAuctionEnded = ({ tournament: updatedTournament }) => {
+      setActiveLot(null)
+      setSaleMoment(null)
+      queryClient.setQueryData(
+        ['auction-room', tournamentId, 'presenter'],
+        (current) =>
+          current
+            ? { ...current, tournament: updatedTournament, activeLot: null }
+            : current,
+      )
+      queryClient.invalidateQueries({ queryKey: ['auction-lots', tournamentId, 'presenter'] })
+    }
+
     socket.on('connect', joinRoom)
     socket.on('lot:activated', onLotActivated)
     socket.on('bid:placed', onBidPlaced)
@@ -252,6 +268,7 @@ export default function AuctionPresenterPage() {
     socket.on('lot:undone', onLotUndone)
     socket.on('lot:deactivated', onLotDeactivated)
     socket.on('auction:setup-updated', onSetupUpdated)
+    socket.on('auction:ended', onAuctionEnded)
 
     return () => {
       socket.emit('room:leave', { tournamentId })
@@ -265,12 +282,16 @@ export default function AuctionPresenterPage() {
       socket.off('lot:undone', onLotUndone)
       socket.off('lot:deactivated', onLotDeactivated)
       socket.off('auction:setup-updated', onSetupUpdated)
+      socket.off('auction:ended', onAuctionEnded)
     }
   }, [socket, connected, tournamentId, queryClient])
 
   const tournament = snapshotQuery.data?.tournament
   const currency = tournament?.currency || 'INR'
-  const franchises = tournament?.franchises || []
+  const franchises = useMemo(
+    () => tournament?.franchises || [],
+    [tournament?.franchises],
+  )
   const leader = activeLot
     ? franchises.find((franchise) => franchise.id === activeLot.currentBidderFranchiseId)
     : null
@@ -335,6 +356,31 @@ export default function AuctionPresenterPage() {
           <h1>Could not open presenter view</h1>
           <Link to={`/tournaments/${tournamentId}`}>Back to lobby</Link>
         </div>
+      </main>
+    )
+  }
+
+  if (tournament?.status === 'completed') {
+    return (
+      <main className="presenter-stage presenter-stage--ended" ref={stageRef}>
+        <section className="presenter-ended" role="status" aria-live="polite">
+          <span className="presenter-ended-mark" aria-hidden="true">
+            <Trophy size={52} />
+          </span>
+          <span className="presenter-ended-eyebrow">Final hammer</span>
+          <h1>{tournament.name}</h1>
+          <h2>Auction completed</h2>
+          <p>The room is closed and all final squads are now locked.</p>
+          <div className="presenter-ended-stats">
+            <span><strong>{soldLots.length}</strong> players sold</span>
+            <span><strong>{franchises.length}</strong> franchises</span>
+            <span><strong>{(lotsQuery.data || []).length}</strong> total players</span>
+          </div>
+          <Link to={`/tournaments/${tournamentId}`} className="presenter-ended-link">
+            <ArrowLeft size={17} />
+            Back to tournament
+          </Link>
+        </section>
       </main>
     )
   }

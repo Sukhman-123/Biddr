@@ -1,4 +1,4 @@
-import { ArrowLeft, Wifi, WifiOff, CircleDot } from 'lucide-react'
+import { ArrowLeft, CircleDot, Flag, Wifi, WifiOff } from 'lucide-react'
 import './TopBar.css'
 
 // Top bar for the auction room. Shows the tournament name, a live
@@ -68,7 +68,8 @@ export default function TopBar({
           disabled={endDisabled}
           title={endDisabledReason}
         >
-          End auction
+          <Flag size={14} />
+          End room
         </button>
       ) : null}
 

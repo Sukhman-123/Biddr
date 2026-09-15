@@ -9,6 +9,7 @@ export default function EndAuctionModal({
   tournament,
   busy,
   errorMessage,
+  blockedReason,
   onConfirm,
   onCancel,
 }) {
@@ -75,13 +76,13 @@ export default function EndAuctionModal({
             </p>
             <ul className="start-auction-list">
               <li>The tournament moves out of the live state.</li>
-              <li>No more lots can be brought to the floor.</li>
-              <li>Make sure every active lot has been sold, passed, or skipped first.</li>
+              <li>All bidding and player-pool changes will be locked.</li>
+              <li>Connected presenter and viewer screens will be told the room has closed.</li>
             </ul>
 
-            {errorMessage ? (
+            {blockedReason || errorMessage ? (
               <p className="start-auction-error" role="alert">
-                {errorMessage}
+                {blockedReason || errorMessage}
               </p>
             ) : null}
 
@@ -98,7 +99,7 @@ export default function EndAuctionModal({
                 type="button"
                 className="cta-btn start-auction-confirm"
                 onClick={onConfirm}
-                disabled={busy}
+                disabled={busy || Boolean(blockedReason)}
               >
                 <span className="cta-btn-content">
                   <Flag size={16} />

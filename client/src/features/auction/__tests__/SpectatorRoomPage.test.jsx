@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { render, screen, act } from '@testing-library/react'
 import { MemoryRouter, Route, Routes } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
@@ -60,18 +60,26 @@ vi.mock('../../../lib/socket', () => ({
 vi.mock('framer-motion', () => ({
   AnimatePresence: ({ children }) => <>{children}</>,
   motion: {
-    header: ({ children, initial, animate, exit, transition, ...props }) => (
-      <header {...props}>{children}</header>
-    ),
-    section: ({ children, initial, animate, exit, transition, ...props }) => (
-      <section {...props}>{children}</section>
-    ),
-    div: ({ children, initial, animate, exit, transition, ...props }) => (
-      <div {...props}>{children}</div>
-    ),
-    span: ({ children, initial, animate, exit, transition, ...props }) => (
-      <span {...props}>{children}</span>
-    ),
+    header: ({ children, ...props }) => {
+      const cleanProps = { ...props }
+      ;['initial', 'animate', 'exit', 'transition'].forEach((key) => delete cleanProps[key])
+      return <header {...cleanProps}>{children}</header>
+    },
+    section: ({ children, ...props }) => {
+      const cleanProps = { ...props }
+      ;['initial', 'animate', 'exit', 'transition'].forEach((key) => delete cleanProps[key])
+      return <section {...cleanProps}>{children}</section>
+    },
+    div: ({ children, ...props }) => {
+      const cleanProps = { ...props }
+      ;['initial', 'animate', 'exit', 'transition'].forEach((key) => delete cleanProps[key])
+      return <div {...cleanProps}>{children}</div>
+    },
+    span: ({ children, ...props }) => {
+      const cleanProps = { ...props }
+      ;['initial', 'animate', 'exit', 'transition'].forEach((key) => delete cleanProps[key])
+      return <span {...cleanProps}>{children}</span>
+    },
   },
   useReducedMotion: () => true,
 }))
@@ -231,5 +239,27 @@ describe('SpectatorRoomPage', () => {
     )
 
     unmount()
+  })
+
+  it('shows a closed-room state for a completed auction', () => {
+    const snapshot = makeSnapshot()
+    snapshot.tournament.status = 'completed'
+    snapshot.tournament.completedAt = '2026-07-07T06:30:00.000Z'
+    snapshot.activeLot = null
+    useQuery.mockImplementation(() => ({
+      data: snapshot,
+      isLoading: false,
+    }))
+
+    render(
+      <MemoryRouter initialEntries={['/tournaments/t1/watch']}>
+        <Routes>
+          <Route path="/tournaments/:id/watch" element={<SpectatorRoomPage />} />
+        </Routes>
+      </MemoryRouter>,
+    )
+
+    expect(screen.getByRole('status')).toHaveTextContent(/auction has ended/i)
+    expect(screen.getByText(/bidding and player-pool changes are locked/i)).toBeInTheDocument()
   })
 })

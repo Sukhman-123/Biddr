@@ -19,6 +19,7 @@ afterAll(async () => {
 
 beforeEach(async () => {
   await clearDatabase()
+  if (app.locals?.mockIo) app.locals.mockIo.reset()
 })
 
 async function getToken(email, fullName) {
@@ -60,6 +61,14 @@ describe('POST /api/tournaments/:id/end', () => {
 
     expect(res.status).toBe(200)
     expect(res.body.tournament.status).toBe('completed')
+    expect(res.body.tournament.completedAt).toBeTruthy()
+
+    const broadcast = app.locals.mockIo.emits.find(
+      (event) => event.event === 'auction:ended',
+    )
+    expect(broadcast).toBeTruthy()
+    expect(broadcast.room).toBe(`tournament:${tournament.id}`)
+    expect(broadcast.payload.tournament.status).toBe('completed')
   })
 
   it('rejects ending while a lot is active', async () => {
@@ -115,5 +124,54 @@ describe('POST /api/tournaments/:id/end', () => {
 
     expect(res.status).toBe(400)
     expect(res.body.message).toMatch(/resolve the current lot/i)
+  })
+
+  it('locks room actions and player-pool changes after completion', async () => {
+    const token = await getToken('host@example.com', 'Host')
+    const tournament = await createLiveTournament(token)
+    const lotRes = await request(app)
+      .post(`/api/tournaments/${tournament.id}/lots`)
+      .set('Authorization', `Bearer ${token}`)
+      .send({
+        name: 'Virat Kohli',
+        style: 'Batsman',
+        country: 'India',
+        basePrice: 2000000,
+        bidIncrement: 500000,
+      })
+
+    const ended = await request(app)
+      .post(`/api/tournaments/${tournament.id}/end`)
+      .set('Authorization', `Bearer ${token}`)
+    expect(ended.status).toBe(200)
+
+    const activate = await request(app)
+      .post(`/api/tournaments/${tournament.id}/lots/${lotRes.body.lot.id}/activate`)
+      .set('Authorization', `Bearer ${token}`)
+    expect(activate.status).toBe(409)
+    expect(activate.body.message).toMatch(/auction has ended/i)
+
+    const create = await request(app)
+      .post(`/api/tournaments/${tournament.id}/lots`)
+      .set('Authorization', `Bearer ${token}`)
+      .send({
+        name: 'Rohit Sharma',
+        style: 'Batsman',
+        country: 'India',
+        basePrice: 2000000,
+      })
+    expect(create.status).toBe(409)
+    expect(create.body.message).toMatch(/player pool is now locked/i)
+
+    const update = await request(app)
+      .patch(`/api/lots/${lotRes.body.lot.id}`)
+      .set('Authorization', `Bearer ${token}`)
+      .send({ name: 'Updated after end' })
+    expect(update.status).toBe(409)
+
+    const pass = await request(app)
+      .post(`/api/lots/${lotRes.body.lot.id}/pass`)
+      .set('Authorization', `Bearer ${token}`)
+    expect(pass.status).toBe(409)
   })
 })

@@ -147,6 +147,10 @@ const tournamentSchema = new mongoose.Schema(
       },
       default: 'upcoming',
     },
+    completedAt: {
+      type: Date,
+      default: null,
+    },
     visibility: {
       type: String,
       enum: {
@@ -257,6 +261,7 @@ tournamentSchema.methods.toSummaryJSON = function toSummaryJSON() {
     pursePerFranchise: this.pursePerFranchise,
     startDate: this.startDate,
     endDate: this.endDate,
+    completedAt: this.completedAt,
     status: this.status,
     visibility: this.visibility,
     hostName: this.hostName || '',

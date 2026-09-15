@@ -19,6 +19,16 @@ const broadcastSetupUpdated = (req, tournament, reason = 'tournament') => {
   });
 };
 
+const broadcastAuctionEnded = (req, tournament) => {
+  const io = req.app.get('io');
+  if (!io || !tournament?._id) return;
+  io.to(`tournament:${tournament._id.toString()}`).emit('auction:ended', {
+    tournament: tournament.toDetailJSON(),
+    by: { id: req.user._id.toString(), fullName: req.user.fullName },
+    at: tournament.completedAt?.toISOString?.() || new Date().toISOString(),
+  });
+};
+
 const listTournaments = async (req, res, next) => {
   try {
     const filter = {};
@@ -566,8 +576,10 @@ const endAuction = async (req, res, next) => {
     }
 
     tournament.status = 'completed';
+    tournament.completedAt = new Date();
     await tournament.save();
     clearUndoStack(tournament._id.toString());
+    broadcastAuctionEnded(req, tournament);
 
     return res.status(200).json({ tournament: tournament.toDetailJSON() });
   } catch (error) {
