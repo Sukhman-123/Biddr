@@ -24,7 +24,12 @@ export async function registerRequest({ fullName, email, phone, password }) {
     if (data?.token) tokenStorage.set(data.token)
     return data
   } catch (error) {
-    throw wrapError(error, 'Unable to create your account')
+    const fallback = !error.response
+      ? 'Could not connect. Check your connection and try again.'
+      : error.response.status >= 500
+        ? 'Account creation is temporarily unavailable. Please try again shortly.'
+        : 'Could not create your account. Check your details and try again.'
+    throw wrapError(error, fallback)
   }
 }
 

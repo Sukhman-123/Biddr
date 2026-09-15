@@ -5,7 +5,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 import AuthPage from '../AuthPage'
 import { AuthProvider } from '../AuthContext'
 import { tokenStorage } from '../../../lib/api'
-import { forgotPasswordRequest, loginRequest } from '../auth.api'
+import { forgotPasswordRequest, loginRequest, registerRequest } from '../auth.api'
 
 vi.mock('../auth.api', () => ({
   fetchMeRequest: vi.fn(),
@@ -46,6 +46,20 @@ function renderForgotPassword() {
         <Routes>
           <Route path="/forgot-password" element={<AuthPage />} />
           <Route path="/login" element={<Destination />} />
+        </Routes>
+      </AuthProvider>
+    </MemoryRouter>,
+  )
+}
+
+function renderRegister() {
+  return render(
+    <MemoryRouter initialEntries={[{ pathname: '/register', state: { next: '/tournaments/invited-room' } }]}>
+      <AuthProvider>
+        <Routes>
+          <Route path="/register" element={<AuthPage />} />
+          <Route path="/login" element={<Destination />} />
+          <Route path="/tournaments/invited-room" element={<p>Your invited auction</p>} />
         </Routes>
       </AuthProvider>
     </MemoryRouter>,
@@ -171,5 +185,57 @@ describe('Login page', () => {
     )
     expect(email).toHaveValue('owner@example.com')
     expect(screen.getByRole('button', { name: 'Send reset link' })).toBeEnabled()
+  })
+
+  it('focuses the first invalid registration field', async () => {
+    const user = userEvent.setup()
+    renderRegister()
+    await user.click(await screen.findByRole('button', { name: 'Create account' }))
+
+    const fullName = screen.getByLabelText('Full name')
+    expect(fullName).toHaveFocus()
+    expect(fullName).toHaveAccessibleDescription('Please enter your full name')
+    expect(registerRequest).not.toHaveBeenCalled()
+  })
+
+  it('keeps registration details visible while submitting and after failure', async () => {
+    let rejectRegistration
+    registerRequest.mockImplementationOnce(
+      () => new Promise((_, reject) => { rejectRegistration = reject }),
+    )
+    const user = userEvent.setup()
+    renderRegister()
+
+    await user.type(await screen.findByLabelText('Full name'), 'Team Owner')
+    await user.type(screen.getByLabelText('Email address'), 'Owner@Example.com')
+    await user.type(screen.getByLabelText('Phone number'), '+91 98765 43210')
+    await user.type(screen.getByLabelText('Password', { exact: true }), 'password123')
+    await user.click(screen.getByRole('button', { name: 'Create account' }))
+
+    expect(screen.getByRole('button', { name: 'Creating your account…' })).toBeDisabled()
+    expect(screen.getByLabelText('Email address')).toHaveValue('Owner@Example.com')
+    expect(screen.getByLabelText('Email address')).toHaveAttribute('readonly')
+    expect(registerRequest).toHaveBeenCalledWith({
+      fullName: 'Team Owner',
+      email: 'owner@example.com',
+      phone: '+91 98765 43210',
+      password: 'password123',
+    })
+
+    await act(async () => rejectRegistration(new Error('An account with that email already exists')))
+    expect(await screen.findByRole('alert')).toHaveTextContent('An account with that email already exists')
+    expect(screen.getByLabelText('Full name')).toHaveValue('Team Owner')
+    expect(screen.getByRole('button', { name: 'Create account' })).toBeEnabled()
+
+    registerRequest.mockResolvedValueOnce({ user: { id: 'owner', fullName: 'Team Owner' } })
+    await user.click(screen.getByRole('button', { name: 'Create account' }))
+    expect(await screen.findByText('Your invited auction')).toBeInTheDocument()
+  })
+
+  it('preserves the destination when signing in from registration', async () => {
+    const user = userEvent.setup()
+    renderRegister()
+    await user.click(await screen.findByRole('button', { name: 'Sign in' }))
+    expect(await screen.findByText('Return destination: /tournaments/invited-room')).toBeInTheDocument()
   })
 })

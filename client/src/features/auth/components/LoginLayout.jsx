@@ -9,9 +9,12 @@ export default function LoginLayout({
   title = 'Sign in to Biddr.',
   description = 'Your next auction is waiting for you.',
   icon,
+  variant,
 }) {
+  const pageClassName = variant ? `login-page login-page--${variant}` : 'login-page'
+
   return (
-    <div className="login-page">
+    <div className={pageClassName}>
       <header className="login-header">
         <Link to="/" aria-label="Biddr home" className="login-brand">
           <AuthBrand size={30} />

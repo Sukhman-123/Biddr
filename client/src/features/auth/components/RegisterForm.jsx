@@ -1,5 +1,4 @@
-import { Mail, Phone, Sparkles } from 'lucide-react'
-import { motion } from 'framer-motion'
+import { ArrowRight, LoaderCircle, Mail, Phone, UserRound } from 'lucide-react'
 import { AUTH_MODES } from '../auth.constants'
 import AuthLegal from './AuthLegal'
 import FormError from './FormError'
@@ -23,58 +22,66 @@ function RegisterForm({
   serverError,
   showPassword,
 }) {
+  const busy = isSubmitting || isGoogleLoading
+
   return (
     <form
       id="auth-panel"
-      className="auth-form auth-form--register"
+      className="auth-form login-form register-form"
       onSubmit={onSubmit}
+      aria-busy={busy}
       noValidate
     >
       <FormError message={serverError} />
 
-      <div className="auth-register-fields">
-        <div className="auth-register-row">
-          <FormField
-            id="fullName"
-            label="Full Name"
-            autoComplete="name"
-            placeholder="Virat Kohli"
-            value={form.fullName}
-            onChange={onChange('fullName')}
-            error={errors.fullName}
-          />
+      <div className="register-fields">
+        <FormField
+          id="fullName"
+          label="Full name"
+          autoComplete="name"
+          readOnly={busy}
+          placeholder="Your full name"
+          value={form.fullName}
+          onChange={onChange('fullName')}
+          error={errors.fullName}
+          icon={<UserRound size={18} />}
+        />
 
-          <FormField
-            id="phone"
-            label="Phone"
-            autoComplete="tel"
-            inputMode="tel"
-            placeholder="+91 98765 43210"
-            value={form.phone}
-            onChange={onChange('phone')}
-            error={errors.phone}
-            icon={<Phone size={18} />}
-          />
-        </div>
+        <FormField
+          id="email"
+          label="Email address"
+          type="email"
+          inputMode="email"
+          autoComplete="email"
+          autoCapitalize="none"
+          spellCheck={false}
+          readOnly={busy}
+          placeholder="you@example.com"
+          value={form.email}
+          onChange={onChange('email')}
+          error={errors.email}
+          icon={<Mail size={18} />}
+        />
 
-        <div className="field-row">
-          <FormField
-            id="email"
-            label="Email"
-            type="email"
-            autoComplete="email"
-            placeholder="you@example.com"
-            value={form.email}
-            onChange={onChange('email')}
-            error={errors.email}
-            icon={<Mail size={18} />}
-          />
-        </div>
+        <FormField
+          id="phone"
+          label="Phone number"
+          type="tel"
+          autoComplete="tel"
+          inputMode="tel"
+          readOnly={busy}
+          placeholder="+91 98765 43210"
+          value={form.phone}
+          onChange={onChange('phone')}
+          error={errors.phone}
+          icon={<Phone size={18} />}
+        />
 
-        <div className="field-row">
+        <div className="register-password-field">
           <PasswordField
             autoComplete="new-password"
-            placeholder="Create a strong password"
+            readOnly={busy}
+            placeholder="At least 8 characters"
             value={form.password}
             showPassword={showPassword}
             onChange={onChange('password')}
@@ -85,30 +92,24 @@ function RegisterForm({
         </div>
       </div>
 
-      <motion.button
-        type="submit"
-        className="cta-btn"
-        disabled={isSubmitting || isGoogleLoading}
-        aria-busy={isSubmitting || undefined}
-        whileHover={isSubmitting || isGoogleLoading ? undefined : { y: -1 }}
-        whileTap={isSubmitting || isGoogleLoading ? undefined : { y: 0, scale: 0.99 }}
-        transition={{ type: 'spring', stiffness: 400, damping: 28 }}
-      >
-        <span className="cta-btn-shine" aria-hidden="true" />
+      <button type="submit" className="cta-btn" disabled={busy}>
         <span className="cta-btn-content">
-          {isSubmitting ? (
-            'Setting up your account…'
-          ) : (
-            <>
-              <Sparkles size={16} strokeWidth={2.4} />
-              Create account
-            </>
-          )}
+          {busy ? <LoaderCircle className="login-spinner" size={18} aria-hidden="true" /> : null}
+          {isSubmitting
+            ? 'Creating your account…'
+            : isGoogleLoading
+              ? 'Connecting to Google…'
+              : 'Create account'}
+          {!busy ? <ArrowRight size={18} aria-hidden="true" /> : null}
         </span>
-      </motion.button>
+      </button>
+
+      <span className="login-status" role="status">
+        {isSubmitting ? 'Creating your Biddr account. Please wait.' : ''}
+      </span>
 
       <SocialAuthButtons
-        isGoogleLoading={isGoogleLoading}
+        isGoogleLoading={busy}
         onGoogleCredential={onGoogleCredential}
         onGoogleError={onGoogleError}
       />
@@ -118,6 +119,7 @@ function RegisterForm({
         <button
           type="button"
           className="link-btn"
+          disabled={busy}
           onClick={() => onModeChange(AUTH_MODES.LOGIN)}
         >
           Sign in

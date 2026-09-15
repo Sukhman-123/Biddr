@@ -16,6 +16,7 @@ import {
   MailCheck,
   MonitorUp,
   ShieldCheck,
+  UserPlus,
   Users,
   Wallet,
 } from 'lucide-react'
@@ -124,7 +125,9 @@ function AuthPage() {
     document.body.classList.add('auth-route-active')
     document.body.classList.toggle(
       'auth-login-route',
-      mode === AUTH_MODES.LOGIN || mode === AUTH_MODES.FORGOT_PASSWORD,
+      mode === AUTH_MODES.LOGIN ||
+        mode === AUTH_MODES.REGISTER ||
+        mode === AUTH_MODES.FORGOT_PASSWORD,
     )
     return () => {
       document.body.classList.remove('auth-route-active', 'auth-login-route')
@@ -206,9 +209,11 @@ function AuthPage() {
 
   const handleRegister = async (event) => {
     event.preventDefault()
+    if (isSubmitting || isGoogleLoading) return
     const nextErrors = validateRegister(form)
     if (Object.keys(nextErrors).length > 0) {
       setErrors(nextErrors)
+      event.currentTarget.elements.namedItem(Object.keys(nextErrors)[0])?.focus()
       return
     }
     setErrors(EMPTY_ERRORS)
@@ -346,6 +351,34 @@ function AuthPage() {
             setResetResult(null)
             setServerError(null)
           }}
+        />
+      </LoginLayout>
+    )
+  }
+
+  if (isRegister) {
+    return (
+      <LoginLayout
+        variant="register"
+        eyebrow="JOIN THE AUCTION"
+        title="Create your account."
+        description="One profile lets you host auctions, manage a franchise, or follow the room live."
+        icon={<UserPlus size={25} />}
+      >
+        <RegisterForm
+          form={form}
+          passwordStrength={strength}
+          showPassword={showPassword}
+          errors={errors}
+          serverError={serverError}
+          isSubmitting={isSubmitting}
+          isGoogleLoading={isGoogleLoading}
+          onChange={updateField}
+          onModeChange={switchMode}
+          onSubmit={handleRegister}
+          onTogglePassword={() => setShowPassword((value) => !value)}
+          onGoogleCredential={handleGoogleCredential}
+          onGoogleError={handleGoogleError}
         />
       </LoginLayout>
     )

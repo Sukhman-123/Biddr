@@ -86,6 +86,7 @@ body.auth-route-active.auth-login-route {
 
 .login-form-panel { display: flex; flex-direction: column; justify-content: center; align-items: center; padding: 64px 48px 88px; position: relative; }
 .login-form-container { width: 100%; max-width: 390px; }
+.login-page--register .login-form-container { max-width: 430px; }
 .login-heading { margin-bottom: 36px; }
 .login-heading h1 { margin: 14px 0 12px; font-size: clamp(30px, 3vw, 40px); font-weight: 600; line-height: 1.2; letter-spacing: -.045em; }
 .login-heading p { color: var(--login-muted); font-size: 14px; line-height: 1.6; }
@@ -120,6 +121,19 @@ body.auth-route-active.auth-login-route {
 .login-page .legal-copy a { color: #b4b7b2; text-underline-offset: 3px; }
 .login-panel-foot { position: absolute; bottom: 30px; color: #868a86; font-size: 11px; text-align: center; }
 
+.login-page .register-form { gap: 18px; }
+.register-fields { display: grid; gap: 16px; }
+.register-password-field { min-width: 0; }
+.login-page .register-password-field .strength-meter { margin-top: 9px; }
+.login-page .register-password-field .strength-hint { margin-top: 7px; color: #8f928f; font-size: 11px; line-height: 1.55; }
+.login-page--register .login-form-panel { padding-block: 38px 58px; }
+.login-page--register .login-heading { margin-bottom: 24px; }
+.login-page--register .login-heading h1 { font-size: clamp(30px, 2.7vw, 38px); }
+.login-page--register .recovery-heading-icon { margin-bottom: 18px; }
+.login-page--register .login-panel-foot { display: none; }
+.login-page--register .divider { margin-top: 0; }
+.login-page--register .switch-copy { margin-top: 0; }
+
 .recovery-heading-icon { display: grid; place-items: center; width: 54px; height: 54px; margin-bottom: 26px; border: 1px solid #eac16e30; border-radius: 15px; color: #eac16e; background: #eac16e0a; }
 .login-page .recovery-return { display: flex; align-items: center; justify-content: center; gap: 8px; min-height: 44px; align-self: center; }
 .recovery-help { color: #a0a39f; font-size: 12px; line-height: 1.8; text-align: center; }
@@ -145,6 +159,7 @@ body.auth-route-active.auth-login-route {
   .login-story { display: none; }
   .login-form-panel { padding: 56px 24px 80px; background: radial-gradient(ellipse at 50% 0%, #d5a44009, transparent 65%); }
   .login-form-container { max-width: 400px; }
+  .login-page--register .login-form-container { max-width: 430px; }
   .login-heading { margin-bottom: 32px; }
   .login-heading h1 { font-size: 34px; }
   .login-panel-foot { bottom: 24px; }
@@ -152,6 +167,9 @@ body.auth-route-active.auth-login-route {
   .login-page .auth-form-actions { margin-block: -18px -10px; }
   .login-page .switch-copy { margin-top: 0; }
   .login-home-link { min-height: 44px; }
+  .login-page--register .login-form-panel { justify-content: flex-start; padding-block: 36px 56px; }
+  .login-page--register .login-heading { margin-bottom: 26px; }
+  .login-page--register .recovery-heading-icon { margin-bottom: 20px; }
 }
 
 @media (max-width: 380px) {
