@@ -63,6 +63,15 @@ const { push, pop, peek, clear, depth } = require('../services/undoService');
 const isHost = (tournament, user) =>
   user && tournament.ownerId.toString() === user._id.toString();
 
+const buildUndoContext = (tournament, actor) => ({
+  host: {
+    userId: tournament.ownerId,
+    fullName:
+      tournament.hostName || (isHost(tournament, actor) ? actor.fullName : 'Tournament host'),
+  },
+  actor,
+});
+
 const assertAuctionNotCompleted = (tournament) => {
   if (tournament.status === 'completed') {
     throw new HttpError(409, 'This auction has ended. No further room actions are allowed');
@@ -256,12 +265,16 @@ const hammerLot = async (req, res, next) => {
     await lot.save()
     await tournament.save()
 
-    push(tournament._id.toString(), {
-      type: 'LOT_HAMMERED',
-      lotId: lot._id.toString(),
-      previousLot,
-      previousWallets,
-    });
+    await push(
+      tournament._id.toString(),
+      {
+        type: 'LOT_HAMMERED',
+        lotId: lot._id.toString(),
+        previousLot,
+        previousWallets,
+      },
+      buildUndoContext(tournament, req.user),
+    );
 
     broadcast(req, tournament._id.toString(), 'lot:hammered', {
       lot: lot.toJSON(),
@@ -357,10 +370,8 @@ const placeBid = async (req, res, next) => {
       throw new HttpError(400, check.reason);
     }
 
-    // Optimistic-concurrency guard: reject if the lot has since been
-    // outbid by another franchise (stale client state). This covers the
-    // race where two owners bid simultaneously — the second request to
-    // reach the server loses and gets a clear 409 to retry from.
+    // Fast stale-client check. The versioned atomic update below closes the
+    // remaining race when simultaneous requests both read this same value.
     if (lot.currentBid > 0 && amount <= lot.currentBid) {
       throw new HttpError(
         409,
@@ -368,39 +379,69 @@ const placeBid = async (req, res, next) => {
       );
     }
 
-    // Place the bid
+    // Capture the state this request validated. The write below compares the
+    // MongoDB version key and current bid, so only one request based on this
+    // state can succeed.
     const previousBid = cleanLotSnapshot(lot.toObject())
-    lot.currentBid = amount;
-    lot.currentBidderFranchiseId = franchiseId;
-    lot.currentBidByUserId = req.user._id;
-    lot.currentBidAt = new Date();
-    // Persist bid history so reconnecting clients see the ladder
-    if (!Array.isArray(lot.bidHistory)) lot.bidHistory = []
-    lot.bidHistory.push({
+    const bidAt = new Date();
+    const bidHistoryEntry = {
       amount,
       franchiseId,
       franchiseName: franchise.name,
       userId: req.user._id,
       userFullName: req.user.fullName,
-      at: lot.currentBidAt,
-    })
-    await lot.save();
+      at: bidAt,
+    };
+    const updatedLot = await Lot.findOneAndUpdate(
+      {
+        _id: lot._id,
+        auctionStatus: 'active',
+        currentBid: lot.currentBid,
+        __v: lot.__v,
+      },
+      {
+        $set: {
+          currentBid: amount,
+          currentBidderFranchiseId: franchiseId,
+          currentBidByUserId: req.user._id,
+          currentBidAt: bidAt,
+        },
+        $push: { bidHistory: bidHistoryEntry },
+        $inc: { __v: 1 },
+      },
+      { new: true, runValidators: true },
+    );
 
-    push(tournament._id.toString(), {
-      type: 'BID_PLACED',
-      lotId: lot._id.toString(),
-      previousBid,
-    });
+    if (!updatedLot) {
+      const latestLot = await Lot.findById(lot._id).select('currentBid auctionStatus');
+      if (!latestLot) throw new HttpError(404, 'Lot not found');
+      throw new HttpError(
+        409,
+        latestLot.auctionStatus === 'active'
+          ? `Another bid was accepted first. The current bid is ${latestLot.currentBid.toLocaleString('en-IN')}. Please try again.`
+          : 'The lot changed while this bid was being placed. Refresh the auction room',
+      );
+    }
+
+    await push(
+      tournament._id.toString(),
+      {
+        type: 'BID_PLACED',
+        lotId: updatedLot._id.toString(),
+        previousBid,
+      },
+      buildUndoContext(tournament, req.user),
+    );
 
     broadcast(req, tournament._id.toString(), 'bid:placed', {
-      lot: lot.toJSON(),
+      lot: updatedLot.toJSON(),
       franchise: { id: franchise._id.toString(), name: franchise.name },
       amount,
       by: { id: req.user._id.toString(), fullName: req.user.fullName },
       at: new Date().toISOString(),
     });
 
-    return res.status(200).json({ lot: lot.toJSON() });
+    return res.status(200).json({ lot: updatedLot.toJSON() });
   } catch (error) {
     if (error instanceof HttpError) {
       return res.status(error.status).json({ message: error.message });
@@ -534,11 +575,15 @@ const passLot = async (req, res, next) => {
     lot.auctionStatus = 'unsold';
     await lot.save();
 
-    push(tournament._id.toString(), {
-      type: 'LOT_PASSED',
-      lotId: lot._id.toString(),
-      previousLot,
-    });
+    await push(
+      tournament._id.toString(),
+      {
+        type: 'LOT_PASSED',
+        lotId: lot._id.toString(),
+        previousLot,
+      },
+      buildUndoContext(tournament, req.user),
+    );
 
     broadcast(req, tournament._id.toString(), 'lot:passed', {
       lot: lot.toJSON(),
@@ -568,17 +613,22 @@ const getRoomSnapshot = async (req, res, next) => {
     // The "current room lot" is whichever lot is still on the floor.
     // That includes both actively bidding lots and paused lots, so a
     // host refresh or reconnect can still resume a paused auction.
-    const activeLot = await Lot.findOne({
-      tournamentId: tournament._id,
-      auctionStatus: { $in: ['active', 'paused'] },
-    });
+    const tournamentIdString = tournament._id.toString();
+    const [activeLot, lastUndoAction, undoDepth] = await Promise.all([
+      Lot.findOne({
+        tournamentId: tournament._id,
+        auctionStatus: { $in: ['active', 'paused'] },
+      }),
+      peek(tournamentIdString),
+      depth(tournamentIdString),
+    ]);
 
     return res.status(200).json({
       tournament: tournament.toDetailJSON(),
       activeLot: activeLot ? activeLot.toJSON() : null,
       recentBids: activeLot?.bidHistory ?? [],
-      undoAvailable: depth(tournament._id.toString()) > 0,
-      lastUndoLotId: peek(tournament._id.toString())?.lotId ?? null,
+      undoAvailable: undoDepth > 0,
+      lastUndoLotId: lastUndoAction?.lotId ?? null,
     });
   } catch (error) {
     if (error instanceof HttpError) {
@@ -601,7 +651,7 @@ const undoLastAction = async (req, res, next) => {
     assertAuctionNotCompleted(tournament);
 
     const tournamentId = tournament._id.toString()
-    const action = peek(tournamentId);
+    const action = await peek(tournamentId);
     if (!action) throw new HttpError(400, 'No actions to undo');
     if (action.lotId !== lot._id.toString()) {
       throw new HttpError(
@@ -641,22 +691,24 @@ const undoLastAction = async (req, res, next) => {
 
     // Persistence must finish before the action is consumed. If the stack
     // changed while the restore was in flight, keep it intact for recovery.
-    if (!pop(tournamentId, action)) {
+    if (!await pop(tournamentId, action, req.user)) {
       throw new HttpError(409, 'Undo state changed while the action was being restored');
     }
+
+    const undoAvailable = (await depth(tournamentId)) > 0;
 
     broadcast(req, tournamentId, 'lot:undone', {
       action: { ...action, reverted: true },
       tournamentId,
       lot: revertedLot ? revertedLot.toJSON() : null,
-      undoAvailable: depth(tournamentId) > 0,
+      undoAvailable,
       at: new Date().toISOString(),
     });
 
     return res.status(200).json({
       action: { ...action, reverted: true },
       lot: revertedLot ? revertedLot.toJSON() : null,
-      undoAvailable: depth(tournamentId) > 0,
+      undoAvailable,
     });
   } catch (error) {
     if (error instanceof HttpError) return res.status(error.status).json({ message: error.message });
@@ -694,7 +746,7 @@ const deactivateLot = async (req, res, next) => {
     await lot.save();
 
     // Skip/deactivate is non-revertible, so clear any queued undo state.
-    clear(tournament._id.toString());
+    await clear(tournament._id.toString());
 
     broadcast(req, tournament._id.toString(), 'lot:deactivated', {
       lot: lot.toJSON(),

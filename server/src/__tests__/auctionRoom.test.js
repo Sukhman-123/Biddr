@@ -8,6 +8,7 @@ const {
 } = require('../test/testServer')
 const Invitation = require('../models/Invitation')
 const Lot = require('../models/Lot')
+const UndoAction = require('../models/UndoAction')
 
 let app
 
@@ -427,6 +428,7 @@ describe('POST /api/lots/:lotId/undo integrity', () => {
     return {
       token,
       tournamentId,
+      hostId: create.body.tournament.ownerId,
       franchise,
       lotId,
       otherLotId: secondLot.body.lot.id,
@@ -526,6 +528,38 @@ describe('POST /api/lots/:lotId/undo integrity', () => {
       .post(`/api/lots/${lotId}/undo`)
       .set('Authorization', `Bearer ${token}`)
     expect(retry.status).toBe(200)
+  })
+
+  it('persists undo history with host metadata across service reloads', async () => {
+    const { token, tournamentId, hostId, lotId } = await soldLot()
+
+    const storedAction = await UndoAction.findOne({
+      tournamentId,
+      status: 'pending',
+    }).lean()
+    expect(storedAction).toBeTruthy()
+    expect(storedAction.lotId.toString()).toBe(lotId)
+    expect(storedAction.host.userId.toString()).toBe(hostId)
+    expect(storedAction.host.fullName).toBe('Undo Host')
+    expect(storedAction.performedBy.userId.toString()).toBe(hostId)
+    expect(storedAction.createdAt).toBeInstanceOf(Date)
+
+    const servicePath = require.resolve('../services/undoService')
+    delete require.cache[servicePath]
+    const reloadedUndoService = require('../services/undoService')
+    const persistedAction = await reloadedUndoService.peek(tournamentId)
+    expect(persistedAction.lotId).toBe(lotId)
+    expect(persistedAction.type).toBe('LOT_HAMMERED')
+
+    const undo = await request(app)
+      .post(`/api/lots/${lotId}/undo`)
+      .set('Authorization', `Bearer ${token}`)
+    expect(undo.status).toBe(200)
+
+    const auditRecord = await UndoAction.findById(storedAction._id).lean()
+    expect(auditRecord.status).toBe('undone')
+    expect(auditRecord.undoneBy.userId.toString()).toBe(hostId)
+    expect(auditRecord.undoneAt).toBeInstanceOf(Date)
   })
 })
 

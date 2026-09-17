@@ -578,7 +578,7 @@ const endAuction = async (req, res, next) => {
     tournament.status = 'completed';
     tournament.completedAt = new Date();
     await tournament.save();
-    clearUndoStack(tournament._id.toString());
+    await clearUndoStack(tournament._id.toString());
     broadcastAuctionEnded(req, tournament);
 
     return res.status(200).json({ tournament: tournament.toDetailJSON() });

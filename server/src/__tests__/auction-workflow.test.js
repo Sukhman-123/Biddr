@@ -6,6 +6,8 @@ const {
   registerUser,
   loginUser,
 } = require('../test/testServer')
+const Lot = require('../models/Lot')
+const UndoAction = require('../models/UndoAction')
 
 describe('Auction Workflow', () => {
   let app
@@ -299,6 +301,61 @@ describe('Auction Workflow', () => {
       expect(res.status).toBe(200)
       expect(res.body.lot.currentBid).toBe(3000000)
       expect(res.body.lot.currentBidderFranchiseId).toBe(franchise.id)
+    })
+
+    it('accepts only one bid when simultaneous requests use the same lot version', async () => {
+      const franchise = tournament.franchises[0]
+      const placeBid = (amount) => request(app)
+        .post(`/api/lots/${lot.id}/place-bid`)
+        .set('Authorization', `Bearer ${hostToken}`)
+        .send({ franchiseId: franchise.id, amount })
+
+      // Hold both controller reads until they have loaded the same pre-bid
+      // document. This makes the stale-version race deterministic.
+      const originalFindById = Lot.findById.bind(Lot)
+      let releaseReads
+      let completedReads = 0
+      const bothReadsReady = new Promise((resolve) => {
+        releaseReads = resolve
+      })
+      const findByIdSpy = jest.spyOn(Lot, 'findById').mockImplementation((...args) => {
+        const query = originalFindById(...args)
+        if (completedReads >= 2) return query
+        const originalExec = query.exec.bind(query)
+        query.exec = async () => {
+          const result = await originalExec()
+          completedReads += 1
+          if (completedReads === 2) releaseReads()
+          await bothReadsReady
+          return result
+        }
+        return query
+      })
+
+      const responses = await Promise.all([
+        placeBid(2500000),
+        placeBid(3000000),
+      ])
+      findByIdSpy.mockRestore()
+      const statuses = responses.map((response) => response.status).sort()
+
+      expect(statuses).toEqual([200, 409])
+      expect(responses.find((response) => response.status === 409).body.message)
+        .toMatch(/another bid was accepted first/i)
+
+      const room = await request(app)
+        .get(`/api/tournaments/${tournament.id}/room`)
+        .set('Authorization', `Bearer ${hostToken}`)
+      expect(room.status).toBe(200)
+      expect(room.body.recentBids).toHaveLength(1)
+      expect([2500000, 3000000]).toContain(room.body.activeLot.currentBid)
+
+      const persistedBidActions = await UndoAction.countDocuments({
+        tournamentId: tournament.id,
+        type: 'BID_PLACED',
+        status: 'pending',
+      })
+      expect(persistedBidActions).toBe(1)
     })
 
     it('rejects bid exceeding wallet', async () => {
