@@ -10,7 +10,11 @@ vi.mock('../../../lib/api', () => ({
 }))
 
 import api from '../../../lib/api'
-import { endAuctionRequest, startAuctionRequest } from '../tournament.api'
+import {
+  endAuctionRequest,
+  getAuctionRecapRequest,
+  startAuctionRequest,
+} from '../tournament.api'
 
 beforeEach(() => {
   vi.clearAllMocks()
@@ -60,5 +64,25 @@ describe('endAuctionRequest', () => {
     await expect(endAuctionRequest('t1')).rejects.toThrow(
       /resolve the current lot/i,
     )
+  })
+})
+
+describe('getAuctionRecapRequest', () => {
+  it('GETs the completed auction recap', async () => {
+    const recap = { tournament: { id: 't1' }, summary: { soldCount: 3 } }
+    api.get.mockResolvedValueOnce({ data: { recap } })
+
+    const result = await getAuctionRecapRequest('t1')
+
+    expect(api.get).toHaveBeenCalledWith('/tournaments/t1/recap')
+    expect(result).toEqual(recap)
+  })
+
+  it('surfaces the server error when the recap is not ready', async () => {
+    const error = new Error('Request failed')
+    error.response = { data: { message: 'The auction recap is available after the auction ends' } }
+    api.get.mockRejectedValueOnce(error)
+
+    await expect(getAuctionRecapRequest('t1')).rejects.toThrow(/after the auction ends/i)
   })
 })

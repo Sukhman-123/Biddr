@@ -25,6 +25,7 @@ const {
   getRoomSnapshot,
 } = require('../controllers/auctionRoom.controller');
 const { exportTournamentCsv } = require('../controllers/export.controller');
+const { getAuctionRecap } = require('../controllers/auctionRecap.controller');
 const { auth } = require('../middleware/auth');
 
 const router = express.Router();
@@ -54,6 +55,7 @@ router.post('/', createTournament);
 router.patch('/:id', updateTournament);
 router.post('/:id/start', startAuction);
 router.post('/:id/end', endAuction);
+router.get('/:id/recap', getAuctionRecap);
 router.get('/:id/exports/:kind.csv', exportTournamentCsv);
 router.get('/:id/invites', listInvites);
 router.post('/:id/invites', createInvite);

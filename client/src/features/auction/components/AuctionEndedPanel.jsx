@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom'
-import { ArrowLeft, Trophy } from 'lucide-react'
+import { BarChart3, Trophy } from 'lucide-react'
 
 const formatCompletedAt = (value) => {
   if (!value) return null
@@ -29,10 +29,10 @@ export default function AuctionEndedPanel({ tournament }) {
         Bidding and player-pool changes are locked.
       </p>
       {completedAt ? <span className="auction-ended-time">Completed {completedAt}</span> : null}
-      <Link to={`/tournaments/${tournament?.id}`} className="cta-btn auction-ended-action">
+      <Link to={`/tournaments/${tournament?.id}/recap`} className="cta-btn auction-ended-action">
         <span className="cta-btn-content">
-          <ArrowLeft size={16} />
-          Back to tournament
+          <BarChart3 size={16} />
+          View auction recap
         </span>
       </Link>
     </section>

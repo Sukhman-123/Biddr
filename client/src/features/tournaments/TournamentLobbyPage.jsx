@@ -89,6 +89,7 @@ function TournamentLobbyPage() {
   const [startOpen, setStartOpen] = useState(false)
   const [startBusy, setStartBusy] = useState(false)
   const [startError, setStartError] = useState(null)
+  const [openedAt] = useState(() => Date.now())
 
   useEffect(() => {
     if (!socket || !connected || !id) return undefined
@@ -304,11 +305,11 @@ function TournamentLobbyPage() {
             //   live + no lot yet → "Enter a room (waiting)" disabled
             //   upcoming + host   → "Start the auction" (gated by startDate)
             //   upcoming + viewer → "Notify me when live" disabled
-            //   completed         → "View recap" disabled
+            //   completed         → completed-auction recap
             const liveLot = roomSnapshot?.activeLot
             const startDateArrived =
               !tournament.startDate ||
-              new Date(tournament.startDate).getTime() <= Date.now()
+              new Date(tournament.startDate).getTime() <= openedAt
 
             if (tournament.status === 'live') {
               // Link to the room — if there's an active lot, go directly to it;
@@ -401,17 +402,15 @@ function TournamentLobbyPage() {
             }
             if (tournament.status === 'completed') {
               return (
-                <button
-                  type="button"
+                <Link
+                  to={`/tournaments/${id}/recap`}
                   className="lobby-room-action is-primary"
-                  disabled
-                  title="Recap is coming next phase"
                 >
                   <span className="lobby-room-action-icon">
-                    <Gavel size={16} />
+                    <Trophy size={16} />
                   </span>
                   <span>View recap</span>
-                </button>
+                </Link>
               )
             }
             return null

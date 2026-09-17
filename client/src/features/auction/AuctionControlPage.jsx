@@ -258,7 +258,7 @@ export default function AuctionControlPage() {
         queryClient.invalidateQueries({ queryKey: ['auction-room-probe', tournamentId] }),
       ])
       toast.success('Auction completed')
-      navigate(`/tournaments/${tournamentId}`)
+      navigate(`/tournaments/${tournamentId}/recap`)
     } catch (err) {
       setEndError(err.message)
     } finally {

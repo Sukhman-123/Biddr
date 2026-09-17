@@ -5,6 +5,7 @@ import AuthGate from './features/auth/AuthGate'
 import HomePage from './features/home/HomePage'
 import TournamentsPage from './features/tournaments/TournamentsPage'
 import TournamentLobbyPage from './features/tournaments/TournamentLobbyPage'
+import AuctionRecapPage from './features/tournaments/AuctionRecapPage'
 import CreateTournamentPage from './features/tournaments/CreateTournamentPage'
 import UserProfilePage from './features/profile/UserProfilePage'
 import LandingPage from './features/landing/LandingPage'
@@ -49,6 +50,7 @@ function App() {
             <Route path="/tournaments" element={<AuthGate><Shell><TournamentsPage /></Shell></AuthGate>} />
             <Route path="/tournaments/new" element={<AuthGate><Shell><CreateTournamentPage /></Shell></AuthGate>} />
             <Route path="/tournaments/:id" element={<AuthGate><Shell><TournamentLobbyPage /></Shell></AuthGate>} />
+            <Route path="/tournaments/:id/recap" element={<AuthGate><Shell><AuctionRecapPage /></Shell></AuthGate>} />
             <Route path="/tournaments/:id/room" element={<AuthGate><Shell><AuctionRoomPage /></Shell></AuthGate>} />
             <Route path="/tournaments/:id/control-room" element={<AuthGate><Shell><AuctionControlPage /></Shell></AuthGate>} />
             <Route path="/tournaments/:id/watch" element={<AuthGate><AuctionPresenterPage /></AuthGate>} />

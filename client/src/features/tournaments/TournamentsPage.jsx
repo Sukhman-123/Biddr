@@ -151,7 +151,11 @@ function TournamentsPage() {
             <li key={tournament.id}>
               <TournamentCard
                 tournament={tournament}
-                onOpen={() => navigate(`/tournaments/${tournament.id}`)}
+                onOpen={() => navigate(
+                  tournament.status === 'completed'
+                    ? `/tournaments/${tournament.id}/recap`
+                    : `/tournaments/${tournament.id}`,
+                )}
               />
             </li>
           ))}

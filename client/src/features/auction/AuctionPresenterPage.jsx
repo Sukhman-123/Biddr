@@ -376,9 +376,9 @@ export default function AuctionPresenterPage() {
             <span><strong>{franchises.length}</strong> franchises</span>
             <span><strong>{(lotsQuery.data || []).length}</strong> total players</span>
           </div>
-          <Link to={`/tournaments/${tournamentId}`} className="presenter-ended-link">
-            <ArrowLeft size={17} />
-            Back to tournament
+          <Link to={`/tournaments/${tournamentId}/recap`} className="presenter-ended-link">
+            <Trophy size={17} />
+            View auction recap
           </Link>
         </section>
       </main>

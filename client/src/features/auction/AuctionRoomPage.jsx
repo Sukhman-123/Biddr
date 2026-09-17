@@ -578,7 +578,7 @@ export default function AuctionRoomPage() {
       const updatedTournament = await endAuctionRequest(tournamentId)
       await refreshRoomQueries({ includeTournament: true, updatedTournament })
       toast.success('Auction completed')
-      navigate(`/tournaments/${tournamentId}`)
+      navigate(`/tournaments/${tournamentId}/recap`)
     } catch (err) {
       setEndError(err.message)
     } finally {

@@ -67,6 +67,15 @@ export async function endAuctionRequest(id) {
   }
 }
 
+export async function getAuctionRecapRequest(id) {
+  try {
+    const { data } = await api.get(`/tournaments/${id}/recap`)
+    return data?.recap ?? null
+  } catch (error) {
+    throw wrapError(error, 'Could not load the auction recap')
+  }
+}
+
 export async function listInvitesRequest(id) {
   try {
     const { data } = await api.get(`/tournaments/${id}/invites`)
