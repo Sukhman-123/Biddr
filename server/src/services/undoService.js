@@ -1,8 +1,9 @@
 // =============================================================
 // UndoService — in-memory per-tournament undo stack.
 //
-// Actions are pushed before mutation. Undo reverses them in LIFO
-// order. Only the tournament host can undo.
+// Actions are pushed after a mutation succeeds. Undo restores the
+// latest action in LIFO order and only consumes it after persistence
+// succeeds. Only the tournament host can undo.
 //
 // Actions stored:
 //   BID_PLACED     → snapshot of lot before bid
@@ -44,13 +45,17 @@ function peek(tournamentId) {
 }
 
 /**
- * Pop and reverse the most recent action.
- * Returns the reversed action metadata, or null if nothing to undo.
+ * Pop the most recent action only if it is still the action the caller
+ * previously inspected. This prevents a concurrent action from being
+ * removed while an undo is being persisted.
+ * Returns the action, or null if the stack changed or is empty.
  * @param {string} tournamentId
+ * @param {Object} expectedAction
  */
-function pop(tournamentId) {
+function pop(tournamentId, expectedAction) {
   const stack = stacks.get(tournamentId)
   if (!stack || stack.length === 0) return null
+  if (expectedAction && stack[stack.length - 1] !== expectedAction) return null
   return stack.pop()
 }
 

@@ -7,6 +7,7 @@ const {
   loginUser,
 } = require('../test/testServer')
 const Invitation = require('../models/Invitation')
+const Lot = require('../models/Lot')
 
 let app
 
@@ -395,6 +396,136 @@ describe('POST /api/lots/:lotId/hammer', () => {
       .post(`/api/lots/${lotId}/hammer`)
       .set('Authorization', `Bearer ${token}`)
     expect(res.status).toBe(400)
+  })
+})
+
+describe('POST /api/lots/:lotId/undo integrity', () => {
+  async function soldLot() {
+    const token = await getToken('undo-host@example.com', 'Undo Host')
+    const create = await createTournament(token, { shortCode: 'UNDO' })
+    const tournamentId = create.body.tournament.id
+    const franchise = create.body.tournament.franchises[0]
+    const firstLot = await createLot(token, tournamentId, {
+      name: 'Player A',
+      bidIncrement: 500000,
+    })
+    const secondLot = await createLot(token, tournamentId, {
+      name: 'Player B',
+      bidIncrement: 500000,
+    })
+    const lotId = firstLot.body.lot.id
+
+    await request(app)
+      .post(`/api/tournaments/${tournamentId}/lots/${lotId}/activate`)
+      .set('Authorization', `Bearer ${token}`)
+    const hammer = await request(app)
+      .post(`/api/lots/${lotId}/hammer`)
+      .set('Authorization', `Bearer ${token}`)
+      .send({ franchiseId: franchise.id })
+    expect(hammer.status).toBe(200)
+
+    return {
+      token,
+      tournamentId,
+      franchise,
+      lotId,
+      otherLotId: secondLot.body.lot.id,
+    }
+  }
+
+  it('restores the squad on undo and does not duplicate the player after resale', async () => {
+    const { token, tournamentId, franchise, lotId } = await soldLot()
+
+    const undo = await request(app)
+      .post(`/api/lots/${lotId}/undo`)
+      .set('Authorization', `Bearer ${token}`)
+
+    expect(undo.status).toBe(200)
+    expect(undo.body.lot.auctionStatus).toBe('active')
+
+    const afterUndo = await request(app)
+      .get(`/api/tournaments/${tournamentId}`)
+      .set('Authorization', `Bearer ${token}`)
+    const restoredFranchise = afterUndo.body.tournament.franchises.find(
+      (item) => item.id === franchise.id,
+    )
+    expect(restoredFranchise.wallet.spent).toBe(0)
+    expect(restoredFranchise.squad.playerIds.map(String)).not.toContain(lotId)
+
+    const resale = await request(app)
+      .post(`/api/lots/${lotId}/hammer`)
+      .set('Authorization', `Bearer ${token}`)
+      .send({ franchiseId: franchise.id })
+    expect(resale.status).toBe(200)
+
+    const afterResale = await request(app)
+      .get(`/api/tournaments/${tournamentId}`)
+      .set('Authorization', `Bearer ${token}`)
+    const resoldFranchise = afterResale.body.tournament.franchises.find(
+      (item) => item.id === franchise.id,
+    )
+    const playerOccurrences = resoldFranchise.squad.playerIds
+      .map(String)
+      .filter((playerId) => playerId === lotId)
+    expect(resoldFranchise.wallet.spent).toBe(2000000)
+    expect(playerOccurrences).toHaveLength(1)
+  })
+
+  it('rejects undo through a different lot and preserves the correct action', async () => {
+    const { token, tournamentId, franchise, lotId, otherLotId } = await soldLot()
+
+    const wrongLotUndo = await request(app)
+      .post(`/api/lots/${otherLotId}/undo`)
+      .set('Authorization', `Bearer ${token}`)
+
+    expect(wrongLotUndo.status).toBe(409)
+    expect(wrongLotUndo.body.message).toMatch(/different lot/i)
+
+    const room = await request(app)
+      .get(`/api/tournaments/${tournamentId}/room`)
+      .set('Authorization', `Bearer ${token}`)
+    expect(room.body.undoAvailable).toBe(true)
+    expect(room.body.lastUndoLotId).toBe(lotId)
+
+    const tournament = await request(app)
+      .get(`/api/tournaments/${tournamentId}`)
+      .set('Authorization', `Bearer ${token}`)
+    const soldFranchise = tournament.body.tournament.franchises.find(
+      (item) => item.id === franchise.id,
+    )
+    expect(soldFranchise.wallet.spent).toBe(2000000)
+    expect(soldFranchise.squad.playerIds.map(String)).toContain(lotId)
+
+    const correctUndo = await request(app)
+      .post(`/api/lots/${lotId}/undo`)
+      .set('Authorization', `Bearer ${token}`)
+    expect(correctUndo.status).toBe(200)
+    expect(correctUndo.body.lot.name).toBe('Player A')
+  })
+
+  it('keeps the undo action when restoring the lot fails', async () => {
+    const { token, tournamentId, lotId } = await soldLot()
+    const saveSpy = jest
+      .spyOn(Lot.prototype, 'save')
+      .mockRejectedValueOnce(new Error('simulated persistence failure'))
+
+    const failedUndo = await request(app)
+      .post(`/api/lots/${lotId}/undo`)
+      .set('Authorization', `Bearer ${token}`)
+    saveSpy.mockRestore()
+
+    expect(failedUndo.status).toBe(500)
+
+    const room = await request(app)
+      .get(`/api/tournaments/${tournamentId}/room`)
+      .set('Authorization', `Bearer ${token}`)
+    expect(room.body.undoAvailable).toBe(true)
+    expect(room.body.lastUndoLotId).toBe(lotId)
+
+    const retry = await request(app)
+      .post(`/api/lots/${lotId}/undo`)
+      .set('Authorization', `Bearer ${token}`)
+    expect(retry.status).toBe(200)
   })
 })
 

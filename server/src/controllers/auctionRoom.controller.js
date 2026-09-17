@@ -6,6 +6,40 @@ const cleanLotSnapshot = (obj) => {
   return rest
 }
 
+// Keep undo snapshots independent from Mongoose subdocuments. In particular,
+// squad.playerIds must be copied by value; retaining the Mongoose array here
+// would let the later sale mutate the state that undo is meant to restore.
+const snapshotFranchiseStates = (franchises = []) =>
+  franchises.map((franchise) => ({
+    id: franchise._id.toString(),
+    wallet: {
+      initial: franchise.wallet?.initial ?? 0,
+      spent: franchise.wallet?.spent ?? 0,
+    },
+    squad: {
+      playerIds: (franchise.squad?.playerIds || []).map((id) => id.toString()),
+      maxSize: franchise.squad?.maxSize ?? 11,
+    },
+  }))
+
+const restoreFranchiseStates = (tournament, snapshots = []) => {
+  snapshots.forEach((snapshot) => {
+    const franchise = tournament.franchises.find(
+      (candidate) => candidate._id.toString() === snapshot.id,
+    )
+    if (!franchise) return
+
+    franchise.wallet = {
+      initial: snapshot.wallet.initial,
+      spent: snapshot.wallet.spent,
+    }
+    franchise.squad = {
+      playerIds: [...snapshot.squad.playerIds],
+      maxSize: snapshot.squad.maxSize,
+    }
+  })
+}
+
 const Lot = require('../models/Lot');
 const Tournament = require('../models/Tournament');
 const { assertCanSeeTournament, HttpError } = require('../middleware/canSeeTournament');
@@ -188,12 +222,8 @@ const hammerLot = async (req, res, next) => {
     }
 
     const previousLot = cleanLotSnapshot(lot.toObject())
-    // Snapshot franchise wallets before the sale so we can restore them on undo.
-    const previousWallets = tournament.franchises.map((f) => ({
-      id: f._id.toString(),
-      wallet: { ...f.wallet },
-      squad: { ...f.squad },
-    }))
+    // Snapshot wallet and squad state before the sale so undo can restore both.
+    const previousWallets = snapshotFranchiseStates(tournament.franchises)
 
     lot.status = 'sold';
     lot.auctionStatus = 'hammered';
@@ -213,7 +243,12 @@ const hammerLot = async (req, res, next) => {
         if (!Array.isArray(franchise.squad.playerIds)) {
           franchise.squad.playerIds = []
         }
-        franchise.squad.playerIds.push(lot._id)
+        const alreadyInSquad = franchise.squad.playerIds.some(
+          (playerId) => playerId.toString() === lot._id.toString(),
+        )
+        if (!alreadyInSquad) {
+          franchise.squad.playerIds.push(lot._id)
+        }
       }
     }
 
@@ -568,14 +603,18 @@ const undoLastAction = async (req, res, next) => {
     const tournamentId = tournament._id.toString()
     const action = peek(tournamentId);
     if (!action) throw new HttpError(400, 'No actions to undo');
+    if (action.lotId !== lot._id.toString()) {
+      throw new HttpError(
+        409,
+        'The latest undoable action belongs to a different lot. Undo that lot first',
+      );
+    }
 
     const restoredAuctionStatus =
       action.previousLot?.auctionStatus || action.previousBid?.auctionStatus;
     if (FLOOR_STATUSES.includes(restoredAuctionStatus)) {
       await assertFloorIsEmpty(tournament._id, lot._id);
     }
-
-    pop(tournamentId);
 
     let revertedLot = null;
     switch (action.type) {
@@ -592,15 +631,18 @@ const undoLastAction = async (req, res, next) => {
       case 'LOT_HAMMERED':
         Object.assign(lot, action.previousLot);
         await lot.save();
-        action.previousWallets.forEach((ws) => {
-          const f = tournament.franchises.find((fr) => fr._id.toString() === ws.id);
-          if (f) { f.wallet = ws.wallet; f.squad = ws.squad; }
-        });
+        restoreFranchiseStates(tournament, action.previousWallets);
         await tournament.save();
         revertedLot = lot;
         break;
       default:
         throw new HttpError(400, `Cannot undo: ${action.type}`);
+    }
+
+    // Persistence must finish before the action is consumed. If the stack
+    // changed while the restore was in flight, keep it intact for recovery.
+    if (!pop(tournamentId, action)) {
+      throw new HttpError(409, 'Undo state changed while the action was being restored');
     }
 
     broadcast(req, tournamentId, 'lot:undone', {
