@@ -400,6 +400,40 @@ describe('POST /api/lots/:lotId/hammer', () => {
   })
 })
 
+describe('GET /api/lots/:lotId/intelligence', () => {
+  it('returns private contextual advice to the host and rejects an unrelated viewer', async () => {
+    const token = await getToken('intelligence-host@example.com', 'Intelligence Host')
+    const viewerToken = await getToken('intelligence-viewer@example.com', 'Intelligence Viewer')
+    const create = await createTournament(token, { auctionMode: 'remote', shortCode: 'INTEL' })
+    const tournamentId = create.body.tournament.id
+    const franchiseId = create.body.tournament.franchises[0].id
+    const lotRes = await createLot(token, tournamentId, { bidIncrement: 500000 })
+    const lotId = lotRes.body.lot.id
+
+    await request(app)
+      .post(`/api/tournaments/${tournamentId}/lots/${lotId}/activate`)
+      .set('Authorization', `Bearer ${token}`)
+
+    const hostResponse = await request(app)
+      .get(`/api/lots/${lotId}/intelligence`)
+      .query({ franchiseId })
+      .set('Authorization', `Bearer ${token}`)
+
+    expect(hostResponse.status).toBe(200)
+    expect(['BID', 'CAUTION', 'PASS']).toContain(hostResponse.body.intelligence.advice)
+    expect(hostResponse.body.intelligence.recommendedMaximumBid).toEqual(expect.any(Number))
+    expect(hostResponse.body.intelligence.roleBalanceScore).toEqual(expect.any(Number))
+    expect(hostResponse.body.intelligence.purse.requiredReserve).toEqual(expect.any(Number))
+    expect(hostResponse.body.intelligence.role.scarcityLevel).toMatch(/low|medium|high/)
+
+    const viewerResponse = await request(app)
+      .get(`/api/lots/${lotId}/intelligence`)
+      .query({ franchiseId })
+      .set('Authorization', `Bearer ${viewerToken}`)
+    expect(viewerResponse.status).toBe(403)
+  })
+})
+
 describe('POST /api/lots/:lotId/undo integrity', () => {
   async function soldLot() {
     const token = await getToken('undo-host@example.com', 'Undo Host')

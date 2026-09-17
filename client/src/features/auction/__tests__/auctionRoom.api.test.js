@@ -14,6 +14,7 @@ import api from '../../../lib/api'
 import {
   fetchRoomSnapshotRequest,
   listTournamentLotsRequest,
+  fetchAuctionIntelligenceRequest,
   activateLotRequest,
   hammerLotRequest,
   passLotRequest,
@@ -78,6 +79,20 @@ describe('auctionRoom.api', () => {
       api.get.mockResolvedValueOnce({ data: {} })
       const result = await listTournamentLotsRequest('t1')
       expect(result).toEqual([])
+    })
+  })
+
+  describe('fetchAuctionIntelligenceRequest', () => {
+    it('requests contextual advice for the selected franchise', async () => {
+      const intelligence = { advice: 'CAUTION', recommendedMaximumBid: 2500000 }
+      api.get.mockResolvedValueOnce({ data: { intelligence } })
+
+      const result = await fetchAuctionIntelligenceRequest('l1', 'f1')
+
+      expect(api.get).toHaveBeenCalledWith('/lots/l1/intelligence', {
+        params: { franchiseId: 'f1' },
+      })
+      expect(result).toEqual(intelligence)
     })
   })
 

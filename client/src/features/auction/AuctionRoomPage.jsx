@@ -15,6 +15,7 @@ import {
   pauseLotRequest,
   resumeLotRequest,
   placeBidRequest,
+  fetchAuctionIntelligenceRequest,
   undoLastActionRequest,
   deactivateLotRequest,
 } from './auctionRoom.api'
@@ -26,6 +27,7 @@ import PaddlesRail from './components/PaddlesRail'
 import BidFeed from './components/BidFeed'
 import TeamBudgetSidebar from './components/TeamBudgetSidebar'
 import PlayerQueuePanel from './components/PlayerQueuePanel'
+import AuctionIntelligencePanel from './components/AuctionIntelligencePanel'
 import AuctionEndedPanel from './components/AuctionEndedPanel'
 import EndAuctionModal from '../tournaments/EndAuctionModal'
 import './AuctionRoomPage.css'
@@ -363,6 +365,48 @@ export default function AuctionRoomPage() {
     navigate(`/tournaments/${tournamentId}/presenter`, { replace: true })
   }, [isHost, navigate, tournament, tournamentId])
 
+  const intelligenceFranchises = useMemo(() => {
+    const franchises = tournament?.franchises || []
+    if (isHost) return franchises
+    if (tournament?.auctionMode === 'physical') return []
+    return franchises.filter((franchise) =>
+      (franchise.members || []).some(
+        (member) => String(member.userId) === String(user?.id) && member.role === 'owner',
+      ),
+    )
+  }, [isHost, tournament, user?.id])
+
+  const [intelligenceFranchiseId, setIntelligenceFranchiseId] = useState('')
+  useEffect(() => {
+    if (intelligenceFranchises.length === 0) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setIntelligenceFranchiseId('')
+      return
+    }
+    const selectionStillExists = intelligenceFranchises.some(
+      (franchise) => franchise.id === intelligenceFranchiseId,
+    )
+    if (selectionStillExists) return
+    const preferred = intelligenceFranchises.find(
+      (franchise) => franchise.id === activeLot?.currentBidderFranchiseId,
+    )
+    setIntelligenceFranchiseId(preferred?.id || intelligenceFranchises[0].id)
+  }, [activeLot?.currentBidderFranchiseId, intelligenceFranchiseId, intelligenceFranchises])
+
+  const intelligenceQuery = useQuery({
+    queryKey: [
+      'auction-intelligence',
+      tournamentId,
+      activeLot?.id,
+      intelligenceFranchiseId,
+      activeLot?.updatedAt,
+    ],
+    queryFn: () => fetchAuctionIntelligenceRequest(activeLot.id, intelligenceFranchiseId),
+    enabled: Boolean(activeLot?.id && intelligenceFranchiseId),
+    refetchInterval: activeLot?.id ? 5000 : false,
+    refetchOnWindowFocus: true,
+  })
+
   const queuedLots = useMemo(
     () => (lotsQuery.data || []).filter((l) => l.status === 'queued' && l.auctionStatus === 'idle'),
     [lotsQuery.data],
@@ -669,6 +713,19 @@ export default function AuctionRoomPage() {
             onPlaceBid={onPlaceBid}
             currentUserId={user?.id}
           />
+          {activeLot && intelligenceFranchises.length > 0 ? (
+            <AuctionIntelligencePanel
+              intelligence={intelligenceQuery.data}
+              franchises={intelligenceFranchises}
+              selectedFranchiseId={intelligenceFranchiseId}
+              onSelectFranchise={setIntelligenceFranchiseId}
+              canSelectFranchise={isHost && intelligenceFranchises.length > 1}
+              currency={tournament?.currency || 'INR'}
+              loading={intelligenceQuery.isLoading}
+              error={intelligenceQuery.error}
+              onRetry={() => intelligenceQuery.refetch()}
+            />
+          ) : null}
           {/* PaddlesRail — franchise bidding interface */}
           <PaddlesRail
             franchises={tournament?.franchises || []}

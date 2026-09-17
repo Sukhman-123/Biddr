@@ -1,6 +1,7 @@
 const express = require('express');
 const { auth } = require('../middleware/auth');
 const { updateLot, deleteLot } = require('../controllers/lot.controller');
+const { getAuctionIntelligence } = require('../controllers/auctionIntelligence.controller');
 const {
   hammerLot,
   passLot,
@@ -17,6 +18,7 @@ router.use(auth);
 
 router.patch('/:lotId', updateLot);
 router.delete('/:lotId', deleteLot);
+router.get('/:lotId/intelligence', getAuctionIntelligence);
 
 // Auction-room transitions. Host-only — the auctioneer is the only
 // entity that can mutate room state. See the plan in

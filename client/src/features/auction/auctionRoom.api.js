@@ -50,6 +50,17 @@ export async function listTournamentLotsRequest(tournamentId) {
   }
 }
 
+export async function fetchAuctionIntelligenceRequest(lotId, franchiseId) {
+  try {
+    const { data } = await api.get(`/lots/${lotId}/intelligence`, {
+      params: { franchiseId },
+    })
+    return data?.intelligence ?? null
+  } catch (error) {
+    throw wrapError(error, 'Could not calculate auction intelligence')
+  }
+}
+
 export async function activateLotRequest(tournamentId, lotId) {
   try {
     const { data } = await api.post(
