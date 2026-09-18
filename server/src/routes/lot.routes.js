@@ -2,6 +2,7 @@ const express = require('express');
 const { auth } = require('../middleware/auth');
 const { updateLot, deleteLot } = require('../controllers/lot.controller');
 const { getAuctionIntelligence } = require('../controllers/auctionIntelligence.controller');
+const playerPhotoUpload = require('../middleware/playerPhotoUpload');
 const {
   hammerLot,
   passLot,
@@ -16,7 +17,7 @@ const router = express.Router();
 
 router.use(auth);
 
-router.patch('/:lotId', updateLot);
+router.patch('/:lotId', playerPhotoUpload, updateLot);
 router.delete('/:lotId', deleteLot);
 router.get('/:lotId/intelligence', getAuctionIntelligence);
 

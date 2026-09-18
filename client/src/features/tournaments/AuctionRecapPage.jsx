@@ -15,6 +15,7 @@ import {
 } from 'lucide-react'
 import clsx from 'clsx'
 import { useToast } from '../../components/ToastProvider'
+import PlayerImage from '../../components/PlayerImage'
 import {
   downloadTournamentExportRequest,
   getAuctionRecapRequest,
@@ -280,7 +281,7 @@ function SectionHeading({ icon: Icon, title, meta }) {
 function PlayerIdentity({ player }) {
   return (
     <span className="recap-player">
-      {player.photoUrl ? <img src={player.photoUrl} alt="" /> : <span>{player.name?.charAt(0) || '?'}</span>}
+      <PlayerImage src={player.photoUrl} name={player.name} />
       <span><strong>{player.name}</strong><small>{player.country}</small></span>
     </span>
   )

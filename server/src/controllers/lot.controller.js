@@ -2,6 +2,10 @@ const Tournament = require('../models/Tournament');
 const Lot = require('../models/Lot');
 const { LOT_STYLES } = require('../models/Lot');
 const xlsx = require('xlsx');
+const {
+  uploadPlayerImage,
+  deletePlayerImage,
+} = require('../services/playerImage');
 
 const TEMPLATE_COLUMNS = [
   'name',
@@ -36,6 +40,17 @@ const TEMPLATE_EXAMPLE_ROW = [
 ];
 
 const PHOTO_RE = /^https?:\/\//i;
+
+const removeManagedPhoto = async (publicId) => {
+  if (!publicId) return;
+  try {
+    await deletePlayerImage(publicId);
+  } catch (error) {
+    // Do not roll back a player change because cleanup failed. Keeping the
+    // public ID in the log makes the orphaned asset easy to remove later.
+    console.warn(`Could not remove Cloudinary image ${publicId}:`, error.message);
+  }
+};
 
 const isOwner = (tournament, user) =>
   user && tournament.ownerId.toString() === user._id.toString();
@@ -248,6 +263,8 @@ const listLots = async (req, res, next) => {
 };
 
 const createLot = async (req, res, next) => {
+  let uploadedPhoto = null;
+  let uploadedPhotoCommitted = false;
   try {
     const tournament = await ensureHost(req, res);
     if (!tournament) return;
@@ -257,14 +274,23 @@ const createLot = async (req, res, next) => {
     if (!validation.ok) {
       return res.status(400).json({ message: validation.message });
     }
+    if (req.file) {
+      uploadedPhoto = await uploadPlayerImage(req.file);
+      validation.data.photoUrl = uploadedPhoto.photoUrl;
+    }
     const lot = await Lot.create({
       ...validation.data,
+      photoPublicId: uploadedPhoto?.photoPublicId || '',
       tournamentId: tournament._id,
       createdById: req.user._id,
     });
+    uploadedPhotoCommitted = true;
     broadcastSetupUpdated(req, tournament, 'lot-created');
     return res.status(201).json({ lot: lot.toJSON() });
   } catch (error) {
+    if (uploadedPhoto?.photoPublicId && !uploadedPhotoCommitted) {
+      await removeManagedPhoto(uploadedPhoto.photoPublicId);
+    }
     return next(error);
   }
 };
@@ -327,6 +353,8 @@ const bulkUploadLots = async (req, res, next) => {
 };
 
 const updateLot = async (req, res, next) => {
+  let uploadedPhoto = null;
+  let uploadedPhotoCommitted = false;
   try {
     const found = await ensureHostForLot(req, res);
     if (!found) return;
@@ -385,6 +413,7 @@ const updateLot = async (req, res, next) => {
 
     const previousSoldFranchiseId = lot.status === 'sold' ? lot.soldToFranchiseId : null;
     const previousSoldPrice = lot.status === 'sold' ? lot.soldPrice ?? 0 : 0;
+    const previousPhotoPublicId = lot.photoPublicId || '';
 
     if (nextStatus === 'sold' && nextSoldToFranchiseId) {
       const nextFranchise = tournament.franchises.id(nextSoldToFranchiseId);
@@ -413,7 +442,18 @@ const updateLot = async (req, res, next) => {
       }
     }
 
+    let nextPhotoPublicId = previousPhotoPublicId;
+    if (req.file) {
+      uploadedPhoto = await uploadPlayerImage(req.file);
+      validation.data.photoUrl = uploadedPhoto.photoUrl;
+      nextPhotoPublicId = uploadedPhoto.photoPublicId;
+    } else if (photoUrl !== undefined && validation.data.photoUrl !== lot.photoUrl) {
+      // A pasted URL, or clearing the field, is not managed by Cloudinary.
+      nextPhotoPublicId = '';
+    }
+
     Object.assign(lot, validation.data);
+    lot.photoPublicId = nextPhotoPublicId;
     lot.status = nextStatus;
     lot.soldToFranchiseId = nextSoldToFranchiseId;
     lot.soldPrice = nextStatus === 'sold' ? Math.round(nextSoldPrice) : null;
@@ -457,9 +497,16 @@ const updateLot = async (req, res, next) => {
 
     await tournament.save();
     await lot.save();
+    uploadedPhotoCommitted = true;
+    if (previousPhotoPublicId && previousPhotoPublicId !== nextPhotoPublicId) {
+      await removeManagedPhoto(previousPhotoPublicId);
+    }
     broadcastSetupUpdated(req, tournament, 'lot-updated');
     return res.json({ lot: lot.toJSON() });
   } catch (error) {
+    if (uploadedPhoto?.photoPublicId && !uploadedPhotoCommitted) {
+      await removeManagedPhoto(uploadedPhoto.photoPublicId);
+    }
     return next(error);
   }
 };
@@ -469,6 +516,7 @@ const deleteLot = async (req, res, next) => {
     const found = await ensureHostForLot(req, res);
     if (!found) return;
     const { lot, tournament } = found;
+    const photoPublicId = lot.photoPublicId || '';
 
     if (lot.status === 'sold' && lot.soldToFranchiseId) {
       const franchise = tournament.franchises.id(lot.soldToFranchiseId);
@@ -484,6 +532,7 @@ const deleteLot = async (req, res, next) => {
       }
     }
     await lot.deleteOne();
+    await removeManagedPhoto(photoPublicId);
     broadcastSetupUpdated(req, tournament, 'lot-deleted');
     return res.json({ deleted: true });
   } catch (error) {

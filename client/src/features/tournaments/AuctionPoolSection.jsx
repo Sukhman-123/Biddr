@@ -22,13 +22,13 @@ import {
 } from './tournament.api'
 import {
   groupLotsBySet,
-  initialsFor,
   statusBreakdown,
   statusTone,
   styleTone,
 } from './lot.utils'
 import { formatPurse } from './tournament.utils'
 import AddLotModal from './AddLotModal'
+import PlayerImage from '../../components/PlayerImage'
 import './AuctionPoolSection.css'
 
 const STATUS_FILTERS = [
@@ -348,15 +348,8 @@ function AuctionPoolSection({ tournamentId, currency }) {
                         transition={{ duration: 0.15 }}
                       >
                         <div className="pool-card-top">
-                          <div
-                            className="pool-avatar"
-                            style={
-                              lot.photoUrl
-                                ? { backgroundImage: `url(${lot.photoUrl})` }
-                                : undefined
-                            }
-                          >
-                            {lot.photoUrl ? null : initialsFor(lot.name)}
+                          <div className="pool-avatar">
+                            <PlayerImage src={lot.photoUrl} name={lot.name} />
                           </div>
                           <div className="pool-row-actions">
                             <button

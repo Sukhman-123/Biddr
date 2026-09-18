@@ -346,6 +346,13 @@
   font-weight: 700;
   font-size: 13px;
   letter-spacing: 0.04em;
+  overflow: hidden;
+}
+
+.pool-avatar > img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
 }
 
 .pool-info {

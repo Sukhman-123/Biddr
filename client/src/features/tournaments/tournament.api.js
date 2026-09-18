@@ -112,9 +112,21 @@ export async function listLotsRequest(id) {
   }
 }
 
+const lotRequestPayload = (payload) => {
+  const { photoFile, ...fields } = payload || {}
+  if (!photoFile) return fields
+
+  const form = new FormData()
+  Object.entries(fields).forEach(([key, value]) => {
+    if (value !== undefined && value !== null) form.append(key, String(value))
+  })
+  form.append('photo', photoFile)
+  return form
+}
+
 export async function createLotRequest(id, payload) {
   try {
-    const { data } = await api.post(`/tournaments/${id}/lots`, payload)
+    const { data } = await api.post(`/tournaments/${id}/lots`, lotRequestPayload(payload))
     return data?.lot ?? null
   } catch (error) {
     throw wrapError(error, 'Could not add the player')
@@ -139,7 +151,7 @@ export async function bulkUploadLotsRequest(id, file) {
 
 export async function updateLotRequest(lotId, patch) {
   try {
-    const { data } = await api.patch(`/lots/${lotId}`, patch)
+    const { data } = await api.patch(`/lots/${lotId}`, lotRequestPayload(patch))
     return data?.lot ?? null
   } catch (error) {
     throw wrapError(error, 'Could not save the changes')

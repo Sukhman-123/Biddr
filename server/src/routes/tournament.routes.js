@@ -27,6 +27,7 @@ const {
 const { exportTournamentCsv } = require('../controllers/export.controller');
 const { getAuctionRecap } = require('../controllers/auctionRecap.controller');
 const { auth } = require('../middleware/auth');
+const playerPhotoUpload = require('../middleware/playerPhotoUpload');
 
 const router = express.Router();
 
@@ -63,7 +64,7 @@ router.delete('/:id/invites/:inviteId', revokeInvite);
 
 // Auction pool / lots
 router.get('/:id/lots', listLots);
-router.post('/:id/lots', createLot);
+router.post('/:id/lots', playerPhotoUpload, createLot);
 router.post('/:id/lots/bulk', upload.single('file'), bulkUploadLots);
 router.get('/:id/lots/template.csv', streamCsvTemplate);
 router.get('/:id/lots/template.xlsx', streamXlsxTemplate);

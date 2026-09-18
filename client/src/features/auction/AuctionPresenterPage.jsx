@@ -6,6 +6,7 @@ import { Activity, ArrowLeft, Clock3, Flame, Gavel, Maximize2, Minimize2, Trophy
 import { useSocket } from '../../lib/socket'
 import { fetchRoomSnapshotRequest, listTournamentLotsRequest } from './auctionRoom.api'
 import { formatPurse } from '../tournaments/tournament.utils'
+import PlayerImage from '../../components/PlayerImage'
 import './AuctionPresenterPage.css'
 
 export default function AuctionPresenterPage() {
@@ -437,11 +438,7 @@ export default function AuctionPresenterPage() {
                 <strong>{activeLot.set || 'Player set'}</strong>
               </div>
               <div className="presenter-poster-photo">
-                {activeLot.photoUrl ? (
-                  <img src={activeLot.photoUrl} alt="" />
-                ) : (
-                  <span>{getInitials(activeLot.name)}</span>
-                )}
+                <PlayerImage src={activeLot.photoUrl} name={activeLot.name} />
               </div>
               <div className="presenter-poster-copy">
                 <p>{activeLot.country || 'Country'} · {activeLot.style || 'Player'}</p>
@@ -589,16 +586,6 @@ export default function AuctionPresenterPage() {
       </section>
     </main>
   )
-}
-
-function getInitials(name = '') {
-  return name
-    .split(/\s+/)
-    .filter(Boolean)
-    .slice(0, 2)
-    .map((part) => part[0])
-    .join('')
-    .toUpperCase() || '?'
 }
 
 function getLotNumber(lot) {

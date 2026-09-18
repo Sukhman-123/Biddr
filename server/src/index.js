@@ -100,6 +100,9 @@ const startServer = async () => {
         CLIENT_URL: process.env.CLIENT_URL || '(unset)',
         RESEND_API_KEY: !!process.env.RESEND_API_KEY,
         RESEND_FROM_EMAIL: process.env.RESEND_FROM_EMAIL || '(default)',
+        CLOUDINARY_CLOUD_NAME: !!process.env.CLOUDINARY_CLOUD_NAME,
+        CLOUDINARY_API_KEY: !!process.env.CLOUDINARY_API_KEY,
+        CLOUDINARY_API_SECRET: !!process.env.CLOUDINARY_API_SECRET,
       })
         .map(([k, v]) => `${k}=${v === true ? 'yes' : v}`)
         .join(' '),

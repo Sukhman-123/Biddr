@@ -2,6 +2,7 @@ import { Gavel, User } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 import HostControls from './HostControls'
 import { formatPurse } from '../../tournaments/tournament.utils'
+import PlayerImage from '../../../components/PlayerImage'
 import './CurrentLotCard.css'
 
 // PaddleBar — visible only to franchise owners during a live lot.
@@ -97,13 +98,11 @@ export default function CurrentLotCard({
           >
             <div className="current-lot-head">
               <div className="current-lot-pic" aria-hidden="true">
-                {lot.photoUrl ? (
-                  <img src={lot.photoUrl} alt="" />
-                ) : (
-                  <span className="current-lot-pic-initial">
-                    {(lot.name || '?').slice(0, 1)}
-                  </span>
-                )}
+                <PlayerImage
+                  src={lot.photoUrl}
+                  name={lot.name}
+                  fallbackClassName="current-lot-pic-initial"
+                />
               </div>
               <div className="current-lot-meta">
                 <h2 className="current-lot-name">{lot.name}</h2>

@@ -1,6 +1,6 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Camera, X } from 'lucide-react'
+import { Camera, Trash2, Upload, X } from 'lucide-react'
 import {
   validateLotInput,
   emptyLotDraft,
@@ -23,6 +23,10 @@ function AddLotModal({ tournamentId, lot, onClose, onSaved }) {
   const [draft, setDraft] = useState(initial)
   const [error, setError] = useState(null)
   const [saving, setSaving] = useState(false)
+  const [photoFile, setPhotoFile] = useState(null)
+  const [photoPreview, setPhotoPreview] = useState('')
+  const [previewFailed, setPreviewFailed] = useState(false)
+  const photoInputRef = useRef(null)
 
   const isEdit = Boolean(lot)
 
@@ -34,8 +38,46 @@ function AddLotModal({ tournamentId, lot, onClose, onSaved }) {
     return () => window.removeEventListener('keydown', onKey)
   }, [onClose, saving])
 
+  useEffect(() => () => {
+    if (photoPreview.startsWith('blob:')) URL.revokeObjectURL(photoPreview)
+  }, [photoPreview])
+
   const updateField = (key) => (e) =>
     setDraft((prev) => ({ ...prev, [key]: e.target.value }))
+
+  const onPhotoSelected = (event) => {
+    const file = event.target.files?.[0]
+    event.target.value = ''
+    if (!file) return
+    if (!['image/jpeg', 'image/png', 'image/webp'].includes(file.type)) {
+      setError('Choose a JPG, PNG, or WebP image')
+      return
+    }
+    if (file.size > 2 * 1024 * 1024) {
+      setError('Player photo must be 2 MB or smaller')
+      return
+    }
+
+    setPhotoFile(file)
+    setPhotoPreview(URL.createObjectURL(file))
+    setPreviewFailed(false)
+    setError(null)
+    setDraft((prev) => ({ ...prev, photoUrl: '' }))
+  }
+
+  const removePhoto = () => {
+    setPhotoFile(null)
+    setPhotoPreview('')
+    setPreviewFailed(false)
+    setDraft((prev) => ({ ...prev, photoUrl: '' }))
+  }
+
+  const updatePhotoUrl = (event) => {
+    setPhotoFile(null)
+    setPhotoPreview('')
+    setPreviewFailed(false)
+    setDraft((prev) => ({ ...prev, photoUrl: event.target.value }))
+  }
 
   const onSubmit = async (e) => {
     e.preventDefault()
@@ -49,8 +91,8 @@ function AddLotModal({ tournamentId, lot, onClose, onSaved }) {
     setSaving(true)
     try {
       const saved = isEdit
-        ? await updateLotRequest(lot.id, v.data)
-        : await createLotRequest(tournamentId, v.data)
+        ? await updateLotRequest(lot.id, { ...v.data, photoFile })
+        : await createLotRequest(tournamentId, { ...v.data, photoFile })
       onSaved(saved)
     } catch (err) {
       setError(err?.message ?? 'Could not save the player')
@@ -58,6 +100,9 @@ function AddLotModal({ tournamentId, lot, onClose, onSaved }) {
       setSaving(false)
     }
   }
+
+  const previewSource = photoPreview || draft.photoUrl
+  const playerInitial = (draft.name || '?').trim().charAt(0).toUpperCase() || '?'
 
   return (
     <AnimatePresence>
@@ -162,19 +207,64 @@ function AddLotModal({ tournamentId, lot, onClose, onSaved }) {
               </label>
             </div>
 
-            <label className="addlot-field">
-              <span>Photo URL (optional)</span>
-              <div className="addlot-photo-input">
-                <Camera size={14} />
+            <div className="addlot-field">
+              <span>Player photo (optional)</span>
+              <div className="addlot-photo-card">
+                <div className="addlot-photo-preview" aria-hidden="true">
+                  {previewSource && !previewFailed ? (
+                    <img
+                      src={previewSource}
+                      alt=""
+                      onError={() => setPreviewFailed(true)}
+                    />
+                  ) : (
+                    <span>{playerInitial}</span>
+                  )}
+                </div>
+                <div className="addlot-photo-copy">
+                  <strong>{photoFile ? photoFile.name : previewSource ? 'Photo selected' : 'Add a player photo'}</strong>
+                  <small>JPG, PNG, or WebP · maximum 2 MB</small>
+                  <div className="addlot-photo-actions">
+                    <button
+                      type="button"
+                      onClick={() => photoInputRef.current?.click()}
+                      disabled={saving}
+                    >
+                      <Upload size={13} />
+                      {previewSource ? 'Replace' : 'Choose photo'}
+                    </button>
+                    {previewSource ? (
+                      <button type="button" onClick={removePhoto} disabled={saving}>
+                        <Trash2 size={13} /> Remove
+                      </button>
+                    ) : null}
+                  </div>
+                </div>
                 <input
-                  type="url"
-                  value={draft.photoUrl}
-                  onChange={updateField('photoUrl')}
-                  placeholder="https://example.com/player.jpg"
-                  maxLength={600}
+                  ref={photoInputRef}
+                  className="addlot-photo-file"
+                  type="file"
+                  accept="image/jpeg,image/png,image/webp"
+                  onChange={onPhotoSelected}
+                  disabled={saving}
                 />
               </div>
-            </label>
+
+              <details className="addlot-photo-url-option">
+                <summary><Camera size={13} /> Use an image URL instead</summary>
+                <div className="addlot-photo-input">
+                  <Camera size={14} />
+                  <input
+                    type="url"
+                    value={draft.photoUrl}
+                    onChange={updatePhotoUrl}
+                    placeholder="https://example.com/player.jpg"
+                    maxLength={600}
+                    disabled={saving}
+                  />
+                </div>
+              </details>
+            </div>
 
             {error ? <div className="addlot-error">{error}</div> : null}
 
@@ -193,7 +283,7 @@ function AddLotModal({ tournamentId, lot, onClose, onSaved }) {
                 disabled={saving}
               >
                 {saving
-                  ? 'Saving…'
+                  ? photoFile ? 'Uploading…' : 'Saving…'
                   : isEdit
                     ? 'Save changes'
                     : 'Add to pool'}

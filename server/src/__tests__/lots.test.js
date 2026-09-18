@@ -165,6 +165,82 @@ describe('POST /api/tournaments/:id/lots', () => {
     expect(res.body.lot.set).toBe('Squad')
   })
 
+  it('uploads a validated player photo through the backend', async () => {
+    const token = await getOwnerToken()
+    const create = await createTournament(token)
+    const id = create.body.tournament.id
+    const previousConfig = {
+      cloudName: process.env.CLOUDINARY_CLOUD_NAME,
+      apiKey: process.env.CLOUDINARY_API_KEY,
+      apiSecret: process.env.CLOUDINARY_API_SECRET,
+    }
+    const previousFetch = global.fetch
+
+    process.env.CLOUDINARY_CLOUD_NAME = 'test-cloud'
+    process.env.CLOUDINARY_API_KEY = 'test-key'
+    process.env.CLOUDINARY_API_SECRET = 'test-secret'
+    global.fetch = jest.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({
+        secure_url: 'https://res.cloudinary.com/test-cloud/image/upload/v1/player.png',
+        public_id: 'biddr/players/player',
+      }),
+    })
+
+    try {
+      const res = await request(app)
+        .post(`/api/tournaments/${id}/lots`)
+        .set('Authorization', `Bearer ${token}`)
+        .field('name', 'Photo Player')
+        .field('style', 'Batsman')
+        .field('country', 'India')
+        .field('basePrice', '1500000')
+        .attach(
+          'photo',
+          Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]),
+          { filename: 'player.png', contentType: 'image/png' },
+        )
+
+      expect(res.status).toBe(201)
+      expect(res.body.lot.photoUrl).toContain(
+        '/image/upload/c_fill,g_auto,w_800,h_800,q_auto,f_auto/',
+      )
+      expect(global.fetch).toHaveBeenCalledWith(
+        'https://api.cloudinary.com/v1_1/test-cloud/image/upload',
+        expect.objectContaining({ method: 'POST' }),
+      )
+    } finally {
+      if (previousConfig.cloudName === undefined) delete process.env.CLOUDINARY_CLOUD_NAME
+      else process.env.CLOUDINARY_CLOUD_NAME = previousConfig.cloudName
+      if (previousConfig.apiKey === undefined) delete process.env.CLOUDINARY_API_KEY
+      else process.env.CLOUDINARY_API_KEY = previousConfig.apiKey
+      if (previousConfig.apiSecret === undefined) delete process.env.CLOUDINARY_API_SECRET
+      else process.env.CLOUDINARY_API_SECRET = previousConfig.apiSecret
+      global.fetch = previousFetch
+    }
+  })
+
+  it('rejects a fake image before contacting Cloudinary', async () => {
+    const token = await getOwnerToken()
+    const create = await createTournament(token)
+    const id = create.body.tournament.id
+
+    const res = await request(app)
+      .post(`/api/tournaments/${id}/lots`)
+      .set('Authorization', `Bearer ${token}`)
+      .field('name', 'Fake Photo Player')
+      .field('style', 'Bowler')
+      .field('country', 'India')
+      .field('basePrice', '1000000')
+      .attach('photo', Buffer.from('not actually an image'), {
+        filename: 'fake.png',
+        contentType: 'image/png',
+      })
+
+    expect(res.status).toBe(400)
+    expect(res.body.message).toMatch(/JPG, PNG, or WebP/)
+  })
+
   it('rejects a non-host', async () => {
     const token = await getOwnerToken()
     const otherToken = await getOtherToken()

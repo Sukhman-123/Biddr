@@ -127,6 +127,120 @@
   padding-left: 34px;
 }
 
+.addlot-photo-card {
+  display: flex;
+  align-items: center;
+  gap: 13px;
+  padding: 12px;
+  border: 1px solid var(--border);
+  border-radius: 13px;
+  background: rgba(8, 11, 18, 0.52);
+}
+
+.addlot-photo-preview {
+  width: 68px;
+  height: 68px;
+  flex: 0 0 auto;
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  border: 1px solid rgba(245, 185, 74, 0.2);
+  border-radius: 14px;
+  color: var(--gold);
+  background: linear-gradient(135deg, #1d2436, #0a0d16);
+  font-size: 25px;
+  font-weight: 800;
+}
+
+.addlot-photo-preview img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.addlot-photo-copy {
+  min-width: 0;
+  flex: 1;
+}
+
+.addlot-photo-copy strong,
+.addlot-photo-copy small {
+  display: block;
+}
+
+.addlot-photo-copy strong {
+  overflow: hidden;
+  color: var(--ink-strong);
+  font-size: 13px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.addlot-photo-copy small {
+  margin-top: 3px;
+  color: var(--muted);
+  font-size: 10px;
+}
+
+.addlot-photo-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px;
+  margin-top: 9px;
+}
+
+.addlot-photo-actions button {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 6px 9px;
+  color: var(--ink-strong);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.035);
+  font: inherit;
+  font-size: 11px;
+  cursor: pointer;
+}
+
+.addlot-photo-actions button:hover:not(:disabled) {
+  border-color: rgba(245, 185, 74, 0.35);
+  background: rgba(245, 185, 74, 0.08);
+}
+
+.addlot-photo-actions button:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.addlot-photo-file {
+  display: none;
+}
+
+.addlot-photo-url-option {
+  margin-top: 2px;
+}
+
+.addlot-photo-url-option summary {
+  width: fit-content;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--muted);
+  font-size: 11px;
+  cursor: pointer;
+  list-style: none;
+}
+
+.addlot-photo-url-option summary::-webkit-details-marker {
+  display: none;
+}
+
+.addlot-photo-url-option[open] summary {
+  margin-bottom: 8px;
+  color: var(--ink-strong);
+}
+
 .addlot-error {
   padding: 10px 12px;
   border-radius: 10px;
@@ -188,6 +302,10 @@
 
   .addlot-row {
     grid-template-columns: 1fr;
+  }
+
+  .addlot-photo-card {
+    align-items: flex-start;
   }
 
   .addlot-foot {

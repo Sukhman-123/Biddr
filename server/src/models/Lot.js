@@ -46,6 +46,12 @@ const lotSchema = new mongoose.Schema(
       maxlength: [600, 'Photo URL must be 600 characters or fewer'],
       default: '',
     },
+    photoPublicId: {
+      type: String,
+      trim: true,
+      maxlength: [300, 'Photo public ID must be 300 characters or fewer'],
+      default: '',
+    },
     set: {
       type: String,
       trim: true,

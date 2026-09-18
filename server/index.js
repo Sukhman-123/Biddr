@@ -32,6 +32,9 @@
     line('CLIENT_URL', process.env.CLIENT_URL),
     line('RESEND_API_KEY', process.env.RESEND_API_KEY),
     line('RESEND_FROM_EMAIL', process.env.RESEND_FROM_EMAIL),
+    line('CLOUDINARY_CLOUD_NAME', process.env.CLOUDINARY_CLOUD_NAME),
+    line('CLOUDINARY_API_KEY', process.env.CLOUDINARY_API_KEY),
+    line('CLOUDINARY_API_SECRET', process.env.CLOUDINARY_API_SECRET),
   )
   console.log(
     '[boot]',
