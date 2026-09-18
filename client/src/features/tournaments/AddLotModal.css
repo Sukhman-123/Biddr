@@ -9,7 +9,8 @@
   align-items: center;
   justify-content: center;
   padding: 24px;
-  overflow-y: auto;
+  overflow: hidden;
+  overscroll-behavior: contain;
 }
 
 .addlot-modal {
@@ -22,6 +23,8 @@
   border-radius: 20px;
   padding: 24px;
   box-shadow: 0 24px 60px rgba(0, 0, 0, 0.5);
+  overscroll-behavior: contain;
+  scrollbar-gutter: stable;
 }
 
 .addlot-head {
@@ -158,6 +161,38 @@
   object-fit: cover;
 }
 
+.addlot-photo-preview > a {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  display: block;
+  color: white;
+}
+
+.addlot-photo-preview > a > svg {
+  position: absolute;
+  right: 6px;
+  bottom: 6px;
+  padding: 4px;
+  box-sizing: content-box;
+  border-radius: 7px;
+  background: rgba(4, 7, 12, 0.76);
+  opacity: 0;
+  transform: translateY(3px);
+  transition: opacity 0.15s ease, transform 0.15s ease;
+}
+
+.addlot-photo-preview > a:hover > svg,
+.addlot-photo-preview > a:focus-visible > svg {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.addlot-photo-preview > a:focus-visible {
+  outline: 2px solid var(--gold);
+  outline-offset: -2px;
+}
+
 .addlot-photo-copy {
   min-width: 0;
   flex: 1;
@@ -189,7 +224,8 @@
   margin-top: 9px;
 }
 
-.addlot-photo-actions button {
+.addlot-photo-actions button,
+.addlot-photo-actions a {
   display: inline-flex;
   align-items: center;
   gap: 5px;
@@ -201,9 +237,11 @@
   font: inherit;
   font-size: 11px;
   cursor: pointer;
+  text-decoration: none;
 }
 
-.addlot-photo-actions button:hover:not(:disabled) {
+.addlot-photo-actions button:hover:not(:disabled),
+.addlot-photo-actions a:hover {
   border-color: rgba(245, 185, 74, 0.35);
   background: rgba(245, 185, 74, 0.08);
 }
@@ -290,7 +328,6 @@
 
 @media (max-width: 480px) {
   .addlot-backdrop {
-    align-items: flex-start;
     padding: 12px;
   }
 

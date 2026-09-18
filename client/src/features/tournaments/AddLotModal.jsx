@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Camera, Trash2, Upload, X } from 'lucide-react'
+import { Camera, ExternalLink, Trash2, Upload, X } from 'lucide-react'
 import {
   validateLotInput,
   emptyLotDraft,
@@ -37,6 +37,18 @@ function AddLotModal({ tournamentId, lot, onClose, onSaved }) {
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
   }, [onClose, saving])
+
+  useEffect(() => {
+    const previousBodyOverflow = document.body.style.overflow
+    const previousRootOverflow = document.documentElement.style.overflow
+    document.body.style.overflow = 'hidden'
+    document.documentElement.style.overflow = 'hidden'
+
+    return () => {
+      document.body.style.overflow = previousBodyOverflow
+      document.documentElement.style.overflow = previousRootOverflow
+    }
+  }, [])
 
   useEffect(() => () => {
     if (photoPreview.startsWith('blob:')) URL.revokeObjectURL(photoPreview)
@@ -210,13 +222,22 @@ function AddLotModal({ tournamentId, lot, onClose, onSaved }) {
             <div className="addlot-field">
               <span>Player photo (optional)</span>
               <div className="addlot-photo-card">
-                <div className="addlot-photo-preview" aria-hidden="true">
+                <div className="addlot-photo-preview">
                   {previewSource && !previewFailed ? (
-                    <img
-                      src={previewSource}
-                      alt=""
-                      onError={() => setPreviewFailed(true)}
-                    />
+                    <a
+                      href={previewSource}
+                      target="_blank"
+                      rel="noreferrer"
+                      aria-label={`Open full photo for ${draft.name || 'player'} in a new tab`}
+                      title="Open full image in a new tab"
+                    >
+                      <img
+                        src={previewSource}
+                        alt=""
+                        onError={() => setPreviewFailed(true)}
+                      />
+                      <ExternalLink size={14} aria-hidden="true" />
+                    </a>
                   ) : (
                     <span>{playerInitial}</span>
                   )}
@@ -234,9 +255,15 @@ function AddLotModal({ tournamentId, lot, onClose, onSaved }) {
                       {previewSource ? 'Replace' : 'Choose photo'}
                     </button>
                     {previewSource ? (
-                      <button type="button" onClick={removePhoto} disabled={saving}>
-                        <Trash2 size={13} /> Remove
-                      </button>
+                      <>
+                        <a href={previewSource} target="_blank" rel="noreferrer">
+                          <ExternalLink size={13} />
+                          {photoFile ? 'Preview' : 'Open full image'}
+                        </a>
+                        <button type="button" onClick={removePhoto} disabled={saving}>
+                          <Trash2 size={13} /> Remove
+                        </button>
+                      </>
                     ) : null}
                   </div>
                 </div>
