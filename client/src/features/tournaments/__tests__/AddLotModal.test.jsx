@@ -26,6 +26,9 @@ describe('AddLotModal', () => {
 
     expect(document.body.style.overflow).toBe('hidden')
     expect(document.documentElement.style.overflow).toBe('hidden')
+    expect(screen.getByRole('dialog').closest('.addlot-backdrop')?.parentElement).toBe(
+      document.body,
+    )
 
     unmount()
     expect(document.body.style.overflow).toBe('auto')

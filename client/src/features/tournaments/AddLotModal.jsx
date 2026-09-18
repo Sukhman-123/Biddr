@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
+import { createPortal } from 'react-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Camera, ExternalLink, Trash2, Upload, X } from 'lucide-react'
 import {
@@ -116,7 +117,7 @@ function AddLotModal({ tournamentId, lot, onClose, onSaved }) {
   const previewSource = photoPreview || draft.photoUrl
   const playerInitial = (draft.name || '?').trim().charAt(0).toUpperCase() || '?'
 
-  return (
+  return createPortal(
     <AnimatePresence>
       <motion.div
         className="addlot-backdrop"
@@ -319,7 +320,8 @@ function AddLotModal({ tournamentId, lot, onClose, onSaved }) {
           </form>
         </motion.div>
       </motion.div>
-    </AnimatePresence>
+    </AnimatePresence>,
+    document.body,
   )
 }
 

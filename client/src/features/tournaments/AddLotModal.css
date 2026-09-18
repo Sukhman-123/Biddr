@@ -1,6 +1,9 @@
 .addlot-backdrop {
   position: fixed;
   inset: 0;
+  width: 100vw;
+  height: 100dvh;
+  box-sizing: border-box;
   z-index: 70;
   background: rgba(4, 7, 12, 0.62);
   backdrop-filter: blur(8px);
@@ -16,7 +19,7 @@
 .addlot-modal {
   width: 100%;
   max-width: 520px;
-  max-height: calc(100svh - 48px);
+  max-height: calc(100dvh - 48px);
   overflow-y: auto;
   background: linear-gradient(180deg, #0f1422 0%, #0a0d16 100%);
   border: 1px solid var(--border);
@@ -332,7 +335,7 @@
   }
 
   .addlot-modal {
-    max-height: calc(100svh - 24px);
+    max-height: calc(100dvh - 24px);
     padding: 18px;
     border-radius: 16px;
   }
