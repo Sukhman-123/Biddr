@@ -24,6 +24,9 @@ async function startTestEnv() {
   const emits = []
   const mockIo = {
     rooms,
+    in() {
+      return { fetchSockets: async () => [] }
+    },
     to(room) {
       rooms.add(room)
       return {

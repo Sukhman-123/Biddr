@@ -85,6 +85,26 @@ const assertCanSubscribe = async (tournamentId, user) => {
   return tournament;
 };
 
+// A socket that joined before an access change must not keep receiving
+// private tournament broadcasts after its permission is removed.
+const removeUnauthorizedSubscribers = async (io, tournament) => {
+  if (!io || tournament.visibility !== 'invite-only') return;
+
+  const roomName = `tournament:${tournament._id.toString()}`;
+  const sockets = await io.in(roomName).fetchSockets();
+  if (sockets.length === 0) return;
+
+  const invites = await Invitation.find({ tournamentId: tournament._id }).select('email');
+  const invitedEmails = new Set(invites.map((invite) => invite.email));
+  const ownerId = tournament.ownerId.toString();
+
+  await Promise.all(sockets.map(async (socket) => {
+    const user = socket.data?.user;
+    if (user?._id?.toString() === ownerId || invitedEmails.has(user?.email)) return;
+    await socket.leave(roomName);
+  }));
+};
+
 const registerSocketHandlers = (io) => {
   ioRef = io;
   attachSocketAuth(io);
@@ -146,3 +166,4 @@ const registerSocketHandlers = (io) => {
 module.exports = registerSocketHandlers;
 module.exports.attachSocketAuth = attachSocketAuth;
 module.exports.assertCanSubscribe = assertCanSubscribe;
+module.exports.removeUnauthorizedSubscribers = removeUnauthorizedSubscribers;

@@ -1,6 +1,5 @@
 const Lot = require('../models/Lot');
-const Tournament = require('../models/Tournament');
-const { HttpError } = require('../middleware/canSeeTournament');
+const { assertCanSeeTournament, HttpError } = require('../middleware/canSeeTournament');
 const { calculateAuctionIntelligence } = require('../services/auctionIntelligence');
 
 const getAuctionIntelligence = async (req, res, next) => {
@@ -13,12 +12,11 @@ const getAuctionIntelligence = async (req, res, next) => {
 
     const lot = await Lot.findById(lotId);
     if (!lot) throw new HttpError(404, 'Lot not found');
+    const tournament = await assertCanSeeTournament(lot.tournamentId, req.user);
     if (!['active', 'paused'].includes(lot.auctionStatus)) {
       throw new HttpError(409, 'Auction intelligence is available while a lot is on the floor');
     }
 
-    const tournament = await Tournament.findById(lot.tournamentId);
-    if (!tournament) throw new HttpError(404, 'Tournament not found');
     const franchise = tournament.franchises.id(franchiseId);
     if (!franchise) throw new HttpError(404, 'Franchise not found in this tournament');
 

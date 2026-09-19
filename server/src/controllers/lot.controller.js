@@ -2,6 +2,7 @@ const Tournament = require('../models/Tournament');
 const Lot = require('../models/Lot');
 const { LOT_STYLES } = require('../models/Lot');
 const xlsx = require('xlsx');
+const { assertCanSeeTournament, HttpError } = require('../middleware/canSeeTournament');
 const {
   uploadPlayerImage,
   deletePlayerImage,
@@ -40,6 +41,16 @@ const TEMPLATE_EXAMPLE_ROW = [
 ];
 
 const PHOTO_RE = /^https?:\/\//i;
+
+const handleTournamentReadError = (error, res, next) => {
+  if (error instanceof HttpError) {
+    return res.status(error.status).json({ message: error.message });
+  }
+  if (error?.name === 'CastError') {
+    return res.status(404).json({ message: 'Tournament not found' });
+  }
+  return next(error);
+};
 
 const removeManagedPhoto = async (publicId) => {
   if (!publicId) return;
@@ -229,10 +240,7 @@ const parseSpreadsheet = (buffer, filename = '') => {
 
 const listLots = async (req, res, next) => {
   try {
-    const tournament = await Tournament.findById(req.params.id);
-    if (!tournament) {
-      return res.status(404).json({ message: 'Tournament not found' });
-    }
+    const tournament = await assertCanSeeTournament(req.params.id, req.user);
     const lots = await Lot.find({ tournamentId: tournament._id })
       .sort({ set: 1, name: 1 })
       .lean();
@@ -258,7 +266,7 @@ const listLots = async (req, res, next) => {
       })),
     });
   } catch (error) {
-    return next(error);
+    return handleTournamentReadError(error, res, next);
   }
 };
 
@@ -542,10 +550,7 @@ const deleteLot = async (req, res, next) => {
 
 const streamCsvTemplate = async (req, res, next) => {
   try {
-    const tournament = await Tournament.findById(req.params.id);
-    if (!tournament) {
-      return res.status(404).json({ message: 'Tournament not found' });
-    }
+    const tournament = await assertCanSeeTournament(req.params.id, req.user);
     const csvRows = [TEMPLATE_HEADER_ROW, TEMPLATE_EXAMPLE_ROW]
       .map((r) =>
         r
@@ -563,16 +568,13 @@ const streamCsvTemplate = async (req, res, next) => {
     );
     return res.send(csvRows);
   } catch (error) {
-    return next(error);
+    return handleTournamentReadError(error, res, next);
   }
 };
 
 const streamXlsxTemplate = async (req, res, next) => {
   try {
-    const tournament = await Tournament.findById(req.params.id);
-    if (!tournament) {
-      return res.status(404).json({ message: 'Tournament not found' });
-    }
+    const tournament = await assertCanSeeTournament(req.params.id, req.user);
     const sheet = xlsx.utils.aoa_to_sheet([
       TEMPLATE_HEADER_ROW,
       TEMPLATE_EXAMPLE_ROW,
@@ -593,7 +595,7 @@ const streamXlsxTemplate = async (req, res, next) => {
     );
     return res.send(buffer);
   } catch (error) {
-    return next(error);
+    return handleTournamentReadError(error, res, next);
   }
 };
 

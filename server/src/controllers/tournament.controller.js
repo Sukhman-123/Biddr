@@ -3,6 +3,7 @@ const Invitation = require('../models/Invitation');
 const User = require('../models/User');
 const Lot = require('../models/Lot');
 const { clear: clearUndoStack } = require('../services/undoService');
+const { removeUnauthorizedSubscribers } = require('../socket');
 
 const VALID_STATUSES = ['upcoming', 'live', 'completed'];
 
@@ -40,8 +41,12 @@ const listTournaments = async (req, res, next) => {
 
     if (req.query.visibility && req.query.visibility !== 'all') {
       filter.visibility = req.query.visibility;
-    } else if (userId) {
+    }
+
+    if (userId) {
       // Public + tournaments the user owns + tournaments the user was invited to.
+      // Keep this access condition even when a visibility filter is supplied:
+      // MongoDB combines filter.visibility and filter.$or with AND.
       const invites = await Invitation.find({ email: req.user.email }).select(
         'tournamentId',
       );
@@ -265,6 +270,7 @@ const updateTournament = async (req, res, next) => {
         .status(403)
         .json({ message: 'Only the host can edit this tournament' });
     }
+    const wasPublic = tournament.visibility === 'public';
 
     const pursePerFranchiseProvided = req.body.pursePerFranchise !== undefined;
     const allowed = [
@@ -458,6 +464,9 @@ const updateTournament = async (req, res, next) => {
     }
 
     await tournament.save();
+    if (wasPublic && tournament.visibility === 'invite-only') {
+      await removeUnauthorizedSubscribers(req.app.get('io'), tournament);
+    }
     broadcastSetupUpdated(req, tournament, Array.isArray(req.body.franchises) ? 'franchises' : 'tournament');
     return res
       .status(200)
@@ -681,6 +690,7 @@ const revokeInvite = async (req, res, next) => {
     if (!deleted) {
       return res.status(404).json({ message: 'Invite not found' });
     }
+    await removeUnauthorizedSubscribers(req.app.get('io'), tournament);
     return res.status(200).json({ revoked: true });
   } catch (error) {
     if (error?.name === 'CastError') {

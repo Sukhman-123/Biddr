@@ -10,7 +10,7 @@ const Invitation = require('../models/Invitation');
 //   - Host (ownerId === user._id): always allowed.
 //   - Public tournament: any authenticated user allowed.
 //   - Invite-only tournament: only the host + users with an
-//     accepted Invitation for that tournament.
+//     Invitation for that tournament (pending or accepted).
 //
 // The function name is `assertCanSeeTournament` because it both
 // checks AND throws — there's no silent false return path that
