@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useMemo, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import {
@@ -25,6 +25,7 @@ const TABS = [
   { id: 'upcoming', label: 'Upcoming' },
   { id: 'completed', label: 'Completed' },
 ]
+const PAGE_SIZE = 6
 
 async function fetchTournaments(status) {
   const params = {}
@@ -48,6 +49,8 @@ function TournamentsPage() {
   const navigate = useNavigate()
   const [tab, setTab] = useState('all')
   const [search, setSearch] = useState('')
+  const [page, setPage] = useState(1)
+  const gridRef = useRef(null)
   const debouncedSearch = useDebouncedValue(search, 300)
 
   const { data: counts } = useQuery({
@@ -71,18 +74,32 @@ function TournamentsPage() {
     )
   }, [data, debouncedSearch])
 
+  const pageCount = Math.ceil(filtered.length / PAGE_SIZE)
+  const currentPage = Math.min(page, pageCount || 1)
+  const firstResult = (currentPage - 1) * PAGE_SIZE
+  const visibleTournaments = filtered.slice(firstResult, firstResult + PAGE_SIZE)
+
+  const changePage = (nextPage) => {
+    setPage(nextPage)
+    window.requestAnimationFrame(() => {
+      gridRef.current?.scrollIntoView?.({ block: 'start' })
+    })
+  }
+
   return (
     <main className="tournaments-main">
       <header className="hall-header">
-        <p className="hall-eyebrow">
-          <span className="hall-eyebrow-icon">★</span>
-          AUCTION HALL · <span>Tournaments</span>
-        </p>
-        <h1 className="hall-title">Find your next auction</h1>
-        <p className="hall-subtitle">
-          Live, upcoming, or already in the books — every franchise and every
-          gavel lives here.
-        </p>
+        <div className="hall-header-copy">
+          <p className="hall-eyebrow">
+            <span className="hall-eyebrow-icon">★</span>
+            AUCTION HALL · <span>Tournaments</span>
+          </p>
+          <h1 className="hall-title">Find your next auction</h1>
+          <p className="hall-subtitle">
+            Live, upcoming, or already in the books — every franchise and every
+            gavel lives here.
+          </p>
+        </div>
         <Link
           to="/tournaments/new"
           className="hall-create-btn"
@@ -104,7 +121,10 @@ function TournamentsPage() {
                 role="tab"
                 aria-selected={isActive}
                 className={clsx('hall-tab', { active: isActive })}
-                onClick={() => setTab(t.id)}
+                onClick={() => {
+                  setTab(t.id)
+                  setPage(1)
+                }}
               >
                 <span>{t.label}</span>
                 <span className="hall-tab-count">{count ?? '·'}</span>
@@ -118,7 +138,10 @@ function TournamentsPage() {
           <input
             type="search"
             value={search}
-            onChange={(event) => setSearch(event.target.value)}
+            onChange={(event) => {
+              setSearch(event.target.value)
+              setPage(1)
+            }}
             placeholder="Search by name or code…"
             aria-label="Search tournaments"
             className={search !== debouncedSearch ? 'is-debouncing' : ''}
@@ -136,7 +159,7 @@ function TournamentsPage() {
         />
       ) : filtered.length === 0 ? (
         <EmptyState
-          title="No tournaments yet"
+          title={search.trim() ? 'No matching tournaments' : 'No tournaments yet'}
           message={
             search.trim()
               ? `Nothing matches “${search.trim()}”.`
@@ -146,20 +169,38 @@ function TournamentsPage() {
           }
         />
       ) : (
-        <ul className="tournaments-grid">
-          {filtered.map((tournament) => (
-            <li key={tournament.id}>
-              <TournamentCard
-                tournament={tournament}
-                onOpen={() => navigate(
-                  tournament.status === 'completed'
-                    ? `/tournaments/${tournament.id}/recap`
-                    : `/tournaments/${tournament.id}`,
-                )}
-              />
-            </li>
-          ))}
-        </ul>
+        <>
+          <ul className="tournaments-grid" ref={gridRef}>
+            {visibleTournaments.map((tournament) => (
+              <li key={tournament.id}>
+                <TournamentCard
+                  tournament={tournament}
+                  onOpen={() => navigate(
+                    tournament.status === 'completed'
+                      ? `/tournaments/${tournament.id}/recap`
+                      : `/tournaments/${tournament.id}`,
+                  )}
+                />
+              </li>
+            ))}
+          </ul>
+          {pageCount > 1 && (
+            <nav className="hall-pagination" aria-label="Tournament pages">
+              <p className="hall-pagination-summary" aria-live="polite">
+                Showing {firstResult + 1}–{Math.min(firstResult + PAGE_SIZE, filtered.length)} of {filtered.length}
+              </p>
+              <div className="hall-pagination-controls">
+                <button type="button" onClick={() => changePage(currentPage - 1)} disabled={currentPage === 1}>
+                  Previous
+                </button>
+                <span>Page {currentPage} of {pageCount}</span>
+                <button type="button" onClick={() => changePage(currentPage + 1)} disabled={currentPage === pageCount}>
+                  Next
+                </button>
+              </div>
+            </nav>
+          )}
+        </>
       )}
     </main>
   )
@@ -258,11 +299,6 @@ function TournamentCard({ tournament, onOpen }) {
       </div>
 
       <footer className="t-card-footer">
-        <span className="t-card-host-credit">
-          <Trophy size={12} />
-          {tournament.hostName || 'Biddr'}
-        </span>
-
         <button
           type="button"
           className="t-card-cta"

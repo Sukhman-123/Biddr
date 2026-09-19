@@ -19,6 +19,7 @@
 
 .hall-header-copy {
   max-width: 640px;
+  min-width: 0;
 }
 
 .hall-eyebrow {
@@ -172,6 +173,7 @@
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
   gap: 22px;
+  scroll-margin-top: 88px;
 }
 
 .t-card {
@@ -182,14 +184,13 @@
   padding: 20px 20px 18px;
   display: flex;
   flex-direction: column;
-  gap: 14px;
-  min-height: 320px;
+  gap: 12px;
+  min-height: 290px;
   overflow: hidden;
   isolation: isolate;
   color: #f5f7fa;
   transition: transform 0.2s ease, border-color 0.2s ease,
     box-shadow 0.2s ease;
-  cursor: pointer;
 }
 
 .t-card:hover {
@@ -296,7 +297,7 @@
 .t-card-body {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 6px;
   flex: 1;
 }
 
@@ -342,7 +343,7 @@
 
 .t-card-stats {
   list-style: none;
-  margin: 12px 0 0;
+  margin: 8px 0 0;
   padding: 0;
   display: flex;
   align-items: stretch;
@@ -386,22 +387,8 @@
 .t-card-footer {
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  justify-content: flex-end;
   gap: 12px;
-  margin-top: 8px;
-}
-
-.t-card-host-credit {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  font-size: 11px;
-  letter-spacing: 0.06em;
-  color: rgba(255, 255, 255, 0.7);
-}
-
-.t-card-host-credit svg {
-  color: var(--card-accent);
 }
 
 .t-card-cta {
@@ -421,6 +408,51 @@
 .t-card-cta:hover {
   transform: translateY(-1px);
   filter: brightness(1.05);
+}
+
+/* --- Pagination ---------------------------------------------- */
+
+.hall-pagination {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 24px;
+}
+
+.hall-pagination-summary {
+  margin: 0;
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.hall-pagination-controls {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.hall-pagination-controls button {
+  padding: 8px 12px;
+  border: 1px solid var(--border);
+  border-radius: 9px;
+  background: rgba(8, 11, 18, 0.7);
+  color: var(--ink-strong);
+  font: inherit;
+  cursor: pointer;
+}
+
+.hall-pagination-controls button:hover:not(:disabled) {
+  border-color: var(--gold);
+  color: var(--gold);
+}
+
+.hall-pagination-controls button:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
 }
 
 .t-card-cta--joined {
@@ -546,6 +578,7 @@
     gap: 10px;
   }
   .hall-search {
+    flex: none;
     max-width: none;
     width: 100%;
     min-width: 0;
@@ -559,7 +592,11 @@
     flex-shrink: 0;
   }
   .tournaments-grid {
-    grid-template-columns: 1fr;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 14px;
+  }
+  .t-card {
+    min-height: 0;
   }
 }
 
@@ -581,14 +618,22 @@
   }
   .t-card-stats {
     display: grid;
-    grid-template-columns: 1fr;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 6px;
+  }
+  .t-card-stats li {
+    min-width: 0;
+    padding: 8px 6px;
+  }
+  .t-card-stat-value {
+    gap: 3px;
+    font-size: 12px;
   }
   .t-card-footer {
-    flex-direction: column;
-    align-items: stretch;
-    gap: 8px;
+    margin-top: 2px;
   }
-  .t-card-cta {
+  .hall-pagination {
+    justify-content: center;
     text-align: center;
   }
 }
